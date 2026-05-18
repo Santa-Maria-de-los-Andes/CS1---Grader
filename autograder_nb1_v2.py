@@ -25,19 +25,19 @@ _RS = "\033[0m"    # reset
 
 # ─── Level thresholds (by %) ─────────────────────────────────
 _LEVELS = [
-    (96, 6, "💎 Leyenda Python"),
-    (81, 5, "🚀 Maestro"),
-    (61, 4, "🔥 Hacker"),
-    (41, 3, "⚡ Programador"),
-    (21, 2, "🌱 Iniciado"),
-    (0,  1, "🐣 Aprendiz"),
+    (96, 6, "💎 Dios del Código Eterno"),
+    (81, 5, "⚡ Archimago del Caos"),
+    (61, 4, "🐉 Domador de Programas"),
+    (41, 3, "🔮 Hechicero Codicioso"),
+    (21, 2, "⚗️ Alquimista de Variables"),
+    (0,  1, "👾 Engendro del Código"),
 ]
 
 def _level_info(pct):
     for thresh, num, name in _LEVELS:
         if pct >= thresh:
             return num, name
-    return 1, "🐣 Aprendiz"
+    return 1, "👾 Engendro del Código"
 
 # ─── Helpers ─────────────────────────────────────────────────
 
@@ -85,13 +85,43 @@ class Autograder:
 
     def _print_welcome(self):
         html = '''
-        <div style="background: linear-gradient(135deg, #1e1e2e, #181825); color: #cdd6f4; border-radius: 12px; padding: 25px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 10px 20px rgba(0,0,0,0.5); border-left: 5px solid #89b4fa; max-width: 800px; margin-bottom: 20px;">
-            <h1 style="margin: 0 0 10px 0; color: #b4befe; font-size: 24px; font-weight: 800; letter-spacing: 1px;">🎮 PYTHON QUEST — Notebook 1</h1>
-            <p style="margin: 0; color: #a6adc8; font-size: 14px;">Variables · Tipos · print() · f-strings · Operadores</p>
-            <div style="margin-top: 15px; padding: 10px; background: rgba(166, 227, 161, 0.1); border-radius: 8px; border: 1px solid rgba(166, 227, 161, 0.3);">
-                <span style="color: #a6e3a1; font-weight: bold;">⚡ Grader v2 listo — ¡completa las misiones y sube de nivel!</span>
-            </div>
-        </div>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  @keyframes pg-glow  {0%,100%{text-shadow:0 0 12px rgba(255,215,0,.8),2px 2px 0 #7a5500}50%{text-shadow:0 0 28px rgba(255,215,0,1),0 0 55px rgba(255,140,0,.5),2px 2px 0 #7a5500}}
+  @keyframes pg-blink {50%{opacity:0}}
+  @keyframes pg-float {0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes pg-combo {0%,100%{transform:scale(1)}25%{transform:scale(1.12) rotate(-2deg)}75%{transform:scale(1.12) rotate(2deg)}}
+  @keyframes pg-achieve{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes pg-xpscale{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @keyframes pg-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+  @keyframes pg-levelup{0%{opacity:0;transform:scale(.85)}60%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+</style>
+<div style="background:#0d0d1a;border:2px solid #ffd700;border-radius:4px;max-width:840px;margin:10px 0;overflow:hidden;box-shadow:0 0 0 1px #0d0d1a,0 0 0 4px #ffd700,0 0 50px rgba(255,215,0,.12),0 10px 36px rgba(0,0,0,.8);position:relative;">
+  <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:5;"></div>
+  <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;padding:20px 24px;text-align:center;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:20px;color:#ffd700;animation:pg-glow 2.5s ease-in-out infinite;letter-spacing:3px;margin-bottom:10px;">⚔ PYTHON QUEST ⚔</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#9d4edd;letter-spacing:2px;">NOTEBOOK I — FUNDAMENTOS DE PYTHON</div>
+  </div>
+  <div style="padding:20px 24px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="background:rgba(0,245,212,.04);border:1px solid rgba(0,245,212,.25);border-radius:3px;padding:14px;">
+        <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#00f5d4;margin-bottom:10px;letter-spacing:1px;">⚡ MISIONES</div>
+        <div style="color:#8888bb;font-size:12px;line-height:1.9;">Variables &amp; Tipos<br>Función print()<br>f-strings<br>Operadores</div>
+      </div>
+      <div style="background:rgba(157,78,221,.04);border:1px solid rgba(157,78,221,.25);border-radius:3px;padding:14px;">
+        <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;margin-bottom:10px;letter-spacing:1px;">🏆 SISTEMA XP</div>
+        <div style="color:#8888bb;font-size:12px;line-height:1.9;">6 Niveles<br>Logros &amp; Trofeos<br>Combos x Rachas<br>Boss Battles</div>
+      </div>
+      <div style="background:rgba(255,51,102,.04);border:1px solid rgba(255,51,102,.25);border-radius:3px;padding:14px;">
+        <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ff3366;margin-bottom:10px;letter-spacing:1px;">🌌 NIVELES</div>
+        <div style="color:#8888bb;font-size:11px;line-height:1.9;">👾 Engendro<br>⚗️ Alquimista<br>🔮 Hechicero<br>🐉 Domador<br>⚡ Archimago<br>💎 Dios</div>
+      </div>
+    </div>
+    <div style="background:rgba(57,255,20,.04);border:1px solid rgba(57,255,20,.3);border-radius:3px;padding:12px 16px;text-align:center;animation:pg-float 3s ease-in-out infinite;">
+      <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#39ff14;animation:pg-blink 1.5s step-end infinite;letter-spacing:1px;">▶  EJECUTA TU PRIMERA CELDA PARA COMENZAR</span>
+    </div>
+  </div>
+</div>
         '''
         display(HTML(html))
 
@@ -181,7 +211,7 @@ class Autograder:
         passed = sum(1 for ok, _, _ in checks if ok)
         pts    = round(max_pts * passed / len(checks)) if checks else 0
         self._scores[key] = (pts, max_pts)
-        
+
         if pts == max_pts:
             self._streak += 1
         else:
@@ -189,77 +219,168 @@ class Autograder:
 
         earned, possible, pct = self._totals()
         lvl_num, lvl_name     = _level_info(pct)
-        n                     = self._nombre()
 
-        # Build rows
+        # ── Check rows ───────────────────────────────────────
         rows_html = ""
         for ok, label, msg in checks:
             if ok:
-                rows_html += f'<li style="margin-bottom:6px; padding:8px; background:rgba(166,227,161,0.05); border-radius:6px; border-left:3px solid #a6e3a1;"><span style="color:#a6e3a1; font-weight:bold;">✅ {label}:</span> <span style="color:#bac2de;">{msg}</span></li>'
+                rows_html += (
+                    f'<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 10px;'
+                    f'margin-bottom:3px;background:rgba(57,255,20,.05);'
+                    f'border-left:3px solid #39ff14;border-radius:0 3px 3px 0;">'
+                    f'<span style="color:#39ff14;font-size:13px;flex-shrink:0;line-height:1.5;">✔</span>'
+                    f'<div style="font-size:11px;line-height:1.5;">'
+                    f'<span style="color:#39ff14;font-weight:bold;">{label}:</span> '
+                    f'<span style="color:#8888bb;">{msg}</span></div></div>'
+                )
             else:
-                rows_html += f'<li style="margin-bottom:6px; padding:8px; background:rgba(243,139,168,0.05); border-radius:6px; border-left:3px solid #f38ba8;"><span style="color:#f38ba8; font-weight:bold;">❌ {label}:</span> <span style="color:#f38ba8;">{msg}</span></li>'
+                rows_html += (
+                    f'<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 10px;'
+                    f'margin-bottom:3px;background:rgba(255,51,102,.05);'
+                    f'border-left:3px solid #ff3366;border-radius:0 3px 3px 0;">'
+                    f'<span style="color:#ff3366;font-size:13px;flex-shrink:0;line-height:1.5;">✖</span>'
+                    f'<div style="font-size:11px;line-height:1.5;">'
+                    f'<span style="color:#ff3366;font-weight:bold;">{label}:</span> '
+                    f'<span style="color:#ff7799;">{msg}</span></div></div>'
+                )
 
-        # Progress bar
-        bar_w = f"{pct}%"
-        xp_bar_html = f'''
-        <div style="margin-top: 15px;">
-            <div style="display:flex; justify-content:space-between; font-size:12px; color:#a6adc8; margin-bottom:4px;">
-                <span><b>XP:</b> {earned}/{possible}</span>
-                <span><b>Nivel:</b> {lvl_name}</span>
-            </div>
-            <div style="width: 100%; background: #313244; border-radius: 10px; height: 12px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);">
-                <div style="width: {bar_w}; background: linear-gradient(90deg, #a6e3a1, #94e2d5); height: 100%; border-radius: 10px; transition: width 0.5s ease;"></div>
-            </div>
-        </div>
-        '''
+        # ── Stars ────────────────────────────────────────────
+        star_r = pts / max_pts if max_pts > 0 else 0
+        if star_r == 1.0:
+            stars_html = '<span style="color:#ffd700;font-size:15px;letter-spacing:3px;">★★★</span>'
+        elif star_r >= 0.67:
+            stars_html = '<span style="color:#ffd700;font-size:15px;letter-spacing:3px;">★★</span><span style="color:#2a2a4a;font-size:15px;">★</span>'
+        elif star_r > 0:
+            stars_html = '<span style="color:#ffd700;font-size:15px;">★</span><span style="color:#2a2a4a;font-size:15px;letter-spacing:3px;">★★</span>'
+        else:
+            stars_html = '<span style="color:#2a2a4a;font-size:15px;letter-spacing:3px;">★★★</span>'
 
-        # Status & Combo
+        # ── Combo ─────────────────────────────────────────────
         combo_html = ""
         if self._streak >= 2:
-            combo_html = f'<div style="display:inline-block; margin-top:10px; padding:4px 10px; background:rgba(250,179,135,0.15); border:1px solid #fab387; border-radius:20px; color:#fab387; font-weight:bold; font-size:12px; animation: pulse 2s infinite;">🔥 COMBO x{self._streak}</div>'
+            c_color = "#ff3366" if self._streak >= 5 else "#ff6b35"
+            combo_html = (
+                f'<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;'
+                f'background:rgba(255,107,53,.12);border:1px solid {c_color};border-radius:2px;'
+                f'margin-left:8px;animation:pg-combo .5s ease;">'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:{c_color};">🔥 COMBO x{self._streak}</span>'
+                f'</div>'
+            )
 
-        status_html = ""
+        # ── Status ────────────────────────────────────────────
         if pts == max_pts:
-            status_html = f'<span style="color:#a6e3a1; font-weight:bold;">⚡ PERFECTO! +{pts} XP</span>'
+            s_icon, s_text, s_color = "⚡", f"¡PERFECTO! +{pts} XP", "#39ff14"
+            border_color, glow = "#39ff14", "0 0 22px rgba(57,255,20,.18)"
         elif pts > 0:
-            status_html = f'<span style="color:#f9e2af; font-weight:bold;">👍 +{pts} XP</span> <span style="color:#7f849c; font-size:12px;">({max_pts - pts} XP por ganar)</span>'
+            s_icon, s_text, s_color = "✦", f"+{pts} XP  ·  {max_pts - pts} por ganar", "#ffd700"
+            border_color, glow = "#ffd700", "0 0 22px rgba(255,215,0,.12)"
         else:
-            status_html = f'<span style="color:#f38ba8; font-weight:bold;">💪 ¡Casi! Corrige los ❌ y vuelve a ejecutar</span>'
+            s_icon, s_text, s_color = "☠", "¡INTENTA DE NUEVO! — Corrige los ✖", "#ff3366"
+            border_color, glow = "#ff3366", "0 0 22px rgba(255,51,102,.12)"
 
-        # Achievements
-        ach_html = ""
+        # ── XP bar gradient per level ─────────────────────────
+        _XP_GRAD = {
+            1: "linear-gradient(90deg,#333355,#6666aa)",
+            2: "linear-gradient(90deg,#1b3a0e,#39ff14)",
+            3: "linear-gradient(90deg,#0e1b3a,#00f5d4)",
+            4: "linear-gradient(90deg,#2d0e3a,#9d4edd)",
+            5: "linear-gradient(90deg,#3a2800,#ffd700)",
+            6: "linear-gradient(90deg,#ff3366,#ffd700,#39ff14,#00f5d4,#9d4edd)",
+        }
+        xp_grad = _XP_GRAD.get(lvl_num, _XP_GRAD[1])
+
+        # ── Objective dots ────────────────────────────────────
+        dots = "".join(
+            f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;'
+            f'background:{"#39ff14" if ok else "#ff3366"};margin:0 2px;'
+            f'box-shadow:0 0 4px {"#39ff14" if ok else "#ff3366"};"></span>'
+            for ok, _, _ in checks
+        )
+
+        # ── Achievements ──────────────────────────────────────
         new_ach = self._check_achievements(key)
-        for ach_name, ach_color, ach_rarity in new_ach:
-            ach_html += f'''
-            <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed {ach_color}; display: flex; align-items: center; gap: 10px; animation: slideIn 0.5s ease-out;">
-                <div style="background: {ach_color}; color: #11111b; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">{ach_rarity}</div>
-                <div style="color: #cdd6f4; font-weight: bold;">LOGRO DESBLOQUEADO: {ach_name}</div>
-            </div>
-            '''
+        ach_html = ""
+        _RC = {
+            "Común":     ("#cd7f32", "rgba(205,127,50,.12)",  "🥉"),
+            "Raro":      ("#c0c0c0", "rgba(192,192,192,.12)", "🥈"),
+            "Épico":     ("#ffd700", "rgba(255,215,0,.10)",   "🥇"),
+            "Legendario":("#9d4edd", "rgba(157,78,221,.12)",  "💎"),
+            "Nivel":     ("#00f5d4", "rgba(0,245,212,.10)",   "⬆"),
+        }
+        for ach_name, _, ach_rarity in new_ach:
+            bc, bg, ach_icon = _RC.get(ach_rarity, _RC["Común"])
+            logo_snippet = ""
+            if ach_rarity == "Nivel":
+                logo_snippet = (
+                    '<div style="display:flex;align-items:center;background:#0d0d1a;'
+                    'border:1px solid #ffd700;border-radius:3px;padding:4px 12px;'
+                    'margin-left:auto;box-shadow:0 0 10px rgba(255,215,0,.3);'
+                    'animation:pg-levelup .6s ease-out;">'
+                    '<span style="font-family:\'Press Start 2P\',monospace;font-size:10px;'
+                    'background:linear-gradient(135deg,#ffd700,#ff6b35,#ffd700);'
+                    '-webkit-background-clip:text;-webkit-text-fill-color:transparent;'
+                    'background-size:200%;animation:pg-shimmer 3s linear infinite;'
+                    'letter-spacing:3px;">SMA</span>'
+                    '</div>'
+                )
+            ach_html += (
+                f'<div style="display:flex;align-items:center;gap:10px;margin-top:8px;'
+                f'padding:10px 12px;background:{bg};border:1px solid {bc};border-radius:3px;'
+                f'animation:pg-achieve .4s ease-out;">'
+                f'<span style="font-size:18px;">{ach_icon}</span>'
+                f'<div style="flex:1;">'
+                f'<div style="margin-bottom:3px;">'
+                f'<span style="background:{bc};color:#0d0d1a;font-size:7px;font-weight:bold;'
+                f'padding:1px 5px;border-radius:2px;'
+                f'font-family:\'Press Start 2P\',monospace;">{ach_rarity.upper()}</span>'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;'
+                f'color:{bc};margin-left:6px;">LOGRO</span>'
+                f'</div>'
+                f'<div style="color:#e8e8ff;font-size:12px;font-weight:bold;">{ach_name}</div>'
+                f'</div>'
+                f'{logo_snippet}'
+                f'</div>'
+            )
 
-        card_html = f'''
-        <style>
-            @keyframes pulse {{ 0% {{ box-shadow: 0 0 0 0 rgba(250,179,135,0.4); }} 70% {{ box-shadow: 0 0 0 6px rgba(250,179,135,0); }} 100% {{ box-shadow: 0 0 0 0 rgba(250,179,135,0); }} }}
-            @keyframes slideIn {{ from {{ opacity: 0; transform: translateY(-10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
-        </style>
-        <div style="background: #1e1e2e; color: #cdd6f4; border-radius: 12px; padding: 20px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 8px 16px rgba(0,0,0,0.3); border: 1px solid #313244; max-width: 800px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #45475a; padding-bottom: 10px; margin-bottom: 15px;">
-                <h2 style="margin: 0; color: #89b4fa; font-weight: 700; font-size:18px;">{getattr(self, '_curr_icon', '🎯')} {getattr(self, '_curr_title', 'Misión')}</h2>
-                <div style="background: rgba(243,139,168,0.1); border: 1px solid #f38ba8; color: #f38ba8; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 14px;">MAX {max_pts} XP</div>
-            </div>
-            
-            <ul style="list-style: none; padding: 0; margin: 0 0 15px 0; font-size: 14px;">
-                {rows_html}
-            </ul>
-            
-            <div style="background: #181825; padding: 12px; border-radius: 8px;">
-                {status_html}
-                {combo_html}
-                {xp_bar_html}
-                {ach_html}
-            </div>
-        </div>
-        '''
+        curr_icon  = getattr(self, '_curr_icon', '⚔')
+        curr_title = getattr(self, '_curr_title', 'MISIÓN').upper()
+
+        card_html = f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  @keyframes pg-combo  {{0%,100%{{transform:scale(1)}}25%{{transform:scale(1.12) rotate(-2deg)}}75%{{transform:scale(1.12) rotate(2deg)}}}}
+  @keyframes pg-achieve{{from{{opacity:0;transform:translateX(25px)}}to{{opacity:1;transform:translateX(0)}}}}
+  @keyframes pg-xpscale{{from{{transform:scaleX(0)}}to{{transform:scaleX(1)}}}}
+  @keyframes pg-levelup{{0%{{opacity:0;transform:scale(.85)}}60%{{transform:scale(1.04)}}100%{{opacity:1;transform:scale(1)}}}}
+  @keyframes pg-shimmer{{0%{{background-position:-200% 0}}100%{{background-position:200% 0}}}}
+</style>
+<div style="background:#0d0d1a;border:2px solid {border_color};border-radius:4px;max-width:840px;margin-bottom:14px;overflow:hidden;box-shadow:{glow},0 6px 24px rgba(0,0,0,.6);font-family:'Segoe UI',Roboto,sans-serif;">
+  <div style="background:{border_color}0d;border-bottom:1px solid {border_color}40;padding:9px 16px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:{border_color};letter-spacing:1px;">{curr_icon} {curr_title}</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      {stars_html}
+      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ff3366;background:rgba(255,51,102,.08);border:1px solid rgba(255,51,102,.35);padding:3px 8px;border-radius:2px;">MAX {max_pts} XP</div>
+    </div>
+  </div>
+  <div style="padding:10px 14px 6px;">{rows_html}</div>
+  <div style="background:#09091a;border-top:1px solid #1a1a3a;padding:11px 14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">{s_icon}</span>
+        <span style="font-family:'Press Start 2P',monospace;font-size:8px;color:{s_color};">{s_text}</span>
+        {combo_html}
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;color:#444466;font-size:10px;">{dots}<span style="margin-left:3px;">{passed}/{len(checks)}</span></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP {earned}/{possible}</span>
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;">{lvl_name}</span>
+    </div>
+    <div style="width:100%;height:10px;background:#141428;border:1px solid #2a2a4a;border-radius:2px;overflow:hidden;">
+      <div style="width:{pct}%;height:100%;background:{xp_grad};border-radius:2px;transform-origin:left;animation:pg-xpscale 1.1s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 6px rgba(255,215,0,.2);"></div>
+    </div>
+    {ach_html}
+  </div>
+</div>'''
         display(HTML(card_html))
         return pts
     # ── MINI-A — Variables basicas ───────────────────────────
@@ -1333,13 +1454,24 @@ class Autograder:
         lvl_num, lvl_name     = _level_info(pct)
 
         if pct >= 90:
-            nota, nota_msg, color = "AD", "Nivel de Logro Destacado", "#a6e3a1"
+            nota, nota_msg, nota_color = "AD", "Logro Destacado", "#39ff14"
         elif pct >= 75:
-            nota, nota_msg, color = "A",  "Nivel de Logro Esperado", "#f9e2af"
+            nota, nota_msg, nota_color = "A",  "Logro Esperado",  "#ffd700"
         elif pct >= 55:
-            nota, nota_msg, color = "B",  "En Proceso", "#fab387"
+            nota, nota_msg, nota_color = "B",  "En Proceso",      "#ff6b35"
         else:
-            nota, nota_msg, color = "C",  "En Inicio", "#f38ba8"
+            nota, nota_msg, nota_color = "C",  "En Inicio",       "#ff3366"
+
+        if pct >= 96:
+            final_msg = f"💎 LEYENDA ABSOLUTA. {n.upper()}, eres el Dios del Código Eterno."
+        elif pct >= 90:
+            final_msg = f"⚡ ¡INCREÍBLE, {n}! Archimago confirmado. El Notebook 2 te aguarda."
+        elif pct >= 75:
+            final_msg = f"¡Bien hecho, {n}! Repasa los ✖ para alcanzar el AD."
+        elif pct >= 55:
+            final_msg = f"Buen comienzo, {n}. Dedica tiempo a los ejercicios que fallaron."
+        else:
+            final_msg = f"{n}, relee la teoría de cada sección. ¡Cada intento suma XP!"
 
         ach_display = {
             "perf_mini_a":       "🏅 Perfil Perfecto",
@@ -1361,18 +1493,23 @@ class Autograder:
             "streak5":           "💥 Racha x5",
             "reto_master":       "🌌 Físico Avanzado",
         }
-        
-        earned_ach_html = ""
-        if self._achievements:
-            earned_ach = [label for key, label in ach_display.items() if key in self._achievements]
-            if earned_ach:
-                earned_ach_html = '<div style="margin-top: 20px;">'
-                earned_ach_html += '<h3 style="color: #cba6f7; margin-bottom: 10px; font-size: 16px;">🏅 Logros Desbloqueados</h3>'
-                earned_ach_html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">'
-                for ach in earned_ach:
-                    earned_ach_html += f'<span style="background: rgba(203,166,247,0.15); border: 1px solid #cba6f7; color: #cba6f7; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">{ach}</span>'
-                earned_ach_html += '</div></div>'
+        earned_ach = [label for k, label in ach_display.items() if k in self._achievements]
 
+        # ── XP gradient per level ─────────────────────────────
+        _XP_GRAD = {
+            1: "linear-gradient(90deg,#333355,#6666aa)",
+            2: "linear-gradient(90deg,#1b3a0e,#39ff14)",
+            3: "linear-gradient(90deg,#0e1b3a,#00f5d4)",
+            4: "linear-gradient(90deg,#2d0e3a,#9d4edd)",
+            5: "linear-gradient(90deg,#3a2800,#ffd700)",
+            6: "linear-gradient(90deg,#ff3366,#ffd700,#39ff14,#00f5d4,#9d4edd)",
+        }
+        xp_grad = _XP_GRAD.get(lvl_num, _XP_GRAD[1])
+
+        _LVL_COLOR = {1:"#6666aa",2:"#39ff14",3:"#00f5d4",4:"#9d4edd",5:"#ffd700",6:"#ff3366"}
+        lvl_color = _LVL_COLOR.get(lvl_num, "#6666aa")
+
+        # ── Breakdown grid ────────────────────────────────────
         labels = {
             "mini_a":     "Misión A: Mi Perfil",
             "t1":         "Quiz T1: Tipo int",
@@ -1391,7 +1528,7 @@ class Autograder:
             "ex1_f":      "Ejercicio 1-F: f-string temp",
             "ex2":        "Ejercicio 2: IGV",
             "ex2_f":      "Ejercicio 2-F: f-string IGV",
-            "ex3":        "Ejercicio 3: Promedio Escolar",
+            "ex3":        "Ejercicio 3: Promedio",
             "ex4":        "Ejercicio 4: IMC",
             "ex5":        "Ejercicio 5: Email",
             "ex6":        "Ejercicio 6: Conversor",
@@ -1399,72 +1536,101 @@ class Autograder:
             "cohete":     "⚔️ Jefe 2: Cohete",
             "reto1":      "🌌 Reto 1: Proyectil",
             "reto2":      "🌌 Reto 2: Relatividad",
-            "reto3":      "🌌 Reto 3: Gravitacion",
+            "reto3":      "🌌 Reto 3: Gravitación",
         }
-
-        breakdown_html = '<div style="margin-top: 25px; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">'
+        breakdown_items = ""
         for key, label in labels.items():
             if key in self._scores:
                 e, p = self._scores[key]
                 if e == p:
-                    bcolor, text_color, icon = "rgba(166,227,161,0.1)", "#a6e3a1", "⭐"
+                    bc, tc, bd_icon = "rgba(57,255,20,.07)",   "#39ff14", "★"
                 elif e > 0:
-                    bcolor, text_color, icon = "rgba(249,226,175,0.1)", "#f9e2af", "👍"
+                    bc, tc, bd_icon = "rgba(255,215,0,.07)",   "#ffd700", "◆"
                 else:
-                    bcolor, text_color, icon = "rgba(243,139,168,0.1)", "#f38ba8", "❌"
-                breakdown_html += f'''
-                <div style="background: {bcolor}; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid {text_color};">
-                    <span style="color: #cdd6f4; font-size: 13px;">{icon} {label}</span>
-                    <span style="color: {text_color}; font-weight: bold; font-size: 13px;">{e}/{p}</span>
-                </div>'''
-        breakdown_html += '</div>'
+                    bc, tc, bd_icon = "rgba(255,51,102,.07)",  "#ff3366", "✖"
+                breakdown_items += (
+                    f'<div style="background:{bc};border:1px solid {tc}40;border-radius:3px;'
+                    f'padding:7px 11px;display:flex;justify-content:space-between;align-items:center;">'
+                    f'<span style="color:#a8a8cc;font-size:11px;">{bd_icon} {label}</span>'
+                    f'<span style="color:{tc};font-weight:bold;'
+                    f'font-family:\'Press Start 2P\',monospace;font-size:8px;">{e}/{p}</span>'
+                    f'</div>'
+                )
 
-        if pct >= 96:
-            final_msg = f"💎 ¡LEYENDA! {n}, dominaste Notebook 1 al máximo."
-        elif pct >= 90:
-            final_msg = f"🚀 ¡INCREÍBLE, {n}! Dominas los fundamentos. Notebook 2 te espera."
-        elif pct >= 75:
-            final_msg = f"¡Bien hecho, {n}! Repasa los ❌ para llegar al AD."
-        elif pct >= 55:
-            final_msg = f"Vas bien, {n}. Dedica tiempo a los ejercicios que fallaron."
-        else:
-            final_msg = f"{n}, relee la teoría de cada sección y vuelve a intentarlo. ¡Cada intento suma XP!"
+        ach_section = ""
+        if earned_ach:
+            badges = "".join(
+                f'<span style="background:rgba(157,78,221,.1);border:1px solid #9d4edd;'
+                f'color:#cba6f7;padding:5px 11px;border-radius:20px;font-size:11px;'
+                f'font-weight:bold;">{a}</span>'
+                for a in earned_ach
+            )
+            ach_section = (
+                f'<div style="padding:16px 20px;border-bottom:1px solid #1a1a3a;">'
+                f'<div style="font-family:\'Press Start 2P\',monospace;font-size:8px;'
+                f'color:#cba6f7;margin-bottom:12px;letter-spacing:1px;">🏅 LOGROS DESBLOQUEADOS</div>'
+                f'<div style="display:flex;flex-wrap:wrap;gap:8px;">{badges}</div>'
+                f'</div>'
+            )
 
-        html = f'''
-        <div style="background: linear-gradient(180deg, #1e1e2e 0%, #11111b 100%); color: #cdd6f4; border-radius: 16px; padding: 30px; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 15px 30px rgba(0,0,0,0.6); border: 2px solid #89b4fa; max-width: 900px; margin-top: 30px;">
-            <div style="text-align: center; border-bottom: 2px dashed #45475a; padding-bottom: 20px; margin-bottom: 20px;">
-                <h1 style="margin: 0; color: #89b4fa; font-size: 32px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">🏆 Reporte Final</h1>
-                <p style="margin: 5px 0 0 0; color: #a6adc8; font-size: 16px;">Python Quest — Notebook 1: Fundamentos</p>
-            </div>
-            
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 200px; background: #181825; padding: 20px; border-radius: 12px; border-left: 4px solid #cba6f7;">
-                    <p style="margin: 0 0 10px 0; color: #7f849c; font-size: 12px; text-transform: uppercase; font-weight: bold;">Agente</p>
-                    <h2 style="margin: 0; color: #cdd6f4; font-size: 24px;">{n.upper()}</h2>
-                </div>
-                <div style="flex: 1; min-width: 200px; background: #181825; padding: 20px; border-radius: 12px; border-left: 4px solid {color};">
-                    <p style="margin: 0 0 10px 0; color: #7f849c; font-size: 12px; text-transform: uppercase; font-weight: bold;">Calificación</p>
-                    <div style="display: flex; align-items: baseline; gap: 10px;">
-                        <h2 style="margin: 0; color: {color}; font-size: 32px;">{nota}</h2>
-                        <span style="color: #a6adc8; font-size: 14px;">{nota_msg}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 25px; background: #181825; padding: 20px; border-radius: 12px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span style="font-weight: bold; color: #89b4fa; font-size: 18px;">Nivel: {lvl_name}</span>
-                    <span style="font-weight: bold; color: #cdd6f4; font-size: 18px;">XP: <span style="color:#a6e3a1;">{earned}</span> / {possible} ({pct}%)</span>
-                </div>
-                <div style="width: 100%; background: #313244; border-radius: 12px; height: 16px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
-                    <div style="width: {pct}%; background: linear-gradient(90deg, #89b4fa, #cba6f7, #f38ba8); height: 100%; border-radius: 12px; transition: width 1s ease-out;"></div>
-                </div>
-                <p style="text-align: center; margin: 15px 0 0 0; font-size: 16px; font-weight: bold; color: #f9e2af;">{final_msg}</p>
-            </div>
-            
-            {earned_ach_html}
-            {breakdown_html}
-        </div>
-        '''
+        html = f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  @keyframes pg-glow2  {{0%,100%{{text-shadow:0 0 15px rgba(255,215,0,.7),2px 2px 0 #7a5500}}50%{{text-shadow:0 0 32px rgba(255,215,0,1),0 0 60px rgba(255,140,0,.5),2px 2px 0 #7a5500}}}}
+  @keyframes pg-xpscale{{from{{transform:scaleX(0)}}to{{transform:scaleX(1)}}}}
+  @keyframes pg-float  {{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-5px)}}}}
+  @keyframes pg-shimmer{{0%{{background-position:-200% 0}}100%{{background-position:200% 0}}}}
+  @keyframes pg-pulse  {{0%,100%{{box-shadow:0 0 0 0 rgba(255,215,0,.4)}}70%{{box-shadow:0 0 0 8px rgba(255,215,0,0)}}}}
+</style>
+<div style="background:#0d0d1a;border:2px solid #ffd700;border-radius:4px;max-width:920px;margin:20px 0;overflow:hidden;box-shadow:0 0 0 1px #0d0d1a,0 0 0 4px #ffd700,0 0 70px rgba(255,215,0,.12),0 14px 44px rgba(0,0,0,.8);font-family:'Segoe UI',Roboto,sans-serif;">
+
+  <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;padding:22px;text-align:center;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:20px;color:#ffd700;animation:pg-glow2 2.5s ease-in-out infinite;letter-spacing:3px;margin-bottom:10px;">🏆 REPORTE FINAL</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9d4edd;letter-spacing:2px;">PYTHON QUEST — NOTEBOOK I</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #1a1a3a;">
+    <div style="padding:20px;border-right:1px solid #1a1a3a;text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;margin-bottom:10px;letter-spacing:1px;">AGENTE</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#e8e8ff;letter-spacing:2px;word-break:break-all;">{n.upper()}</div>
+    </div>
+    <div style="padding:20px;border-right:1px solid #1a1a3a;text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;margin-bottom:10px;letter-spacing:1px;">NIVEL</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:{lvl_color};line-height:1.6;">{lvl_name}</div>
+    </div>
+    <div style="padding:20px;text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;margin-bottom:10px;letter-spacing:1px;">CALIFICACIÓN</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:26px;color:{nota_color};text-shadow:0 0 14px {nota_color};">{nota}</div>
+      <div style="font-size:11px;color:{nota_color}99;margin-top:5px;">{nota_msg}</div>
+    </div>
+  </div>
+
+  <div style="padding:18px 20px;border-bottom:1px solid #1a1a3a;">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP TOTAL: {earned}/{possible}</span>
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;">{pct}%</span>
+    </div>
+    <div style="width:100%;height:14px;background:#141428;border:1px solid #2a2a4a;border-radius:3px;overflow:hidden;">
+      <div style="width:{pct}%;height:100%;background:{xp_grad};border-radius:3px;transform-origin:left;animation:pg-xpscale 1.5s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 10px rgba(255,215,0,.25);"></div>
+    </div>
+    <div style="text-align:center;margin-top:14px;font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd700;animation:pg-float 3s ease-in-out infinite;">{final_msg}</div>
+  </div>
+
+  {ach_section}
+
+  <div style="padding:16px 20px;border-bottom:1px solid #1a1a3a;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#89b4fa;margin-bottom:12px;letter-spacing:1px;">📊 DETALLE DE MISIONES</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;">
+      {breakdown_items}
+    </div>
+  </div>
+
+  <div style="padding:22px;text-align:center;background:linear-gradient(180deg,#0d0d1a,#090912);">
+    <!-- Para usar tu logo real: reemplaza el bloque de abajo con <img src="URL_DE_TU_LOGO" style="height:42px;"> -->
+    <div style="display:inline-flex;align-items:center;gap:12px;background:#0a0a14;border:2px solid #ffd700;border-radius:4px;padding:10px 26px;box-shadow:0 0 22px rgba(255,215,0,.22);animation:pg-pulse 2.5s ease-in-out infinite;">
+      <span style="font-family:'Press Start 2P',monospace;font-size:18px;background:linear-gradient(135deg,#ffd700,#ff6b35,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:pg-shimmer 3s linear infinite;letter-spacing:4px;">SMA</span>
+    </div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#2a2a4a;margin-top:10px;letter-spacing:1px;">PYTHON QUEST v2 — AUTOGRADER</div>
+  </div>
+
+</div>'''
         display(HTML(html))
-
