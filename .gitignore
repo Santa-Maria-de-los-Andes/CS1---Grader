@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.claude/
+Untitled*.ipynb
+build_notebooks.py
+build_v2.py
