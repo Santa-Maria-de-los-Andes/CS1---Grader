@@ -24,8 +24,8 @@ _RS = "\033[0m"    # reset
 
 # ─── Supabase Leaderboard Config ─────────────────────────────
 # Reemplaza con las credenciales de tu proyecto Supabase
-SUPABASE_URL      = "https://YOUR_PROJECT_ID.supabase.co"
-SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE"
+SUPABASE_URL      = "https://uwykikwutjtkpffwmdiq.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu"
 
 # ─── Total possible XP for Notebook 1 (sum of all max_pts) ──
 _NOTEBOOK_MAX = 156
