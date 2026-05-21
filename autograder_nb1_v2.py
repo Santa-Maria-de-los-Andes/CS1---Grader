@@ -229,6 +229,13 @@ class Autograder:
         earned, possible, pct = self._totals()
         lvl_num, lvl_name     = _level_info(pct)
 
+        import threading as _thr
+        _thr.Thread(
+            target=self._submit_to_supabase,
+            args=(earned, possible, pct, lvl_num, lvl_name, True),
+            daemon=True,
+        ).start()
+
         # ── Check rows ───────────────────────────────────────
         rows_html = ""
         for ok, label, msg in checks:
@@ -1569,7 +1576,7 @@ class Autograder:
 
         return None
 
-    def _submit_to_supabase(self, earned, possible, pct, lvl_num, lvl_name):
+    def _submit_to_supabase(self, earned, possible, pct, lvl_num, lvl_name, silent=False):
         """POST the final score to Supabase. Silently skips if not configured."""
         if "YOUR_PROJECT_ID" in SUPABASE_URL or not SUPABASE_URL.startswith("https://"):
             return
@@ -1610,20 +1617,22 @@ class Autograder:
             with _ur.urlopen(req, timeout=12):
                 pass
 
-            display(HTML(
-                f'<div style="font-family:\'Press Start 2P\',monospace;font-size:8px;'
-                f'color:#39ff14;background:#020d02;border:1px solid #39ff14;'
-                f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
-                f'✅ SCORE ENVIADO AL LEADERBOARD &nbsp;·&nbsp; {email}</div>'
-            ))
+            if not silent:
+                display(HTML(
+                    f'<div style="font-family:\'Press Start 2P\',monospace;font-size:8px;'
+                    f'color:#39ff14;background:#020d02;border:1px solid #39ff14;'
+                    f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
+                    f'✅ SCORE ENVIADO AL LEADERBOARD &nbsp;·&nbsp; {email}</div>'
+                ))
 
         except Exception as _ex:
-            display(HTML(
-                f'<div style="font-family:\'Press Start 2P\',monospace;font-size:7px;'
-                f'color:#ff3366;background:#1a0202;border:1px solid #ff3366;'
-                f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
-                f'⚠️ Leaderboard no disponible: {_ex}</div>'
-            ))
+            if not silent:
+                display(HTML(
+                    f'<div style="font-family:\'Press Start 2P\',monospace;font-size:7px;'
+                    f'color:#ff3366;background:#1a0202;border:1px solid #ff3366;'
+                    f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
+                    f'⚠️ Leaderboard no disponible: {_ex}</div>'
+                ))
 
     # ── RESUMEN FINAL ────────────────────────────────────────
 

@@ -633,9 +633,9 @@ function renderLeaderboard(players) {
     renderPodiumCard(top3[2], 3),
   ].join('');
 
-  // Rest of the list
+  // Full ranked list (all players)
   const listEl = document.getElementById('rank-list');
-  listEl.innerHTML = rest.map((p, i) => renderRankRow(p, i + 4, i * 40)).join('');
+  listEl.innerHTML = players.map((p, i) => renderRankRow(p, i + 1, i * 40)).join('');
 
   // Show content
   document.getElementById('loading-state').style.display = 'none';
