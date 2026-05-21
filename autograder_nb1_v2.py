@@ -1,12 +1,11 @@
 """
-Autograder v2 — Notebook 1: Fundamentos de Python
+Autograder v3 — Notebook 1: Fundamentos de Python
 🎮 MODO AVENTURA — ¡Desbloquea logros, sube de nivel y domina Python!
 
-Mejoras sobre v1:
- - Deteccion de valores por defecto (0.0) con mensajes accionables
- - Verificacion ordenada: existencia -> tipo -> valor
- - Sistema de XP, niveles y logros desbloqueables
- - Colores ANSI y feedback visual mejorado
+Novedades v3:
+ - Detecta el email de Google Colab automaticamente
+ - Envia el puntaje final a Supabase para el leaderboard en vivo
+ - Compatible con GitHub Pages (leaderboard.html)
 """
 
 import sys
@@ -22,6 +21,14 @@ _C  = "\033[96m"   # cyan
 _BD = "\033[1m"    # bold
 _DM = "\033[2m"    # dim
 _RS = "\033[0m"    # reset
+
+# ─── Supabase Leaderboard Config ─────────────────────────────
+# Reemplaza con las credenciales de tu proyecto Supabase
+SUPABASE_URL      = "https://YOUR_PROJECT_ID.supabase.co"
+SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE"
+
+# ─── Total possible XP for Notebook 1 (sum of all max_pts) ──
+_NOTEBOOK_MAX = 156
 
 # ─── Level thresholds (by %) ─────────────────────────────────
 _LEVELS = [
@@ -79,6 +86,7 @@ class Autograder:
         self._achievements = set()
         self._streak       = 0
         self._prev_level   = 0
+        self._email        = None
         self._print_welcome()
 
     # ── Welcome screen ──────────────────────────────────────
@@ -136,7 +144,8 @@ class Autograder:
     def _totals(self):
         earned   = sum(e for e, _ in self._scores.values())
         possible = sum(p for _, p in self._scores.values())
-        pct      = round(earned / possible * 100) if possible else 0
+        # pct is always over the full notebook max so levels reflect true progress
+        pct      = round(earned / _NOTEBOOK_MAX * 100)
         return earned, possible, pct
 
     def _unlock(self, key):
@@ -297,32 +306,20 @@ class Autograder:
             for ok, _, _ in checks
         )
 
-        # ── Achievements ──────────────────────────────────────
-        new_ach = self._check_achievements(key)
+        # ── Achievements (regular only — level-ups rendered separately) ──
+        new_ach    = self._check_achievements(key)
+        reg_ach    = [(n, c, r) for n, c, r in new_ach if r != "Nivel"]
+        levelup_ach = [(n, c, r) for n, c, r in new_ach if r == "Nivel"]
+
         ach_html = ""
         _RC = {
             "Común":     ("#cd7f32", "rgba(205,127,50,.12)",  "🥉"),
             "Raro":      ("#c0c0c0", "rgba(192,192,192,.12)", "🥈"),
             "Épico":     ("#ffd700", "rgba(255,215,0,.10)",   "🥇"),
             "Legendario":("#9d4edd", "rgba(157,78,221,.12)",  "💎"),
-            "Nivel":     ("#00f5d4", "rgba(0,245,212,.10)",   "⬆"),
         }
-        for ach_name, _, ach_rarity in new_ach:
+        for ach_name, _, ach_rarity in reg_ach:
             bc, bg, ach_icon = _RC.get(ach_rarity, _RC["Común"])
-            logo_snippet = ""
-            if ach_rarity == "Nivel":
-                logo_snippet = (
-                    '<div style="display:flex;align-items:center;background:#0d0d1a;'
-                    'border:1px solid #ffd700;border-radius:3px;padding:4px 12px;'
-                    'margin-left:auto;box-shadow:0 0 10px rgba(255,215,0,.3);'
-                    'animation:pg-levelup .6s ease-out;">'
-                    '<span style="font-family:\'Press Start 2P\',monospace;font-size:10px;'
-                    'background:linear-gradient(135deg,#ffd700,#ff6b35,#ffd700);'
-                    '-webkit-background-clip:text;-webkit-text-fill-color:transparent;'
-                    'background-size:200%;animation:pg-shimmer 3s linear infinite;'
-                    'letter-spacing:3px;">SMA</span>'
-                    '</div>'
-                )
             ach_html += (
                 f'<div style="display:flex;align-items:center;gap:10px;margin-top:8px;'
                 f'padding:10px 12px;background:{bg};border:1px solid {bc};border-radius:3px;'
@@ -338,7 +335,6 @@ class Autograder:
                 f'</div>'
                 f'<div style="color:#e8e8ff;font-size:12px;font-weight:bold;">{ach_name}</div>'
                 f'</div>'
-                f'{logo_snippet}'
                 f'</div>'
             )
 
@@ -350,7 +346,6 @@ class Autograder:
   @keyframes pg-combo  {{0%,100%{{transform:scale(1)}}25%{{transform:scale(1.12) rotate(-2deg)}}75%{{transform:scale(1.12) rotate(2deg)}}}}
   @keyframes pg-achieve{{from{{opacity:0;transform:translateX(25px)}}to{{opacity:1;transform:translateX(0)}}}}
   @keyframes pg-xpscale{{from{{transform:scaleX(0)}}to{{transform:scaleX(1)}}}}
-  @keyframes pg-levelup{{0%{{opacity:0;transform:scale(.85)}}60%{{transform:scale(1.04)}}100%{{opacity:1;transform:scale(1)}}}}
   @keyframes pg-shimmer{{0%{{background-position:-200% 0}}100%{{background-position:200% 0}}}}
 </style>
 <div style="background:#0d0d1a;border:2px solid {border_color};border-radius:4px;max-width:840px;margin-bottom:14px;overflow:hidden;box-shadow:{glow},0 6px 24px rgba(0,0,0,.6);font-family:'Segoe UI',Roboto,sans-serif;">
@@ -372,7 +367,7 @@ class Autograder:
       <div style="display:flex;align-items:center;gap:4px;color:#444466;font-size:10px;">{dots}<span style="margin-left:3px;">{passed}/{len(checks)}</span></div>
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP {earned}/{possible}</span>
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP {earned}/{_NOTEBOOK_MAX}</span>
       <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;">{lvl_name}</span>
     </div>
     <div style="width:100%;height:10px;background:#141428;border:1px solid #2a2a4a;border-radius:2px;overflow:hidden;">
@@ -382,6 +377,11 @@ class Autograder:
   </div>
 </div>'''
         display(HTML(card_html))
+
+        # ── Level-up banner (shown after the card, full prominence) ──
+        for _ in levelup_ach:
+            display(HTML(self._render_levelup(lvl_num, lvl_name)))
+
         return pts
     # ── MINI-A — Variables basicas ───────────────────────────
 
@@ -1446,6 +1446,185 @@ class Autograder:
 
         return self._award("reto3", checks, 6)
 
+    # ── Level-up banner ─────────────────────────────────────
+
+    def _render_levelup(self, lvl_num, lvl_name):
+        _LVL_COLOR = {1:"#6666aa",2:"#39ff14",3:"#00f5d4",4:"#9d4edd",5:"#ffd700",6:"#ff3366"}
+        _LVL_GRAD  = {
+            1: "linear-gradient(135deg,#333355,#6666aa)",
+            2: "linear-gradient(135deg,#0a2205,#39ff14)",
+            3: "linear-gradient(135deg,#050d1a,#00f5d4)",
+            4: "linear-gradient(135deg,#12052a,#9d4edd)",
+            5: "linear-gradient(135deg,#1a0f00,#ffd700)",
+            6: "linear-gradient(135deg,#1a0010,#ff3366,#ffd700,#39ff14)",
+        }
+        color = _LVL_COLOR.get(lvl_num, "#ffd700")
+        grad  = _LVL_GRAD.get(lvl_num, _LVL_GRAD[1])
+        emoji = lvl_name.split()[0]  # grab the leading emoji from level name
+
+        return f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  @keyframes lu-appear  {{0%{{opacity:0;transform:scale(.65) translateY(20px)}}70%{{transform:scale(1.04) translateY(-4px)}}100%{{opacity:1;transform:scale(1) translateY(0)}}}}
+  @keyframes lu-glow    {{0%,100%{{text-shadow:0 0 20px {color}cc,0 0 40px {color}66}}50%{{text-shadow:0 0 50px {color},0 0 90px {color}88,0 0 120px {color}44}}}}
+  @keyframes lu-pulse   {{0%,100%{{box-shadow:0 0 0 0 {color}55,0 0 60px {color}22}}60%{{box-shadow:0 0 0 18px transparent,0 0 80px {color}44}}}}
+  @keyframes lu-shimmer {{0%{{background-position:-300% 0}}100%{{background-position:300% 0}}}}
+  @keyframes lu-stars   {{0%,100%{{opacity:.9;letter-spacing:6px}}50%{{opacity:.25;letter-spacing:10px}}}}
+  @keyframes lu-emoji   {{0%{{transform:scale(0) rotate(-20deg)}}70%{{transform:scale(1.2) rotate(5deg)}}100%{{transform:scale(1) rotate(0)}}}}
+</style>
+<div style="
+  background:linear-gradient(160deg,#06000f,#0d0020,#06000f);
+  border:3px solid {color};
+  border-radius:6px;
+  max-width:840px;
+  margin:6px 0 16px;
+  padding:28px 20px 24px;
+  text-align:center;
+  animation:lu-appear .75s cubic-bezier(.34,1.56,.64,1) both, lu-pulse 2.2s ease-in-out 1s infinite;
+  font-family:'Segoe UI',Roboto,sans-serif;
+">
+  <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{color}55;letter-spacing:6px;margin-bottom:14px;animation:lu-stars 1.8s ease-in-out infinite;">
+    ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦
+  </div>
+
+  <div style="font-family:'Press Start 2P',monospace;font-size:clamp(15px,4vw,24px);color:{color};letter-spacing:5px;margin-bottom:18px;animation:lu-glow 1.6s ease-in-out infinite;">
+    ⬆ ¡NIVEL UP!
+  </div>
+
+  <div style="font-size:clamp(44px,10vw,64px);line-height:1;margin-bottom:18px;animation:lu-emoji .6s cubic-bezier(.34,1.56,.64,1) .2s both;">
+    {emoji}
+  </div>
+
+  <div style="
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(9px,2.2vw,14px);
+    background:{grad};
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-size:300%;
+    animation:lu-shimmer 2.5s linear infinite;
+    letter-spacing:2px;
+    margin-bottom:12px;
+    line-height:1.8;
+  ">{lvl_name}</div>
+
+  <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#555577;letter-spacing:3px;margin-bottom:14px;">
+    NIVEL {lvl_num} DESBLOQUEADO
+  </div>
+
+  <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{color}55;letter-spacing:6px;animation:lu-stars 1.8s ease-in-out infinite .9s;">
+    ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦
+  </div>
+</div>'''
+
+    # ── Colab email + Supabase submit ───────────────────────
+
+    def _fetch_colab_email(self):
+        """Detect the signed-in Google account email in Colab. Returns str or None."""
+        # Method 1: gcloud (already configured if Colab has any Google auth)
+        try:
+            import subprocess
+            r = subprocess.run(
+                ["gcloud", "config", "get-value", "account"],
+                capture_output=True, text=True, timeout=8,
+            )
+            email = r.stdout.strip().lower()
+            if email and "@" in email and "unset" not in email:
+                return email
+        except Exception:
+            pass
+
+        # Method 2: google.auth default credentials + userinfo endpoint
+        try:
+            import json as _json, urllib.request as _ur
+            import google.auth, google.auth.transport.requests
+            creds, _ = google.auth.default()
+            if not creds.valid:
+                creds.refresh(google.auth.transport.requests.Request())
+            req = _ur.Request(
+                "https://www.googleapis.com/oauth2/v1/userinfo",
+                headers={"Authorization": f"Bearer {creds.token}"},
+            )
+            with _ur.urlopen(req, timeout=8) as resp:
+                info = _json.loads(resp.read())
+                email = info.get("email", "").lower()
+                if "@" in email:
+                    return email
+        except Exception:
+            pass
+
+        # Method 3: trigger Colab auth popup then retry gcloud
+        try:
+            from google.colab import auth
+            auth.authenticate_user()
+            import subprocess
+            r = subprocess.run(
+                ["gcloud", "config", "get-value", "account"],
+                capture_output=True, text=True, timeout=8,
+            )
+            email = r.stdout.strip().lower()
+            if email and "@" in email and "unset" not in email:
+                return email
+        except Exception:
+            pass
+
+        return None
+
+    def _submit_to_supabase(self, earned, possible, pct, lvl_num, lvl_name):
+        """POST the final score to Supabase. Silently skips if not configured."""
+        if "YOUR_PROJECT_ID" in SUPABASE_URL or not SUPABASE_URL.startswith("https://"):
+            return
+
+        try:
+            import json as _json, urllib.request as _ur
+
+            if self._email is None:
+                self._email = self._fetch_colab_email()
+
+            email = self._email or "anonimo@sma.edu.pe"
+
+            payload = _json.dumps({
+                "email":           email,
+                "notebook":        "nb1",
+                "earned":          earned,
+                "possible":        possible,
+                "pct":             pct,
+                "level_num":       lvl_num,
+                "level_name":      lvl_name,
+                "achievements":    list(self._achievements),
+                "streak":          self._streak,
+                "score_breakdown": {k: {"e": e, "p": p}
+                                    for k, (e, p) in self._scores.items()},
+            }).encode("utf-8")
+
+            req = _ur.Request(
+                f"{SUPABASE_URL}/rest/v1/submissions",
+                data=payload,
+                headers={
+                    "apikey":        SUPABASE_ANON_KEY,
+                    "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+                    "Content-Type":  "application/json",
+                    "Prefer":        "return=minimal",
+                },
+                method="POST",
+            )
+            with _ur.urlopen(req, timeout=12):
+                pass
+
+            display(HTML(
+                f'<div style="font-family:\'Press Start 2P\',monospace;font-size:8px;'
+                f'color:#39ff14;background:#020d02;border:1px solid #39ff14;'
+                f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
+                f'✅ SCORE ENVIADO AL LEADERBOARD &nbsp;·&nbsp; {email}</div>'
+            ))
+
+        except Exception as _ex:
+            display(HTML(
+                f'<div style="font-family:\'Press Start 2P\',monospace;font-size:7px;'
+                f'color:#ff3366;background:#1a0202;border:1px solid #ff3366;'
+                f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
+                f'⚠️ Leaderboard no disponible: {_ex}</div>'
+            ))
+
     # ── RESUMEN FINAL ────────────────────────────────────────
 
     def resumen(self):
@@ -1606,7 +1785,7 @@ class Autograder:
 
   <div style="padding:18px 20px;border-bottom:1px solid #1a1a3a;">
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP TOTAL: {earned}/{possible}</span>
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP TOTAL: {earned}/{_NOTEBOOK_MAX}</span>
       <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;">{pct}%</span>
     </div>
     <div style="width:100%;height:14px;background:#141428;border:1px solid #2a2a4a;border-radius:3px;overflow:hidden;">
@@ -1629,8 +1808,9 @@ class Autograder:
     <div style="display:inline-flex;align-items:center;gap:12px;background:#0a0a14;border:2px solid #ffd700;border-radius:4px;padding:10px 26px;box-shadow:0 0 22px rgba(255,215,0,.22);animation:pg-pulse 2.5s ease-in-out infinite;">
       <span style="font-family:'Press Start 2P',monospace;font-size:18px;background:linear-gradient(135deg,#ffd700,#ff6b35,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:pg-shimmer 3s linear infinite;letter-spacing:4px;">SMA</span>
     </div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#2a2a4a;margin-top:10px;letter-spacing:1px;">PYTHON QUEST v2 — AUTOGRADER</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#2a2a4a;margin-top:10px;letter-spacing:1px;">PYTHON QUEST v3 — AUTOGRADER</div>
   </div>
 
 </div>'''
         display(HTML(html))
+        self._submit_to_supabase(earned, possible, pct, lvl_num, lvl_name)
