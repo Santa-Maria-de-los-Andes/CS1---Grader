@@ -142,26 +142,26 @@ class Autograder:
 
                 if _best:
                     _score_html = f'''
-<div style="background:#0d0d1a;border:1px solid #ffd700;border-radius:3px;
-  padding:12px 20px;max-width:840px;margin-top:8px;
-  font-family:'Press Start 2P',monospace;animation:ag-fadein .4s ease .1s both;">
-  <div style="font-size:6px;color:#9d4edd;letter-spacing:2px;margin-bottom:10px;">
-    📊 TU MEJOR MARCA REGISTRADA</div>
-  <div style="display:flex;align-items:center;gap:20px;">
-    <div style="font-size:28px;color:#ffd700;
-      text-shadow:0 0 16px rgba(255,215,0,.8),2px 2px 0 #7a5500;">
-      {_best['pct']}%</div>
-    <div>
-      <div style="font-size:8px;color:#39ff14;letter-spacing:1px;">{_best['level_name']}</div>
-      <div style="font-size:6px;color:#8888bb;margin-top:6px;letter-spacing:1px;">
-        {_best['earned']} / {_best['possible']} XP</div>
+  <div style="background:#0d0d1a;border:1px solid #ffd700;border-radius:3px;
+    padding:12px 20px;margin-top:6px;
+    font-family:'Press Start 2P',monospace;animation:ag-fadein .4s ease .1s both;">
+    <div style="font-size:6px;color:#9d4edd;letter-spacing:2px;margin-bottom:10px;">
+      📊 TU MEJOR MARCA REGISTRADA</div>
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div style="font-size:28px;color:#ffd700;
+        text-shadow:0 0 16px rgba(255,215,0,.8),2px 2px 0 #7a5500;">
+        {_best['pct']}%</div>
+      <div>
+        <div style="font-size:8px;color:#39ff14;letter-spacing:1px;">{_best['level_name']}</div>
+        <div style="font-size:6px;color:#8888bb;margin-top:6px;letter-spacing:1px;">
+          {_best['earned']} / {_best['possible']} XP</div>
+      </div>
     </div>
-  </div>
-</div>'''
+  </div>'''
                 else:
                     _score_html = (
                         '<div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:3px;'
-                        'padding:10px 20px;max-width:840px;margin-top:8px;'
+                        'padding:10px 20px;margin-top:6px;'
                         'font-family:\'Press Start 2P\',monospace;font-size:6px;color:#555577;'
                         'letter-spacing:1px;animation:ag-fadein .4s ease .1s both;">'
                         '🆕 Primera vez — ¡aún no tienes puntaje registrado!</div>'
@@ -174,28 +174,30 @@ class Autograder:
   @keyframes ag-spin   {{to{{transform:rotate(360deg)}}}}
   @keyframes ag-start  {{0%{{opacity:0;transform:scale(.7)}}60%{{transform:scale(1.12)}}100%{{opacity:1;transform:scale(1)}}}}
 </style>
-<div style="background:#020d02;border:1px solid #39ff14;border-radius:3px;padding:12px 18px;
-  max-width:840px;margin-top:6px;font-family:'Press Start 2P',monospace;font-size:8px;
-  color:#39ff14;letter-spacing:1px;animation:ag-fadein .4s ease;">
-  ✅ &nbsp;¡BIENVENIDO/A, {nombre.upper()}! &nbsp;·&nbsp; {grado}
-</div>
-{_score_html}
-<div id="ag-loading" style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:3px;
-  padding:18px;max-width:840px;margin-top:8px;text-align:center;animation:ag-fadein .5s ease .2s both;">
-  <div style="display:inline-block;width:28px;height:28px;border:3px solid #2a2a4a;
-    border-top-color:#9d4edd;border-radius:50%;animation:ag-spin .8s linear infinite;margin-bottom:10px;"></div>
-  <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;letter-spacing:2px;">
-    CARGANDO PYTHON QUEST…
+<div style="width:100%;box-sizing:border-box;">
+  <div style="background:#020d02;border:1px solid #39ff14;border-radius:3px;padding:12px 18px;
+    font-family:'Press Start 2P',monospace;font-size:8px;
+    color:#39ff14;letter-spacing:1px;animation:ag-fadein .4s ease;">
+    ✅ &nbsp;¡BIENVENIDO/A, {nombre.upper()}! &nbsp;·&nbsp; {grado}
   </div>
-</div>
-<div id="ag-start" style="display:none;background:#0d0d1a;border:2px solid #ffd700;border-radius:4px;
-  padding:24px;max-width:840px;margin-top:8px;text-align:center;">
-  <div style="font-family:'Press Start 2P',monospace;font-size:28px;color:#ffd700;letter-spacing:6px;
-    text-shadow:0 0 20px rgba(255,215,0,.8),2px 2px 0 #7a5500;animation:ag-start .6s ease;">
-    ¡START!
+  {_score_html}
+  <div id="ag-loading" style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:3px;
+    padding:18px;margin-top:6px;text-align:center;animation:ag-fadein .5s ease .2s both;">
+    <div style="display:inline-block;width:28px;height:28px;border:3px solid #2a2a4a;
+      border-top-color:#9d4edd;border-radius:50%;animation:ag-spin .8s linear infinite;margin-bottom:10px;"></div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;letter-spacing:2px;">
+      CARGANDO PYTHON QUEST…
+    </div>
   </div>
-  <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;
-    letter-spacing:2px;margin-top:10px;">EJECUTA LA PRIMERA CELDA PARA COMENZAR</div>
+  <div id="ag-start" style="display:none;background:#0d0d1a;border:2px solid #ffd700;border-radius:4px;
+    padding:24px;margin-top:6px;text-align:center;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:28px;color:#ffd700;letter-spacing:6px;
+      text-shadow:0 0 20px rgba(255,215,0,.8),2px 2px 0 #7a5500;animation:ag-start .6s ease;">
+      ¡START!
+    </div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;
+      letter-spacing:2px;margin-top:10px;">EJECUTA LA PRIMERA CELDA PARA COMENZAR</div>
+  </div>
 </div>
 <script>
 setTimeout(function(){{
@@ -230,7 +232,7 @@ setTimeout(function(){{
     margin-bottom:8px;display:flex;align-items:center;gap:5px; }}
   .ag-field {{ display:flex;flex-direction:column; }}
 </style>
-<div style="background:#0d0d1a;border:2px solid #9d4edd;border-radius:4px;max-width:840px;
+<div style="background:#0d0d1a;border:2px solid #9d4edd;border-radius:4px;width:100%;box-sizing:border-box;
   margin:10px 0;overflow:hidden;box-shadow:0 0 40px rgba(157,78,221,.15),0 10px 30px rgba(0,0,0,.8);">
 
   <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;
