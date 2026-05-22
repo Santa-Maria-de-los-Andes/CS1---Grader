@@ -28,7 +28,7 @@ SUPABASE_ANON_KEY = "sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu"
 
 # ─── Logo del colegio (URL de imagen) ────────────────────────
 # Reemplaza con la URL de tu logo. Ej: "https://i.imgur.com/abc123.png"
-LOGO_URL = ""
+LOGO_URL = "https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/icono%20SMA.png"
 
 # ─── Total possible XP for Notebook 1 (sum of all max_pts) ──
 _NOTEBOOK_MAX = 156
@@ -116,6 +116,57 @@ class Autograder:
                 self._nombre_real = nombre
                 self._grado       = grado
                 self._dni         = dni
+
+                # Fetch best existing score for this DNI
+                _best = None
+                try:
+                    import urllib.request as _ur2
+                    import json as _json2
+                    import urllib.parse as _up2
+                    _qurl = (
+                        f"{SUPABASE_URL}/rest/v1/submissions"
+                        f"?select=earned,possible,pct,level_name,streak"
+                        f"&dni=eq.{_up2.quote(str(dni), safe='')}"
+                        f"&order=pct.desc,submitted_at.desc&limit=1"
+                    )
+                    _req2 = _ur2.Request(_qurl, headers={
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+                    })
+                    with _ur2.urlopen(_req2, timeout=8) as _resp2:
+                        _rows = _json2.loads(_resp2.read())
+                    if _rows:
+                        _best = _rows[0]
+                except Exception:
+                    pass
+
+                if _best:
+                    _score_html = f'''
+<div style="background:#0d0d1a;border:1px solid #ffd700;border-radius:3px;
+  padding:12px 20px;max-width:840px;margin-top:8px;
+  font-family:'Press Start 2P',monospace;animation:ag-fadein .4s ease .1s both;">
+  <div style="font-size:6px;color:#9d4edd;letter-spacing:2px;margin-bottom:10px;">
+    📊 TU MEJOR MARCA REGISTRADA</div>
+  <div style="display:flex;align-items:center;gap:20px;">
+    <div style="font-size:28px;color:#ffd700;
+      text-shadow:0 0 16px rgba(255,215,0,.8),2px 2px 0 #7a5500;">
+      {_best['pct']}%</div>
+    <div>
+      <div style="font-size:8px;color:#39ff14;letter-spacing:1px;">{_best['level_name']}</div>
+      <div style="font-size:6px;color:#8888bb;margin-top:6px;letter-spacing:1px;">
+        {_best['earned']} / {_best['possible']} XP</div>
+    </div>
+  </div>
+</div>'''
+                else:
+                    _score_html = (
+                        '<div style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:3px;'
+                        'padding:10px 20px;max-width:840px;margin-top:8px;'
+                        'font-family:\'Press Start 2P\',monospace;font-size:6px;color:#555577;'
+                        'letter-spacing:1px;animation:ag-fadein .4s ease .1s both;">'
+                        '🆕 Primera vez — ¡aún no tienes puntaje registrado!</div>'
+                    )
+
                 display(HTML(f'''
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -128,6 +179,7 @@ class Autograder:
   color:#39ff14;letter-spacing:1px;animation:ag-fadein .4s ease;">
   ✅ &nbsp;¡BIENVENIDO/A, {nombre.upper()}! &nbsp;·&nbsp; {grado}
 </div>
+{_score_html}
 <div id="ag-loading" style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:3px;
   padding:18px;max-width:840px;margin-top:8px;text-align:center;animation:ag-fadein .5s ease .2s both;">
   <div style="display:inline-block;width:28px;height:28px;border:3px solid #2a2a4a;
@@ -162,19 +214,21 @@ setTimeout(function(){{
 <style>
   .ag-input,.ag-select {{
     width:100%;box-sizing:border-box;background:#0a0a1a;border:1px solid #2a2a4a;
-    border-radius:3px;padding:10px 12px;color:#e8e8ff;font-size:13px;
+    border-radius:3px;padding:0 12px;color:#e8e8ff;font-size:13px;height:42px;
     font-family:'Segoe UI',Roboto,sans-serif;outline:none;transition:border .2s;
   }}
   .ag-input:focus,.ag-select:focus {{ border-color:#9d4edd; }}
   .ag-select option {{ background:#0d0d1a; }}
   .ag-btn {{
-    width:100%;padding:12px;background:linear-gradient(90deg,#7b2ff7,#9d4edd);
+    width:100%;padding:13px;background:linear-gradient(90deg,#7b2ff7,#9d4edd);
     border:none;border-radius:3px;color:#fff;font-family:'Press Start 2P',monospace;
-    font-size:9px;letter-spacing:2px;cursor:pointer;transition:opacity .2s;margin-top:4px;
+    font-size:9px;letter-spacing:2px;cursor:pointer;transition:opacity .2s;margin-top:6px;
   }}
   .ag-btn:hover {{ opacity:.85; }}
   .ag-err {{ color:#ff3366;font-size:11px;margin-top:6px;display:none; }}
-  .ag-label {{ font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:1px;margin-bottom:8px; }}
+  .ag-label {{ font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:1px;
+    margin-bottom:8px;display:flex;align-items:center;gap:5px; }}
+  .ag-field {{ display:flex;flex-direction:column; }}
 </style>
 <div style="background:#0d0d1a;border:2px solid #9d4edd;border-radius:4px;max-width:840px;
   margin:10px 0;overflow:hidden;box-shadow:0 0 40px rgba(157,78,221,.15),0 10px 30px rgba(0,0,0,.8);">
@@ -192,22 +246,22 @@ setTimeout(function(){{
   </div>
 
   <div style="padding:24px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
-      <div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;align-items:end;">
+      <div class="ag-field">
         <div class="ag-label" style="color:#9d4edd;">👤 NOMBRE COMPLETO</div>
         <input id="ag-nombre" class="ag-input" placeholder="Tu nombre y apellido" />
       </div>
-      <div>
+      <div class="ag-field">
         <div class="ag-label" style="color:#9d4edd;">🏫 GRADO</div>
         <select id="ag-grado" class="ag-select">
-          <option value="">— Selecciona tu grado —</option>
+          <option value="">— Selecciona —</option>
           <option value="3ro">3ro</option>
           <option value="4to">4to</option>
           <option value="5to">5to</option>
         </select>
       </div>
     </div>
-    <div style="margin-bottom:14px;">
+    <div class="ag-field" style="margin-bottom:14px;">
       <div class="ag-label" style="color:#ffd700;">🪪 CÓDIGO DE ESTUDIANTE (DNI, Pasaporte, Carnet de extranjería)</div>
       <input id="ag-dni" class="ag-input" placeholder="Ingresa tu código" />
     </div>
