@@ -23,9 +23,12 @@ _DM = "\033[2m"    # dim
 _RS = "\033[0m"    # reset
 
 # ─── Supabase Leaderboard Config ─────────────────────────────
-# Reemplaza con las credenciales de tu proyecto Supabase
 SUPABASE_URL      = "https://uwykikwutjtkpffwmdiq.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu"
+
+# ─── Logo del colegio (URL de imagen) ────────────────────────
+# Reemplaza con la URL de tu logo. Ej: "https://i.imgur.com/abc123.png"
+LOGO_URL = ""
 
 # ─── Total possible XP for Notebook 1 (sum of all max_pts) ──
 _NOTEBOOK_MAX = 156
@@ -95,6 +98,12 @@ class Autograder:
     # ── Registration form ───────────────────────────────────
 
     def _show_registration_form(self):
+        logo_tag = (f'<img src="{LOGO_URL}" style="height:48px;object-fit:contain;" '
+                    f'onerror="this.style.display=\'none\'">'
+                    if LOGO_URL else
+                    '<span style="font-family:\'Press Start 2P\',monospace;font-size:13px;'
+                    'color:#ffd700;letter-spacing:2px;">SMA</span>')
+
         try:
             from google.colab import output as _out
 
@@ -107,75 +116,115 @@ class Autograder:
                 self._nombre_real = nombre
                 self._grado       = grado
                 self._dni         = dni
-                display(HTML(
-                    f'<div style="background:#020d02;border:1px solid #39ff14;border-radius:3px;'
-                    f'padding:12px 18px;max-width:840px;margin-top:6px;font-family:\'Press Start 2P\','
-                    f'monospace;font-size:8px;color:#39ff14;letter-spacing:1px;">'
-                    f'✅ &nbsp;¡BIENVENIDO/A, {nombre.upper()}! &nbsp;·&nbsp; {grado}</div>'
-                ))
+                display(HTML(f'''
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  @keyframes ag-fadein {{from{{opacity:0;transform:translateY(8px)}}to{{opacity:1;transform:translateY(0)}}}}
+  @keyframes ag-spin   {{to{{transform:rotate(360deg)}}}}
+  @keyframes ag-start  {{0%{{opacity:0;transform:scale(.7)}}60%{{transform:scale(1.12)}}100%{{opacity:1;transform:scale(1)}}}}
+</style>
+<div style="background:#020d02;border:1px solid #39ff14;border-radius:3px;padding:12px 18px;
+  max-width:840px;margin-top:6px;font-family:'Press Start 2P',monospace;font-size:8px;
+  color:#39ff14;letter-spacing:1px;animation:ag-fadein .4s ease;">
+  ✅ &nbsp;¡BIENVENIDO/A, {nombre.upper()}! &nbsp;·&nbsp; {grado}
+</div>
+<div id="ag-loading" style="background:#0d0d1a;border:1px solid #2a2a4a;border-radius:3px;
+  padding:18px;max-width:840px;margin-top:8px;text-align:center;animation:ag-fadein .5s ease .2s both;">
+  <div style="display:inline-block;width:28px;height:28px;border:3px solid #2a2a4a;
+    border-top-color:#9d4edd;border-radius:50%;animation:ag-spin .8s linear infinite;margin-bottom:10px;"></div>
+  <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;letter-spacing:2px;">
+    CARGANDO PYTHON QUEST…
+  </div>
+</div>
+<div id="ag-start" style="display:none;background:#0d0d1a;border:2px solid #ffd700;border-radius:4px;
+  padding:24px;max-width:840px;margin-top:8px;text-align:center;">
+  <div style="font-family:'Press Start 2P',monospace;font-size:28px;color:#ffd700;letter-spacing:6px;
+    text-shadow:0 0 20px rgba(255,215,0,.8),2px 2px 0 #7a5500;animation:ag-start .6s ease;">
+    ¡START!
+  </div>
+  <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;
+    letter-spacing:2px;margin-top:10px;">EJECUTA LA PRIMERA CELDA PARA COMENZAR</div>
+</div>
+<script>
+setTimeout(function(){{
+  var l = document.getElementById('ag-loading');
+  var s = document.getElementById('ag-start');
+  if(l) l.style.display = 'none';
+  if(s){{ s.style.display = 'block'; }}
+}}, 1800);
+</script>
+'''))
 
             _out.register_callback('_ag_register', _on_register)
 
-            display(HTML('''
+            display(HTML(f'''
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  .ag-input {
+  .ag-input,.ag-select {{
     width:100%;box-sizing:border-box;background:#0a0a1a;border:1px solid #2a2a4a;
     border-radius:3px;padding:10px 12px;color:#e8e8ff;font-size:13px;
     font-family:'Segoe UI',Roboto,sans-serif;outline:none;transition:border .2s;
-  }
-  .ag-input:focus { border-color:#9d4edd; }
-  .ag-btn {
+  }}
+  .ag-input:focus,.ag-select:focus {{ border-color:#9d4edd; }}
+  .ag-select option {{ background:#0d0d1a; }}
+  .ag-btn {{
     width:100%;padding:12px;background:linear-gradient(90deg,#7b2ff7,#9d4edd);
     border:none;border-radius:3px;color:#fff;font-family:'Press Start 2P',monospace;
     font-size:9px;letter-spacing:2px;cursor:pointer;transition:opacity .2s;margin-top:4px;
-  }
-  .ag-btn:hover { opacity:.85; }
-  .ag-err { color:#ff3366;font-size:11px;margin-top:6px;display:none; }
+  }}
+  .ag-btn:hover {{ opacity:.85; }}
+  .ag-err {{ color:#ff3366;font-size:11px;margin-top:6px;display:none; }}
+  .ag-label {{ font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:1px;margin-bottom:8px; }}
 </style>
 <div style="background:#0d0d1a;border:2px solid #9d4edd;border-radius:4px;max-width:840px;
   margin:10px 0;overflow:hidden;box-shadow:0 0 40px rgba(157,78,221,.15),0 10px 30px rgba(0,0,0,.8);">
+
   <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;
-    padding:18px 24px;text-align:center;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:18px;color:#ffd700;letter-spacing:3px;
-      text-shadow:0 0 14px rgba(255,215,0,.7),2px 2px 0 #7a5500;">⚔ PYTHON QUEST ⚔</div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9d4edd;
-      letter-spacing:2px;margin-top:8px;">NOTEBOOK I — REGÍSTRATE PARA COMENZAR</div>
+    padding:18px 24px;position:relative;display:flex;align-items:center;justify-content:center;min-height:80px;">
+    <div style="position:absolute;left:20px;top:50%;transform:translateY(-50%);">{logo_tag}</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:18px;color:#ffd700;letter-spacing:3px;
+        text-shadow:0 0 14px rgba(255,215,0,.7),2px 2px 0 #7a5500;">⚔ PYTHON QUEST ⚔</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9d4edd;
+        letter-spacing:2px;margin-top:8px;">NOTEBOOK I — REGÍSTRATE PARA COMENZAR</div>
+    </div>
+    <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);">{logo_tag}</div>
   </div>
+
   <div style="padding:24px;">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
       <div>
-        <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;
-          letter-spacing:1px;margin-bottom:8px;">👤 NOMBRE COMPLETO</div>
+        <div class="ag-label" style="color:#9d4edd;">👤 NOMBRE COMPLETO</div>
         <input id="ag-nombre" class="ag-input" placeholder="Tu nombre y apellido" />
       </div>
       <div>
-        <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;
-          letter-spacing:1px;margin-bottom:8px;">🏫 GRADO Y SECCIÓN</div>
-        <input id="ag-grado" class="ag-input" placeholder="ej: 3ro A" />
+        <div class="ag-label" style="color:#9d4edd;">🏫 GRADO</div>
+        <select id="ag-grado" class="ag-select">
+          <option value="">— Selecciona tu grado —</option>
+          <option value="3ro">3ro</option>
+          <option value="4to">4to</option>
+          <option value="5to">5to</option>
+        </select>
       </div>
     </div>
     <div style="margin-bottom:14px;">
-      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;
-        letter-spacing:1px;margin-bottom:8px;">🪪 DNI (8 dígitos)</div>
-      <input id="ag-dni" class="ag-input" placeholder="12345678" maxlength="8" inputmode="numeric" />
+      <div class="ag-label" style="color:#ffd700;">🪪 CÓDIGO DE ESTUDIANTE (DNI, Pasaporte, Carnet de extranjería)</div>
+      <input id="ag-dni" class="ag-input" placeholder="Ingresa tu código" />
     </div>
-    <div id="ag-err" class="ag-err">⚠ Completa todos los campos. El DNI debe tener 8 dígitos.</div>
+    <div id="ag-err" class="ag-err">⚠ Por favor completa todos los campos.</div>
     <button class="ag-btn" onclick="agRegister()">▶ &nbsp; REGISTRARSE &nbsp; ▶</button>
   </div>
 </div>
 <script>
-async function agRegister() {
+async function agRegister() {{
   const nombre = document.getElementById('ag-nombre').value.trim();
   const grado  = document.getElementById('ag-grado').value.trim();
   const dni    = document.getElementById('ag-dni').value.trim();
   const err    = document.getElementById('ag-err');
-  if (!nombre || !grado || !/^\d{8}$/.test(dni)) {
-    err.style.display = 'block'; return;
-  }
+  if (!nombre || !grado || !dni) {{ err.style.display = 'block'; return; }}
   err.style.display = 'none';
-  await google.colab.kernel.invokeFunction('_ag_register', [nombre, grado, dni], {});
-}
+  await google.colab.kernel.invokeFunction('_ag_register', [nombre, grado, dni], {{}});
+}}
 </script>
 '''))
 
@@ -185,8 +234,10 @@ async function agRegister() {
                              'color:#9d4edd;border:1px solid #9d4edd;border-radius:3px;max-width:840px;">'
                              '⚔ PYTHON QUEST — Registro</div>'))
                 self._nombre_real = input("Nombre completo: ").strip()
-                self._grado       = input("Grado y sección (ej: 3ro A): ").strip()
-                self._dni         = input("DNI (8 dígitos): ").strip()
+                grado_opts = {"1": "3ro", "2": "4to", "3": "5to"}
+                print("Grado: 1) 3ro  2) 4to  3) 5to")
+                self._grado = grado_opts.get(input("Elige (1/2/3): ").strip(), "3ro")
+                self._dni   = input("Código de estudiante (DNI/Pasaporte/Carnet): ").strip()
             except Exception:
                 pass
 
@@ -1724,7 +1775,8 @@ async function agRegister() {
                     f'<div style="font-family:\'Press Start 2P\',monospace;font-size:8px;'
                     f'color:#39ff14;background:#020d02;border:1px solid #39ff14;'
                     f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
-                    f'✅ SCORE ENVIADO AL LEADERBOARD &nbsp;·&nbsp; {self._nombre_real} · DNI {self._dni}</div>'
+                    f'✅ SCORE ENVIADO AL LEADERBOARD &nbsp;·&nbsp; {self._nombre_real} · DNI {self._dni}'
+                    f'<br><span style="color:#00bfff;font-size:7px;">📊 Calificación actualizada en la base de datos</span></div>'
                 ))
 
         except Exception as _ex:
