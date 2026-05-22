@@ -523,9 +523,13 @@ const XP_CLASS = ['','xp-lv1','xp-lv2','xp-lv3','xp-lv4','xp-lv5','xp-lv6'];
 function lvClass(n)  { return LV_CLASS[Math.min(n, 6)] || 'lv1'; }
 function xpClass(n)  { return XP_CLASS[Math.min(n, 6)] || 'xp-lv1'; }
 
-function playerName(email) {
-  // Returns username portion of email; masks domain for privacy
-  return (email || 'anon').split('@')[0];
+function playerName(player) {
+  if (player.nombre) return player.nombre;
+  return (player.email || 'anon').split('@')[0];
+}
+
+function playerGrado(player) {
+  return player.grado || '';
 }
 
 function noteLabel(pct) {
@@ -539,7 +543,7 @@ function noteLabel(pct) {
 function dedup(rows) {
   const best = {};
   for (const row of rows) {
-    const key = row.email;
+    const key = row.dni || row.email;
     if (!best[key] || row.pct > best[key].pct ||
         (row.pct === best[key].pct && row.earned > best[key].earned)) {
       best[key] = row;
@@ -556,13 +560,15 @@ function renderPodiumCard(player, rank) {
   const crowns   = ['', '🥇', '🥈', '🥉'];
   const rankCls  = ['', 'rank1', 'rank2', 'rank3'];
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
-  const name     = playerName(player.email);
+  const name     = playerName(player);
+  const grado    = playerGrado(player);
   const note     = noteLabel(player.pct);
   return `
     <div class="podium-card ${rankCls[rank]}">
       <div class="podium-crown">${crowns[rank]}</div>
       <div class="px podium-rank">#${rank}</div>
       <div class="px podium-name">${name}</div>
+      ${grado ? `<div style="font-size:9px;color:#8888bb;margin-top:3px;">${grado}</div>` : ''}
       <div class="px podium-pct">${player.pct}%</div>
       <div class="px podium-level ${lvClass(player.level_num)}">${player.level_name}</div>
       <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
@@ -575,14 +581,18 @@ function renderPodiumCard(player, rank) {
 
 function renderRankRow(player, rank, delay) {
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
-  const name     = playerName(player.email);
+  const name     = playerName(player);
+  const grado    = playerGrado(player);
   const note     = noteLabel(player.pct);
   return `
     <div class="rank-row" style="animation-delay:${delay}ms;">
       <div class="px rank-num">${rank}</div>
       <div class="rank-info">
         <div class="px rank-name">${name}</div>
-        <div class="px rank-level ${lvClass(player.level_num)}">${player.level_name}</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="px rank-level ${lvClass(player.level_num)}">${player.level_name}</div>
+          ${grado ? `<div style="font-size:9px;color:#8888bb;">${grado}</div>` : ''}
+        </div>
         <div class="xp-track">
           <div class="xp-fill ${xpClass(player.level_num)}" style="width:${player.pct}%;animation-delay:${delay}ms;"></div>
         </div>
@@ -618,10 +628,10 @@ function renderLeaderboard(players) {
   const streakLeader = [...players].sort((a,b) => (b.streak||0) - (a.streak||0))[0];
   const tickerParts = [
     `${players.length} GUERREROS EN COMBATE`,
-    topPct > 0 ? `LÍDER: ${playerName(top3[0]?.email)} · ${topPct}%` : '',
+    topPct > 0 ? `LÍDER: ${playerName(top3[0])} · ${topPct}%` : '',
     avgPct > 0 ? `PROMEDIO CLASE: ${avgPct}%` : '',
-    achLeader ? `MÁS LOGROS: ${playerName(achLeader.email)} · ${(achLeader.achievements||[]).length} 🏅` : '',
-    streakLeader?.streak >= 2 ? `RACHA MÁS ALTA: ${playerName(streakLeader.email)} · 🔥×${streakLeader.streak}` : '',
+    achLeader ? `MÁS LOGROS: ${playerName(achLeader)} · ${(achLeader.achievements||[]).length} 🏅` : '',
+    streakLeader?.streak >= 2 ? `RACHA MÁS ALTA: ${playerName(streakLeader)} · 🔥×${streakLeader.streak}` : '',
   ].filter(Boolean).join('   ⚔   ');
   document.getElementById('ticker').textContent = tickerParts;
 
@@ -648,7 +658,7 @@ async function loadLeaderboard() {
   try {
     const { data, error } = await db
       .from('submissions')
-      .select('email, notebook, earned, possible, pct, level_num, level_name, achievements, streak, submitted_at')
+      .select('email, dni, nombre, grado, notebook, earned, possible, pct, level_num, level_name, achievements, streak, submitted_at')
       .eq('notebook', 'nb1')
       .order('pct', { ascending: false })
       .order('submitted_at', { ascending: false })

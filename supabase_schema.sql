@@ -6,7 +6,10 @@
 -- ── submissions: historial completo de intentos ──────────────
 CREATE TABLE IF NOT EXISTS public.submissions (
   id               uuid        DEFAULT gen_random_uuid() PRIMARY KEY,
-  email            text        NOT NULL,
+  email            text        NOT NULL DEFAULT '',
+  dni              text,
+  nombre           text,
+  grado            text,
   notebook         text        NOT NULL DEFAULT 'nb1',
   earned           integer     NOT NULL,
   possible         integer     NOT NULL,
@@ -19,9 +22,15 @@ CREATE TABLE IF NOT EXISTS public.submissions (
   submitted_at     timestamptz DEFAULT now()
 );
 
--- Indice para consultas del leaderboard
-CREATE INDEX IF NOT EXISTS idx_submissions_email_pct
-  ON public.submissions (email, pct DESC, submitted_at DESC);
+-- Si la tabla ya existe, agrega las nuevas columnas:
+ALTER TABLE public.submissions ADD COLUMN IF NOT EXISTS dni    text;
+ALTER TABLE public.submissions ADD COLUMN IF NOT EXISTS nombre text;
+ALTER TABLE public.submissions ADD COLUMN IF NOT EXISTS grado  text;
+ALTER TABLE public.submissions ALTER COLUMN email SET DEFAULT '';
+
+-- Indice para consultas del leaderboard por DNI
+CREATE INDEX IF NOT EXISTS idx_submissions_dni_pct
+  ON public.submissions (dni, pct DESC, submitted_at DESC);
 
 -- ── Row Level Security ───────────────────────────────────────
 ALTER TABLE public.submissions ENABLE ROW LEVEL SECURITY;

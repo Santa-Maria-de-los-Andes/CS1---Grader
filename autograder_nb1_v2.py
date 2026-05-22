@@ -82,14 +82,113 @@ class Autograder:
             sys.stdout.reconfigure(encoding='utf-8')
         except AttributeError:
             pass
-        self._scores       = {}   # key -> (earned, possible)
+        self._scores       = {}
         self._achievements = set()
         self._streak       = 0
         self._prev_level   = 0
         self._email        = None
-        self._print_welcome()
+        self._nombre_real  = None
+        self._grado        = None
+        self._dni          = None
+        self._show_registration_form()
 
-    # ── Welcome screen ──────────────────────────────────────
+    # ── Registration form ───────────────────────────────────
+
+    def _show_registration_form(self):
+        try:
+            from google.colab import output as _out
+
+            def _on_register(nombre, grado, dni):
+                nombre = (nombre or "").strip()
+                grado  = (grado  or "").strip()
+                dni    = (dni    or "").strip()
+                if not nombre or not grado or not dni:
+                    return
+                self._nombre_real = nombre
+                self._grado       = grado
+                self._dni         = dni
+                display(HTML(
+                    f'<div style="background:#020d02;border:1px solid #39ff14;border-radius:3px;'
+                    f'padding:12px 18px;max-width:840px;margin-top:6px;font-family:\'Press Start 2P\','
+                    f'monospace;font-size:8px;color:#39ff14;letter-spacing:1px;">'
+                    f'✅ &nbsp;¡BIENVENIDO/A, {nombre.upper()}! &nbsp;·&nbsp; {grado}</div>'
+                ))
+
+            _out.register_callback('_ag_register', _on_register)
+
+            display(HTML('''
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  .ag-input {
+    width:100%;box-sizing:border-box;background:#0a0a1a;border:1px solid #2a2a4a;
+    border-radius:3px;padding:10px 12px;color:#e8e8ff;font-size:13px;
+    font-family:'Segoe UI',Roboto,sans-serif;outline:none;transition:border .2s;
+  }
+  .ag-input:focus { border-color:#9d4edd; }
+  .ag-btn {
+    width:100%;padding:12px;background:linear-gradient(90deg,#7b2ff7,#9d4edd);
+    border:none;border-radius:3px;color:#fff;font-family:'Press Start 2P',monospace;
+    font-size:9px;letter-spacing:2px;cursor:pointer;transition:opacity .2s;margin-top:4px;
+  }
+  .ag-btn:hover { opacity:.85; }
+  .ag-err { color:#ff3366;font-size:11px;margin-top:6px;display:none; }
+</style>
+<div style="background:#0d0d1a;border:2px solid #9d4edd;border-radius:4px;max-width:840px;
+  margin:10px 0;overflow:hidden;box-shadow:0 0 40px rgba(157,78,221,.15),0 10px 30px rgba(0,0,0,.8);">
+  <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;
+    padding:18px 24px;text-align:center;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:18px;color:#ffd700;letter-spacing:3px;
+      text-shadow:0 0 14px rgba(255,215,0,.7),2px 2px 0 #7a5500;">⚔ PYTHON QUEST ⚔</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9d4edd;
+      letter-spacing:2px;margin-top:8px;">NOTEBOOK I — REGÍSTRATE PARA COMENZAR</div>
+  </div>
+  <div style="padding:24px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div>
+        <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;
+          letter-spacing:1px;margin-bottom:8px;">👤 NOMBRE COMPLETO</div>
+        <input id="ag-nombre" class="ag-input" placeholder="Tu nombre y apellido" />
+      </div>
+      <div>
+        <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;
+          letter-spacing:1px;margin-bottom:8px;">🏫 GRADO Y SECCIÓN</div>
+        <input id="ag-grado" class="ag-input" placeholder="ej: 3ro A" />
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;
+        letter-spacing:1px;margin-bottom:8px;">🪪 DNI (8 dígitos)</div>
+      <input id="ag-dni" class="ag-input" placeholder="12345678" maxlength="8" inputmode="numeric" />
+    </div>
+    <div id="ag-err" class="ag-err">⚠ Completa todos los campos. El DNI debe tener 8 dígitos.</div>
+    <button class="ag-btn" onclick="agRegister()">▶ &nbsp; REGISTRARSE &nbsp; ▶</button>
+  </div>
+</div>
+<script>
+async function agRegister() {
+  const nombre = document.getElementById('ag-nombre').value.trim();
+  const grado  = document.getElementById('ag-grado').value.trim();
+  const dni    = document.getElementById('ag-dni').value.trim();
+  const err    = document.getElementById('ag-err');
+  if (!nombre || !grado || !/^\d{8}$/.test(dni)) {
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+  await google.colab.kernel.invokeFunction('_ag_register', [nombre, grado, dni], {});
+}
+</script>
+'''))
+
+        except ImportError:
+            try:
+                display(HTML('<div style="font-family:monospace;padding:10px;background:#0d0d1a;'
+                             'color:#9d4edd;border:1px solid #9d4edd;border-radius:3px;max-width:840px;">'
+                             '⚔ PYTHON QUEST — Registro</div>'))
+                self._nombre_real = input("Nombre completo: ").strip()
+                self._grado       = input("Grado y sección (ej: 3ro A): ").strip()
+                self._dni         = input("DNI (8 dígitos): ").strip()
+            except Exception:
+                pass
 
     def _print_welcome(self):
         html = '''
@@ -136,6 +235,8 @@ class Autograder:
     # ── Internal helpers ────────────────────────────────────
 
     def _nombre(self):
+        if self._nombre_real:
+            return self._nombre_real
         n = _get("nombre")
         if isinstance(n, str) and n.strip() and n.strip() not in ("?", ""):
             return n.strip()
@@ -1581,16 +1682,17 @@ class Autograder:
         if "YOUR_PROJECT_ID" in SUPABASE_URL or not SUPABASE_URL.startswith("https://"):
             return
 
+        if not self._dni:
+            return
+
         try:
             import json as _json, urllib.request as _ur
 
-            if self._email is None:
-                self._email = self._fetch_colab_email()
-
-            email = self._email or "anonimo@sma.edu.pe"
-
             payload = _json.dumps({
-                "email":           email,
+                "email":           self._dni,
+                "dni":             self._dni,
+                "nombre":          self._nombre_real or "estudiante",
+                "grado":           self._grado or "",
                 "notebook":        "nb1",
                 "earned":          earned,
                 "possible":        possible,
@@ -1622,7 +1724,7 @@ class Autograder:
                     f'<div style="font-family:\'Press Start 2P\',monospace;font-size:8px;'
                     f'color:#39ff14;background:#020d02;border:1px solid #39ff14;'
                     f'border-radius:3px;padding:10px 16px;max-width:840px;margin-top:6px;">'
-                    f'✅ SCORE ENVIADO AL LEADERBOARD &nbsp;·&nbsp; {email}</div>'
+                    f'✅ SCORE ENVIADO AL LEADERBOARD &nbsp;·&nbsp; {self._nombre_real} · DNI {self._dni}</div>'
                 ))
 
         except Exception as _ex:
