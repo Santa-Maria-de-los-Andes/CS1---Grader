@@ -587,6 +587,7 @@ async function agRegister() {{
       <div style="width:{pct}%;height:100%;background:{xp_grad};border-radius:2px;transform-origin:left;animation:pg-xpscale 1.1s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 6px rgba(255,215,0,.2);"></div>
     </div>
     {ach_html}
+    {'<div style="margin-top:8px;font-family:\'Press Start 2P\',monospace;font-size:6px;color:#00bfff;letter-spacing:1px;opacity:.85;">📊 Calificación actualizada en la base de datos</div>' if self._dni else ''}
   </div>
 </div>'''
         display(HTML(card_html))
