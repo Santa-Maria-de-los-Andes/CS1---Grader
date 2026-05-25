@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Level Up Animations — Preview</title>
+<style>
+  :root {
+    --lv1: #39ff14; --lv1b: #003300;
+    --lv2: #c084fc; --lv2b: #1a0030;
+    --lv3: #67e8f9; --lv3b: #001a2e;
+    --lv4: #fb923c; --lv4b: #1a0800;
+    --lv5: #facc15; --lv5b: #1a1200;
+    --lv6: #f0abfc; --lv6b: #12001a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #444;
+    font-size: .85rem;
+    margin-bottom: 40px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .card {
+    border: 1px solid #222;
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: transform .15s, border-color .2s;
+    background: #111;
+    user-select: none;
+  }
+  .card:hover { transform: translateY(-4px); }
+
+  .card .emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+  .card .lvl-tag { font-size: .7rem; letter-spacing: .15em; text-transform: uppercase; opacity: .5; margin-bottom: 4px; }
+  .card .lvl-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+  .card .lvl-pct { font-size: .75rem; opacity: .4; }
+  .card .play-hint {
+    margin-top: 14px;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    opacity: .35;
+  }
+
+  /* ── per-level card accent ── */
+  .lv1 { border-color: #1a3300; }
+  .lv1:hover { border-color: var(--lv1); box-shadow: 0 0 20px #39ff1433; }
+  .lv1 .lvl-name { color: var(--lv1); }
+
+  .lv2 { border-color: #2a0050; }
+  .lv2:hover { border-color: var(--lv2); box-shadow: 0 0 20px #c084fc33; }
+  .lv2 .lvl-name { color: var(--lv2); }
+
+  .lv3 { border-color: #002233; }
+  .lv3:hover { border-color: var(--lv3); box-shadow: 0 0 20px #67e8f933; }
+  .lv3 .lvl-name { color: var(--lv3); }
+
+  .lv4 { border-color: #2a1000; }
+  .lv4:hover { border-color: var(--lv4); box-shadow: 0 0 20px #fb923c33; }
+  .lv4 .lvl-name { color: var(--lv4); }
+
+  .lv5 { border-color: #2a2000; }
+  .lv5:hover { border-color: var(--lv5); box-shadow: 0 0 20px #facc1533; }
+  .lv5 .lvl-name { color: var(--lv5); }
+
+  .lv6 { border-color: #1f0030; }
+  .lv6:hover { border-color: var(--lv6); box-shadow: 0 0 20px #f0abfc55; }
+  .lv6 .lvl-name {
+    background: linear-gradient(90deg, #f0abfc, #818cf8, #67e8f9, #facc15, #f0abfc);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-text 3s linear infinite;
+  }
+
+  /* ═══════════════════════════════════════
+     OVERLAY
+  ═══════════════════════════════════════ */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #overlay.active { display: flex; }
+
+  #overlay-bg {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+  }
+
+  /* canvas for particle effects */
+  #fx-canvas {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  #banner {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 40px 56px;
+    border-radius: 24px;
+    max-width: 480px;
+    width: 90%;
+    pointer-events: none;
+  }
+
+  #banner .b-tag {
+    font-size: .7rem;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    opacity: .6;
+    margin-bottom: 10px;
+  }
+  #banner .b-emoji {
+    font-size: 4rem;
+    display: block;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  #banner .b-up {
+    font-size: 1rem;
+    letter-spacing: .4em;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: .7;
+    margin-bottom: 8px;
+  }
+  #banner .b-name {
+    font-size: 1.7rem;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  #banner .b-sub {
+    font-size: .8rem;
+    opacity: .5;
+    letter-spacing: .1em;
+  }
+
+  /* dismiss hint */
+  #dismiss-hint {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    opacity: 0;
+    color: #fff;
+    pointer-events: none;
+    transition: opacity .4s;
+  }
+  #dismiss-hint.show { opacity: .35; }
+
+  /* ═══════════════════════════════════════
+     KEYFRAMES — shared
+  ═══════════════════════════════════════ */
+  @keyframes rainbow-text {
+    to { background-position: 200%; }
+  }
+
+  /* banner appear */
+  @keyframes banner-in {
+    0%  { opacity:0; transform: scale(.6) translateY(40px); }
+    60% { opacity:1; transform: scale(1.05) translateY(-6px); }
+    80% { transform: scale(.98) translateY(2px); }
+    100%{ transform: scale(1) translateY(0); }
+  }
+
+  /* emoji bounce */
+  @keyframes emoji-bounce {
+    0%,100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.3) rotate(-8deg); }
+    50% { transform: scale(1.1) rotate(6deg); }
+    75% { transform: scale(1.25) rotate(-4deg); }
+  }
+
+  /* glow pulse */
+  @keyframes glow-pulse {
+    0%,100% { text-shadow: 0 0 10px currentColor, 0 0 30px currentColor; }
+    50% { text-shadow: 0 0 20px currentColor, 0 0 60px currentColor, 0 0 90px currentColor; }
+  }
+
+  /* lv1 — glitch */
+  @keyframes glitch-x {
+    0%,100%{ clip-path:inset(0 0 100% 0); transform:translateX(0); }
+    20%{ clip-path:inset(20% 0 60% 0); transform:translateX(-6px); }
+    40%{ clip-path:inset(50% 0 30% 0); transform:translateX(6px); }
+    60%{ clip-path:inset(10% 0 80% 0); transform:translateX(-3px); }
+    80%{ clip-path:inset(70% 0 10% 0); transform:translateX(3px); }
+  }
+  @keyframes scanline {
+    0%  { top: -10%; }
+    100%{ top: 110%; }
+  }
+  @keyframes pixel-flicker {
+    0%,90%,100%{ opacity:1; }
+    92%{ opacity:.4; }
+    94%{ opacity:1; }
+    96%{ opacity:.6; }
+  }
+
+  /* lv2 — alchemy bubble */
+  @keyframes bubble-up {
+    0%  { transform: translateY(0) scale(1); opacity:.9; }
+    100%{ transform: translateY(-120vh) scale(1.5); opacity:0; }
+  }
+
+  /* lv3 — mystic swirl */
+  @keyframes mystic-rotate {
+    from{ transform: rotate(0deg); }
+    to  { transform: rotate(360deg); }
+  }
+  @keyframes orb-pulse {
+    0%,100%{ opacity:.3; transform:scale(1); }
+    50%{ opacity:.9; transform:scale(1.1); }
+  }
+
+  /* lv4 — fire shake */
+  @keyframes screen-shake {
+    0%,100%{ transform:translate(0,0) rotate(0deg); }
+    10%{ transform:translate(-6px,4px) rotate(-.5deg); }
+    30%{ transform:translate(7px,-5px) rotate(.5deg); }
+    50%{ transform:translate(-4px,3px) rotate(-.3deg); }
+    70%{ transform:translate(5px,-3px) rotate(.3deg); }
+    90%{ transform:translate(-2px,2px); }
+  }
+
+  /* lv5 — lightning */
+  @keyframes zap-flash {
+    0%,100%{ opacity:0; }
+    5%,15%{ opacity:1; }
+    10%{ opacity:.3; }
+    20%{ opacity:0; }
+    55%,65%{ opacity:1; }
+    60%{ opacity:.5; }
+    70%{ opacity:0; }
+  }
+  @keyframes charge-grow {
+    0%{ transform:scaleY(0); opacity:0; }
+    50%{ opacity:1; }
+    100%{ transform:scaleY(1); opacity:0; }
+  }
+
+  /* lv6 — prismatic */
+  @keyframes prismatic-bg {
+    0%  { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100%{ background-position: 0% 50%; }
+  }
+  @keyframes crown-spin {
+    0%{ transform: rotateY(0deg) scale(1); }
+    50%{ transform: rotateY(180deg) scale(1.2); }
+    100%{ transform: rotateY(360deg) scale(1); }
+  }
+  @keyframes star-burst {
+    0%{ transform:scale(0) rotate(0deg); opacity:1; }
+    100%{ transform:scale(4) rotate(180deg); opacity:0; }
+  }
+
+</style>
+</head>
+<body>
+
+<h1>⬆ Level Up Animations</h1>
+<p class="subtitle">Click any level card to preview its animation &nbsp;·&nbsp; Click overlay to dismiss</p>
+
+<div class="grid">
+
+  <div class="card lv1" onclick="play(1)">
+    <span class="emoji">👾</span>
+    <div class="lvl-tag">Nivel 1 · 0 – 20%</div>
+    <div class="lvl-name">Engendro del Código</div>
+    <div class="lvl-pct">Primer nivel desbloqueado</div>
+    <div class="play-hint">▶ Click para previsualizar</div>
+  </div>
+
+  <div class="card lv2" onclick="play(2)">
+    <span class="emoji">⚗️</span>
+    <div class="lvl-tag">Nivel 2 · 21 – 40%</div>
+    <div class="lvl-name">Alquimista de Variables</div>
+    <div class="lvl-pct">Primeras variables dominadas</div>
+    <div class="play-hint">▶ Click para previsualizar</div>
+  </div>
+
+  <div class="card lv3" onclick="play(3)">
+    <span class="emoji">🔮</span>
+    <div class="lvl-tag">Nivel 3 · 41 – 60%</div>
+    <div class="lvl-name">Hechicero Codicioso</div>
+    <div class="lvl-pct">Lógica de control en tu poder</div>
+    <div class="play-hint">▶ Click para previsualizar</div>
+  </div>
+
+  <div class="card lv4" onclick="play(4)">
+    <span class="emoji">🐉</span>
+    <div class="lvl-tag">Nivel 4 · 61 – 80%</div>
+    <div class="lvl-name">Domador de Programas</div>
+    <div class="lvl-pct">Programas complejos bajo control</div>
+    <div class="play-hint">▶ Click para previsualizar</div>
+  </div>
+
+  <div class="card lv5" onclick="play(5)">
+    <span class="emoji">⚡</span>
+    <div class="lvl-tag">Nivel 5 · 81 – 95%</div>
+    <div class="lvl-name">Archimago del Caos</div>
+    <div class="lvl-pct">Casi en la cima del poder</div>
+    <div class="play-hint">▶ Click para previsualizar</div>
+  </div>
+
+  <div class="card lv6" onclick="play(6)">
+    <span class="emoji">💎</span>
+    <div class="lvl-tag">Nivel 6 · 96 – 100%</div>
+    <div class="lvl-name">Dios del Código Eterno</div>
+    <div class="lvl-pct">Perfección absoluta</div>
+    <div class="play-hint">▶ Click para previsualizar</div>
+  </div>
+
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+  <div id="overlay-bg" onclick="dismiss()"></div>
+  <canvas id="fx-canvas"></canvas>
+  <div id="banner">
+    <div class="b-tag">Desbloqueaste</div>
+    <span class="b-emoji" id="b-emoji"></span>
+    <div class="b-up">⬆ &nbsp; Level Up &nbsp; ⬆</div>
+    <div class="b-name" id="b-name"></div>
+    <div class="b-sub" id="b-sub"></div>
+  </div>
+</div>
+<div id="dismiss-hint">Click para cerrar</div>
+
+<script>
+/* ── level data ── */
+const LEVELS = {
+  1: {
+    emoji: '👾', name: 'Engendro del Código', sub: 'Primer nivel desbloqueado',
+    color: '#39ff14', bg: '#001a00', theme: 'matrix'
+  },
+  2: {
+    emoji: '⚗️', name: 'Alquimista de Variables', sub: 'Las variables obedecen tu voluntad',
+    color: '#c084fc', bg: '#0e0020', theme: 'alchemy'
+  },
+  3: {
+    emoji: '🔮', name: 'Hechicero Codicioso', sub: 'La lógica se inclina ante ti',
+    color: '#67e8f9', bg: '#001222', theme: 'mystic'
+  },
+  4: {
+    emoji: '🐉', name: 'Domador de Programas', sub: 'Ningún programa te puede vencer',
+    color: '#fb923c', bg: '#1a0500', theme: 'fire'
+  },
+  5: {
+    emoji: '⚡', name: 'Archimago del Caos', sub: 'El caos fluye a través de tu código',
+    color: '#facc15', bg: '#130f00', theme: 'lightning'
+  },
+  6: {
+    emoji: '💎', name: 'Dios del Código Eterno', sub: 'La perfección absoluta — código inmortal',
+    color: '#f0abfc', bg: '#0a0015', theme: 'prismatic'
+  }
+};
+
+let activeTheme = null;
+let animFrame  = null;
+let particles  = [];
+
+const overlay    = document.getElementById('overlay');
+const overlayBg  = document.getElementById('overlay-bg');
+const canvas     = document.getElementById('fx-canvas');
+const ctx        = canvas.getContext('2d');
+const banner     = document.getElementById('banner');
+const bEmoji     = document.getElementById('b-emoji');
+const bName      = document.getElementById('b-name');
+const bSub       = document.getElementById('b-sub');
+const hint       = document.getElementById('dismiss-hint');
+
+function play(n) {
+  const lv = LEVELS[n];
+  activeTheme = lv.theme;
+
+  /* populate banner */
+  bEmoji.textContent = lv.emoji;
+  bName.textContent  = lv.name;
+  bSub.textContent   = lv.sub;
+
+  /* reset banner styles */
+  banner.style.cssText = '';
+  bName.style.cssText  = '';
+  bEmoji.style.cssText = '';
+
+  /* per-level banner styling */
+  applyBannerStyle(n, lv);
+
+  /* show overlay */
+  overlay.classList.add('active');
+
+  /* size canvas */
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  /* launch particles */
+  particles = [];
+  cancelAnimationFrame(animFrame);
+  launchTheme(lv);
+
+  /* show dismiss hint after delay */
+  setTimeout(() => hint.classList.add('show'), 1200);
+}
+
+function dismiss() {
+  overlay.classList.remove('active');
+  hint.classList.remove('show');
+  cancelAnimationFrame(animFrame);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = [];
+  activeTheme = null;
+  /* remove any injected scanline */
+  document.getElementById('scanline-el')?.remove();
+  document.getElementById('lightning-el')?.remove();
+  document.getElementById('prismatic-ring')?.remove();
+}
+
+/* ════════════════════════════════════════
+   BANNER STYLE PER LEVEL
+════════════════════════════════════════ */
+function applyBannerStyle(n, lv) {
+  /* common appear animation */
+  banner.style.animation = 'banner-in .7s cubic-bezier(.34,1.56,.64,1) forwards';
+  bEmoji.style.animation = 'emoji-bounce 1.2s ease-in-out 0.4s infinite';
+
+  if (n === 1) {
+    /* MATRIX / GLITCH */
+    overlayBg.style.background = 'radial-gradient(ellipse at center, #002200 0%, #000 70%)';
+    banner.style.background    = 'rgba(0,20,0,.92)';
+    banner.style.border        = '2px solid #39ff14';
+    banner.style.boxShadow     = '0 0 40px #39ff1466, inset 0 0 30px #39ff1411';
+    bName.style.color          = '#39ff14';
+    bName.style.textShadow     = '0 0 12px #39ff14, 0 0 30px #39ff14';
+    bName.style.fontFamily     = '"Courier New", monospace';
+    bName.style.animation      = 'pixel-flicker 3s ease-in-out infinite';
+
+    /* scanline overlay */
+    injectScanline();
+  }
+  else if (n === 2) {
+    /* ALCHEMY */
+    overlayBg.style.background = 'radial-gradient(ellipse at center, #1a0035 0%, #05000f 80%)';
+    banner.style.background    = 'rgba(20,0,40,.9)';
+    banner.style.border        = '2px solid #c084fc';
+    banner.style.boxShadow     = '0 0 50px #c084fc44, inset 0 0 30px #c084fc11';
+    bName.style.color          = '#c084fc';
+    bName.style.textShadow     = '0 0 15px #c084fc, 0 0 40px #a855f7';
+    bName.style.animation      = 'glow-pulse 2s ease-in-out infinite';
+  }
+  else if (n === 3) {
+    /* MYSTIC */
+    overlayBg.style.background = 'radial-gradient(ellipse at center, #001c30 0%, #000510 80%)';
+    banner.style.background    = 'rgba(0,10,30,.92)';
+    banner.style.border        = '2px solid #67e8f9';
+    banner.style.boxShadow     = '0 0 60px #67e8f944, inset 0 0 40px #67e8f911';
+    bName.style.color          = '#67e8f9';
+    bName.style.textShadow     = '0 0 15px #67e8f9, 0 0 50px #38bdf8';
+    bName.style.animation      = 'glow-pulse 1.8s ease-in-out infinite';
+  }
+  else if (n === 4) {
+    /* FIRE */
+    overlayBg.style.background = 'radial-gradient(ellipse at center, #2a0800 0%, #080100 80%)';
+    banner.style.background    = 'rgba(25,5,0,.92)';
+    banner.style.border        = '2px solid #fb923c';
+    banner.style.boxShadow     = '0 0 60px #fb923c55, inset 0 0 30px #fb923c11';
+    bName.style.color          = '#fb923c';
+    bName.style.textShadow     = '0 0 10px #fb923c, 0 0 30px #ef4444';
+    banner.style.animation     = 'banner-in .7s cubic-bezier(.34,1.56,.64,1) forwards, screen-shake .4s ease-in-out 0.7s 2';
+  }
+  else if (n === 5) {
+    /* LIGHTNING */
+    overlayBg.style.background = 'radial-gradient(ellipse at center, #1a1400 0%, #050300 80%)';
+    banner.style.background    = 'rgba(15,12,0,.95)';
+    banner.style.border        = '2px solid #facc15';
+    banner.style.boxShadow     = '0 0 80px #facc1566, inset 0 0 40px #facc1511';
+    bName.style.color          = '#facc15';
+    bName.style.textShadow     = '0 0 10px #facc15, 0 0 40px #fde047, 0 0 80px #fff';
+    bName.style.animation      = 'glow-pulse 0.8s ease-in-out infinite';
+    injectLightning();
+  }
+  else if (n === 6) {
+    /* PRISMATIC */
+    overlayBg.style.background =
+      'radial-gradient(ellipse at center, #1a0030 0%, #040010 80%)';
+    banner.style.background    = 'rgba(10,0,25,.9)';
+    banner.style.border        = '2px solid transparent';
+    banner.style.backgroundClip = 'padding-box';
+    banner.style.boxShadow     = '0 0 0 2px #f0abfc, 0 0 80px #f0abfc55, 0 0 120px #818cf844';
+    bName.style.background     = 'linear-gradient(90deg,#f0abfc,#818cf8,#67e8f9,#facc15,#f0abfc)';
+    bName.style.backgroundSize = '200%';
+    bName.style.webkitBackgroundClip = 'text';
+    bName.style.webkitTextFillColor  = 'transparent';
+    bName.style.animation      = 'rainbow-text 2s linear infinite';
+    bEmoji.style.animation     = 'crown-spin 3s ease-in-out infinite, emoji-bounce 1.2s ease-in-out 0.4s 2';
+    injectPrismaticRing();
+  }
+}
+
+/* ════════════════════════════════════════
+   INJECTED DOM EFFECTS
+════════════════════════════════════════ */
+function injectScanline() {
+  const s = document.createElement('div');
+  s.id = 'scanline-el';
+  Object.assign(s.style, {
+    position:'fixed', top:0, left:0, right:0, height:'3px',
+    background:'rgba(57,255,20,.15)', pointerEvents:'none', zIndex:1200,
+    animation:'scanline 2s linear infinite'
+  });
+  document.body.appendChild(s);
+}
+
+function injectLightning() {
+  const el = document.createElement('div');
+  el.id = 'lightning-el';
+  Object.assign(el.style, {
+    position:'fixed', inset:0, pointerEvents:'none', zIndex:900,
+    background:'rgba(250,204,21,.08)',
+    animation:'zap-flash 2.5s ease-in-out infinite'
+  });
+  document.body.appendChild(el);
+}
+
+function injectPrismaticRing() {
+  const el = document.createElement('div');
+  el.id = 'prismatic-ring';
+  Object.assign(el.style, {
+    position:'fixed', inset:0, pointerEvents:'none', zIndex:900,
+    background:'conic-gradient(from 0deg, #f0abfc22,#818cf822,#67e8f922,#facc1522,#f0abfc22)',
+    animation:'mystic-rotate 8s linear infinite'
+  });
+  document.body.appendChild(el);
+}
+
+/* ════════════════════════════════════════
+   PARTICLE SYSTEMS
+════════════════════════════════════════ */
+function launchTheme(lv) {
+  const t = lv.theme;
+  if (t === 'matrix')    spawnMatrix(lv.color);
+  if (t === 'alchemy')   spawnBubbles(lv.color);
+  if (t === 'mystic')    spawnOrbs(lv.color);
+  if (t === 'fire')      spawnFire(lv.color);
+  if (t === 'lightning') spawnSparks(lv.color);
+  if (t === 'prismatic') spawnConfetti();
+  animFrame = requestAnimationFrame(loop);
+}
+
+/* ── MATRIX: falling code chars ── */
+function spawnMatrix(col) {
+  const chars = '01アイウエオカキクケコ<>{}[]();';
+  const cols  = Math.floor(canvas.width / 18);
+  for (let i = 0; i < cols; i++) {
+    particles.push({
+      type:'char', x: i*18+4, y: Math.random()*-canvas.height,
+      speed: 2 + Math.random()*5,
+      char: chars[Math.floor(Math.random()*chars.length)],
+      alpha: .2 + Math.random()*.8,
+      size: 12 + Math.floor(Math.random()*6),
+      col, swapTimer: 0
+    });
+  }
+}
+
+/* ── ALCHEMY: rising bubbles ── */
+function spawnBubbles(col) {
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      type:'bubble',
+      x: Math.random()*canvas.width,
+      y: canvas.height + Math.random()*200,
+      r: 4 + Math.random()*18,
+      speed: .5 + Math.random()*2.5,
+      wobble: Math.random()*Math.PI*2,
+      wobbleSpeed: .02 + Math.random()*.04,
+      alpha: .3 + Math.random()*.6,
+      col
+    });
+  }
+}
+
+/* ── MYSTIC: floating orbs ── */
+function spawnOrbs(col) {
+  for (let i = 0; i < 30; i++) {
+    const angle = Math.random()*Math.PI*2;
+    const dist  = 80 + Math.random()*300;
+    particles.push({
+      type:'orb',
+      cx: canvas.width/2, cy: canvas.height/2,
+      angle, dist,
+      orbitSpeed: (.005 + Math.random()*.01) * (Math.random()<.5?1:-1),
+      r: 3 + Math.random()*8,
+      alpha: .4 + Math.random()*.5,
+      pulseOffset: Math.random()*Math.PI*2,
+      col
+    });
+  }
+}
+
+/* ── FIRE: ember particles ── */
+function spawnFire(col) {
+  for (let i = 0; i < 120; i++) {
+    particles.push({
+      type:'ember',
+      x: canvas.width/2 + (Math.random()-0.5)*300,
+      y: canvas.height + 10,
+      vx: (Math.random()-0.5)*4,
+      vy: -(2 + Math.random()*6),
+      life: 1,
+      decay: .008 + Math.random()*.015,
+      r: 2 + Math.random()*6,
+      col,
+      hue: Math.random()*40 - 10
+    });
+  }
+}
+
+/* ── LIGHTNING: sparks ── */
+function spawnSparks(col) {
+  for (let i = 0; i < 80; i++) {
+    const angle = Math.random()*Math.PI*2;
+    particles.push({
+      type:'spark',
+      x: canvas.width/2, y: canvas.height/2,
+      vx: Math.cos(angle)*(3+Math.random()*10),
+      vy: Math.sin(angle)*(3+Math.random()*10),
+      life: 1,
+      decay: .02 + Math.random()*.04,
+      len: 8 + Math.random()*20,
+      col,
+      angle
+    });
+  }
+  /* periodic re-burst */
+  setTimeout(()=>{ if(activeTheme==='lightning') spawnSparks(col); }, 800);
+  setTimeout(()=>{ if(activeTheme==='lightning') spawnSparks(col); }, 1600);
+}
+
+/* ── PRISMATIC: confetti ── */
+function spawnConfetti() {
+  const cols = ['#f0abfc','#818cf8','#67e8f9','#facc15','#f472b6','#a3e635','#fb923c'];
+  for (let i = 0; i < 200; i++) {
+    particles.push({
+      type:'confetti',
+      x: Math.random()*canvas.width,
+      y: -20 - Math.random()*canvas.height*.5,
+      vx: (Math.random()-0.5)*4,
+      vy: 2 + Math.random()*5,
+      rot: Math.random()*Math.PI*2,
+      rotSpeed: (Math.random()-0.5)*.15,
+      w: 6 + Math.random()*10,
+      h: 3 + Math.random()*5,
+      col: cols[Math.floor(Math.random()*cols.length)],
+      life: 1
+    });
+  }
+}
+
+/* ════════════════════════════════════════
+   RENDER LOOP
+════════════════════════════════════════ */
+function loop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = particles.length-1; i >= 0; i--) {
+    const p = particles[i];
+    let dead = false;
+
+    if (p.type === 'char') {
+      p.y += p.speed;
+      p.swapTimer++;
+      if (p.swapTimer > 8) {
+        const chars = '01アイウエオカキクケコ<>{}[]();';
+        p.char = chars[Math.floor(Math.random()*chars.length)];
+        p.swapTimer = 0;
+      }
+      if (p.y > canvas.height) p.y = -20;
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle   = p.col;
+      ctx.font        = `bold ${p.size}px "Courier New"`;
+      ctx.fillText(p.char, p.x, p.y);
+    }
+
+    else if (p.type === 'bubble') {
+      p.y -= p.speed;
+      p.wobble += p.wobbleSpeed;
+      const wx = p.x + Math.sin(p.wobble)*12;
+      ctx.globalAlpha = p.alpha * Math.min(1, (-p.y + canvas.height) / canvas.height);
+      const g = ctx.createRadialGradient(wx-p.r*.3,p.y-p.r*.3,p.r*.1, wx,p.y,p.r);
+      g.addColorStop(0,'rgba(255,255,255,.6)');
+      g.addColorStop(.7, p.col+'88');
+      g.addColorStop(1, p.col+'22');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(wx, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = p.col+'66';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      if (p.y < -p.r*2) dead = true;
+    }
+
+    else if (p.type === 'orb') {
+      p.angle += p.orbitSpeed;
+      const t = Date.now()/1000;
+      const pulse = .5 + .5*Math.sin(t*2 + p.pulseOffset);
+      const x = p.cx + Math.cos(p.angle)*p.dist;
+      const y = p.cy + Math.sin(p.angle)*p.dist * .5;
+      ctx.globalAlpha = p.alpha * (.4 + .6*pulse);
+      const g = ctx.createRadialGradient(x,y,0, x,y,p.r*(1+pulse*.5));
+      g.addColorStop(0,'#fff');
+      g.addColorStop(.4, p.col);
+      g.addColorStop(1, p.col+'00');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, p.r*(1+pulse*.5), 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    else if (p.type === 'ember') {
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.vy += .05; /* gravity */
+      p.vx += (Math.random()-.5)*.3;
+      p.life -= p.decay;
+      if (p.life <= 0) { dead = true; }
+      else {
+        const a = Math.min(1, p.life*2);
+        ctx.globalAlpha = a;
+        const hue = 10 + p.hue + (1-p.life)*20;
+        ctx.fillStyle = `hsl(${hue},100%,${40+p.life*30}%)`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r*p.life, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    else if (p.type === 'spark') {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += .15;
+      p.life -= p.decay;
+      if (p.life <= 0) { dead = true; }
+      else {
+        ctx.globalAlpha = p.life;
+        ctx.strokeStyle = p.col;
+        ctx.lineWidth   = 2*p.life;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx*p.len*.1, p.y - p.vy*p.len*.1);
+        ctx.stroke();
+      }
+    }
+
+    else if (p.type === 'confetti') {
+      p.x   += p.vx;
+      p.y   += p.vy;
+      p.rot += p.rotSpeed;
+      p.vy  += .03;
+      if (p.y > canvas.height + 20) dead = true;
+      ctx.globalAlpha = 1;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.col;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    }
+
+    if (dead) particles.splice(i, 1);
+  }
+
+  ctx.globalAlpha = 1;
+
+  /* fire: continuously emit embers */
+  if (activeTheme === 'fire' && particles.filter(p=>p.type==='ember').length < 80) {
+    for (let i=0;i<5;i++) {
+      particles.push({
+        type:'ember',
+        x: canvas.width/2 + (Math.random()-0.5)*200,
+        y: canvas.height,
+        vx:(Math.random()-.5)*3,
+        vy:-(3+Math.random()*5),
+        life:1, decay:.01+Math.random()*.02,
+        r:2+Math.random()*5, col:'#fb923c', hue:Math.random()*40-10
+      });
+    }
+  }
+
+  animFrame = requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>

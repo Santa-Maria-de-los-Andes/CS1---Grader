@@ -31,7 +31,10 @@ SUPABASE_ANON_KEY = "sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu"
 LOGO_URL = "https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/icono%20SMA.png"
 
 # ─── Total possible XP for Notebook 1 (sum of all max_pts) ──
-_NOTEBOOK_MAX = 156
+_NOTEBOOK_MAX = 136
+_BONUS_KEYS   = {"cohete", "reto1", "reto2", "reto3"}
+_BONUS_MAX    = 28   # cohete 10 + reto1 6 + reto2 6 + reto3 6
+_CORE_MAX     = _NOTEBOOK_MAX - _BONUS_MAX
 
 # ─── Level thresholds (by %) ─────────────────────────────────
 _LEVELS = [
@@ -371,10 +374,10 @@ async function agRegister() {{
         return "estudiante"
 
     def _totals(self):
-        earned   = sum(e for e, _ in self._scores.values())
-        possible = sum(p for _, p in self._scores.values())
-        # pct is always over the full notebook max so levels reflect true progress
-        pct      = round(earned / _NOTEBOOK_MAX * 100)
+        earned      = sum(e for e, _ in self._scores.values())
+        possible    = sum(p for _, p in self._scores.values())
+        core_earned = sum(e for k, (e, _) in self._scores.items() if k not in _BONUS_KEYS)
+        pct         = min(round(core_earned / _CORE_MAX * 100), 100)
         return earned, possible, pct
 
     def _unlock(self, key):
@@ -457,6 +460,9 @@ async function agRegister() {{
 
         earned, possible, pct = self._totals()
         lvl_num, lvl_name     = _level_info(pct)
+        core_earned  = sum(e for k, (e, _) in self._scores.items() if k not in _BONUS_KEYS)
+        bonus_earned = sum(e for k, (e, _) in self._scores.items() if k in _BONUS_KEYS)
+        _is_bonus    = key in _BONUS_KEYS
 
         import threading as _thr
         _thr.Thread(
@@ -578,6 +584,29 @@ async function agRegister() {{
         curr_title = getattr(self, '_curr_title', 'MISIÓN').upper()
         _logo_sm   = self._logo_tag_sm
 
+        _core_pct_bar = min(round(core_earned / _CORE_MAX * 100), 100)
+        if _is_bonus:
+            _bpct = round(bonus_earned / _BONUS_MAX * 100) if bonus_earned else 0
+            xp_bar_html = (
+                f'<div style="display:flex;justify-content:space-between;margin-bottom:4px;">'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#00f5d4;">Bonus XP: {bonus_earned}/{_BONUS_MAX}</span>'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#00f5d4;">🌌 DESAFÍO</span>'
+                f'</div>'
+                f'<div style="width:100%;height:10px;background:#141428;border:1px solid #1a3a3a;border-radius:2px;overflow:hidden;">'
+                f'<div style="width:{_bpct}%;height:100%;background:linear-gradient(90deg,#0e3a3a,#00f5d4);border-radius:2px;transform-origin:left;animation:pg-xpscale 1.1s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 6px rgba(0,245,212,.3);"></div>'
+                f'</div>'
+            )
+        else:
+            xp_bar_html = (
+                f'<div style="display:flex;justify-content:space-between;margin-bottom:4px;">'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#444466;">Core XP: {core_earned}/{_CORE_MAX}</span>'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#9d4edd;">{lvl_name}</span>'
+                f'</div>'
+                f'<div style="width:100%;height:10px;background:#141428;border:1px solid #2a2a4a;border-radius:2px;overflow:hidden;">'
+                f'<div style="width:{_core_pct_bar}%;height:100%;background:{xp_grad};border-radius:2px;transform-origin:left;animation:pg-xpscale 1.1s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 6px rgba(255,215,0,.2);"></div>'
+                f'</div>'
+            )
+
         card_html = f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   @keyframes pg-combo  {{0%,100%{{transform:scale(1)}}25%{{transform:scale(1.12) rotate(-2deg)}}75%{{transform:scale(1.12) rotate(2deg)}}}}
@@ -606,13 +635,7 @@ async function agRegister() {{
       </div>
       <div style="display:flex;align-items:center;gap:4px;color:#444466;font-size:10px;">{dots}<span style="margin-left:3px;">{passed}/{len(checks)}</span></div>
     </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP {earned}/{_NOTEBOOK_MAX}</span>
-      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#9d4edd;">{lvl_name}</span>
-    </div>
-    <div style="width:100%;height:10px;background:#141428;border:1px solid #2a2a4a;border-radius:2px;overflow:hidden;">
-      <div style="width:{pct}%;height:100%;background:{xp_grad};border-radius:2px;transform-origin:left;animation:pg-xpscale 1.1s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 6px rgba(255,215,0,.2);"></div>
-    </div>
+    {xp_bar_html}
     {ach_html}
     {'<div style="margin-top:8px;font-family:\'Press Start 2P\',monospace;font-size:6px;color:#00bfff;letter-spacing:1px;opacity:.85;">📊 Calificación actualizada en la base de datos</div>' if self._dni else ''}
   </div>
@@ -1690,70 +1713,210 @@ async function agRegister() {{
     # ── Level-up banner ─────────────────────────────────────
 
     def _render_levelup(self, lvl_num, lvl_name):
-        _LVL_COLOR = {1:"#6666aa",2:"#39ff14",3:"#00f5d4",4:"#9d4edd",5:"#ffd700",6:"#ff3366"}
-        _LVL_GRAD  = {
-            1: "linear-gradient(135deg,#333355,#6666aa)",
-            2: "linear-gradient(135deg,#0a2205,#39ff14)",
-            3: "linear-gradient(135deg,#050d1a,#00f5d4)",
-            4: "linear-gradient(135deg,#12052a,#9d4edd)",
-            5: "linear-gradient(135deg,#1a0f00,#ffd700)",
-            6: "linear-gradient(135deg,#1a0010,#ff3366,#ffd700,#39ff14)",
+        import random as _r
+        _r.seed(lvl_num * 13)
+        emoji = lvl_name.split()[0]
+
+        _CFG = {
+            1: dict(c="#39ff14", bg="linear-gradient(160deg,#000a00,#001800,#000a00)",
+                    grad="linear-gradient(135deg,#003300,#006600,#39ff14)"),
+            2: dict(c="#c084fc", bg="linear-gradient(160deg,#080018,#140030,#080018)",
+                    grad="linear-gradient(135deg,#0e0025,#4c1d95,#c084fc)"),
+            3: dict(c="#67e8f9", bg="linear-gradient(160deg,#00080f,#001825,#00080f)",
+                    grad="linear-gradient(135deg,#001a2e,#075985,#67e8f9)"),
+            4: dict(c="#fb923c", bg="linear-gradient(160deg,#100100,#220400,#100100)",
+                    grad="linear-gradient(135deg,#431407,#9a3412,#fb923c)"),
+            5: dict(c="#facc15", bg="linear-gradient(160deg,#0a0800,#180f00,#0a0800)",
+                    grad="linear-gradient(135deg,#1c1200,#92400e,#facc15)"),
+            6: dict(c="#f0abfc", bg="linear-gradient(160deg,#06000f,#100025,#06000f)",
+                    grad="linear-gradient(90deg,#f0abfc,#818cf8,#67e8f9,#facc15,#f0abfc)"),
         }
-        color = _LVL_COLOR.get(lvl_num, "#ffd700")
-        grad  = _LVL_GRAD.get(lvl_num, _LVL_GRAD[1])
-        emoji = lvl_name.split()[0]  # grab the leading emoji from level name
+        cfg  = _CFG.get(lvl_num, _CFG[1])
+        c, bg, grad = cfg["c"], cfg["bg"], cfg["grad"]
+
+        kf_shared = f"""
+  @keyframes lu-appear  {{0%{{opacity:0;transform:scale(.65) translateY(20px)}}70%{{transform:scale(1.04) translateY(-4px)}}100%{{opacity:1;transform:scale(1) translateY(0)}}}}
+  @keyframes lu-emoji   {{0%{{transform:scale(0) rotate(-20deg)}}70%{{transform:scale(1.2) rotate(5deg)}}100%{{transform:scale(1) rotate(0)}}}}
+  @keyframes lu-shimmer {{0%{{background-position:-300% 0}}100%{{background-position:300% 0}}}}
+  @keyframes lu-stars   {{0%,100%{{opacity:.9;letter-spacing:6px}}50%{{opacity:.25;letter-spacing:10px}}}}
+  @keyframes lu-glow    {{0%,100%{{text-shadow:0 0 20px {c}cc,0 0 40px {c}66}}50%{{text-shadow:0 0 50px {c},0 0 90px {c}88}}}}
+  @keyframes lu-pulse   {{0%,100%{{box-shadow:0 0 0 0 {c}55,0 0 60px {c}22}}60%{{box-shadow:0 0 0 18px transparent,0 0 80px {c}44}}}}"""
+
+        kf_extra    = ""
+        ptcls       = ""
+        name_anim   = "lu-shimmer 2.5s linear infinite"
+        emoji_extra = ""
+        banner_anim = f"lu-appear .75s cubic-bezier(.34,1.56,.64,1) both,lu-pulse 2.2s ease-in-out 1s infinite"
+        border_rule = f"border:3px solid {c};"
+
+        if lvl_num == 1:
+            kf_extra = f"""
+  @keyframes lv1-fall    {{0%{{transform:translateY(-20px);opacity:.8}}100%{{transform:translateY(280px);opacity:0}}}}
+  @keyframes lv1-glitch  {{0%,88%,100%{{text-shadow:0 0 20px {c},0 0 40px {c}66;transform:none}}90%{{text-shadow:-3px 0 #ff0033,3px 0 #00ffff,0 0 20px {c};transform:translateX(-3px)}}92%{{text-shadow:3px 0 #ff0033,-3px 0 #00ffff,0 0 30px {c};transform:translateX(3px)}}94%{{text-shadow:0 0 20px {c};transform:none}}}}
+  @keyframes lv1-scan    {{0%{{top:0;opacity:.45}}100%{{top:100%;opacity:0}}}}
+  @keyframes lv1-flicker {{0%,87%,91%,96%,100%{{opacity:1}}88%{{opacity:.15}}90%{{opacity:.7}}95%{{opacity:.3}}}}"""
+            ptcls += (f'<div style="position:absolute;left:0;top:0;right:0;height:3px;'
+                      f'background:linear-gradient(90deg,transparent,{c}55,transparent);'
+                      f'animation:lv1-scan 3s linear infinite;pointer-events:none;"></div>')
+            for i, ch in enumerate(list("01<>{}[]アイウエ")):
+                left  = 4 + i * 9
+                delay = round(_r.uniform(0, 2.5), 1)
+                dur   = round(_r.uniform(1.5, 3.0), 1)
+                sz    = _r.randint(10, 15)
+                ptcls += (f'<span style="position:absolute;left:{left}%;top:-20px;color:{c};'
+                          f'font-family:monospace;font-size:{sz}px;opacity:.55;'
+                          f'animation:lv1-fall {dur}s linear {delay}s infinite;'
+                          f'pointer-events:none;">{ch}</span>')
+            name_anim   = f"lu-shimmer 2.5s linear infinite,lv1-glitch 4s ease-in-out 1.5s infinite"
+            emoji_extra = ",lv1-flicker 5s ease-in-out 2s infinite"
+
+        elif lvl_num == 2:
+            kf_extra = f"""
+  @keyframes lv2-rise {{0%{{transform:translateY(0) scale(1);opacity:.75}}80%{{opacity:.3}}100%{{transform:translateY(-280px) scale(1.4);opacity:0}}}}
+  @keyframes lv2-bob  {{0%,100%{{transform:scale(1) rotate(-4deg)}}50%{{transform:scale(1.14) rotate(4deg)}}}}
+  @keyframes lv2-brew {{0%,100%{{box-shadow:0 0 30px {c}55,0 0 60px {c}22}}40%{{box-shadow:0 0 50px {c}99,0 0 90px {c}44,0 0 0 5px {c}22}}80%{{box-shadow:0 0 20px {c}33}}}}"""
+            for i in range(9):
+                left  = 8 + i * 10
+                delay = round(_r.uniform(0, 3.5), 1)
+                dur   = round(_r.uniform(2.0, 4.0), 1)
+                sz    = _r.randint(6, 18)
+                ptcls += (f'<span style="position:absolute;left:{left}%;bottom:-5px;'
+                          f'width:{sz}px;height:{sz}px;border-radius:50%;'
+                          f'border:1.5px solid {c}88;background:{c}11;'
+                          f'animation:lv2-rise {dur}s ease-in {delay}s infinite;'
+                          f'pointer-events:none;"></span>')
+            emoji_extra = ",lv2-bob 2s ease-in-out .4s infinite"
+            banner_anim = f"lu-appear .75s cubic-bezier(.34,1.56,.64,1) both,lv2-brew 3s ease-in-out 1s infinite"
+
+        elif lvl_num == 3:
+            kf_extra = f"""
+  @keyframes lv3-orbit {{from{{transform:rotate(0deg)}}to{{transform:rotate(360deg)}}}}
+  @keyframes lv3-orb-p {{0%,100%{{opacity:.45;transform:scale(1)}}50%{{opacity:1;transform:scale(1.3)}}}}
+  @keyframes lv3-ring  {{0%,100%{{box-shadow:0 0 0 0 {c}44,0 0 60px {c}22}}60%{{box-shadow:0 0 0 8px {c}1a,0 0 80px {c}44}}}}"""
+            for radius, dot_sz, delay, dur in [(70,4,0,3.0),(100,5,1.2,4.5),(55,3,0.5,2.5),(85,6,0.8,5.0),(115,4,1.8,6.0)]:
+                pulse_dur = round(dur * 0.6, 1)
+                ptcls += (f'<div style="position:absolute;left:50%;top:50%;width:0;height:0;'
+                          f'transform-origin:0 0;'
+                          f'animation:lv3-orbit {dur}s linear {delay}s infinite;pointer-events:none;">'
+                          f'<span style="position:absolute;left:{radius}px;top:-{dot_sz//2}px;'
+                          f'width:{dot_sz}px;height:{dot_sz}px;border-radius:50%;background:{c};'
+                          f'box-shadow:0 0 {dot_sz*2}px {c};'
+                          f'animation:lv3-orb-p {pulse_dur}s ease-in-out {delay}s infinite;"></span>'
+                          f'</div>')
+            banner_anim = f"lu-appear .75s cubic-bezier(.34,1.56,.64,1) both,lv3-ring 3s ease-in-out 1s infinite"
+
+        elif lvl_num == 4:
+            kf_extra = f"""
+  @keyframes lv4-shake {{0%,100%{{transform:translate(0,0)}}15%{{transform:translate(-5px,3px)}}30%{{transform:translate(6px,-4px)}}45%{{transform:translate(-3px,3px)}}60%{{transform:translate(5px,-2px)}}75%{{transform:translate(-2px,1px)}}}}
+  @keyframes lv4-el    {{0%{{transform:translate(0,0);opacity:1}}100%{{transform:translate(-24px,-220px);opacity:0}}}}
+  @keyframes lv4-ec    {{0%{{transform:translate(0,0);opacity:1}}100%{{transform:translate(4px,-240px) rotate(15deg);opacity:0}}}}
+  @keyframes lv4-er    {{0%{{transform:translate(0,0);opacity:1}}100%{{transform:translate(24px,-220px);opacity:0}}}}
+  @keyframes lv4-flick {{0%,100%{{opacity:.9}}30%{{opacity:.4}}60%{{opacity:.75}}}}"""
+            anims4 = ["lv4-el","lv4-ec","lv4-er","lv4-ec","lv4-el","lv4-er"]
+            for i in range(12):
+                left  = _r.randint(25, 75)
+                delay = round(_r.uniform(0, 2.5), 1)
+                dur   = round(_r.uniform(1.0, 2.2), 1)
+                sz    = _r.randint(3, 8)
+                hue   = _r.randint(5, 40)
+                anim  = anims4[i % len(anims4)]
+                ptcls += (f'<span style="position:absolute;left:{left}%;bottom:0;'
+                          f'width:{sz}px;height:{sz}px;border-radius:50%;'
+                          f'background:hsl({hue},100%,58%);filter:blur(1px);'
+                          f'animation:{anim} {dur}s ease-out {delay}s infinite;'
+                          f'pointer-events:none;"></span>')
+            banner_anim = f"lu-appear .5s cubic-bezier(.34,1.56,.64,1) both,lv4-shake .35s ease-in-out .55s 2,lv4-flick 4s ease-in-out 2s infinite"
+
+        elif lvl_num == 5:
+            kf_extra = f"""
+  @keyframes lv5-flash {{0%,100%{{opacity:0}}5%,15%{{opacity:1}}10%{{opacity:.3}}20%{{opacity:0}}55%,65%{{opacity:1}}60%{{opacity:.4}}70%{{opacity:0}}}}
+  @keyframes lv5-spark {{0%{{transform:scaleX(0);opacity:1}}70%{{opacity:.7}}100%{{transform:scaleX(1);opacity:0}}}}
+  @keyframes lv5-zap   {{0%,80%,100%{{text-shadow:0 0 15px {c},0 0 30px {c}88}}85%{{text-shadow:0 0 40px {c},0 0 80px {c},0 0 110px #fff}}90%{{text-shadow:0 0 10px {c}55}}}}
+  @keyframes lv5-charge{{0%{{transform:scaleY(0);opacity:0}}40%{{opacity:1}}100%{{transform:scaleY(1);opacity:0}}}}"""
+            ptcls += (f'<div style="position:absolute;inset:0;background:{c}0a;'
+                      f'animation:lv5-flash 2s ease-in-out infinite;'
+                      f'pointer-events:none;border-radius:5px;"></div>')
+            for i, ang in enumerate([0,30,60,90,120,150,210,270,315]):
+                delay = round(i * 0.08, 2)
+                dur   = round(0.6 + i * 0.03, 2)
+                ln    = _r.randint(20, 42)
+                ptcls += (f'<span style="position:absolute;left:50%;top:50%;'
+                          f'width:{ln}px;height:2px;'
+                          f'background:linear-gradient(90deg,{c},{c}00);'
+                          f'transform-origin:0 50%;transform:rotate({ang}deg) scaleX(0);'
+                          f'animation:lv5-spark {dur}s ease-out {delay}s infinite;'
+                          f'pointer-events:none;"></span>')
+            ptcls += (f'<div style="position:absolute;left:calc(50% - 1px);top:0;'
+                      f'width:2px;height:100%;'
+                      f'background:linear-gradient(180deg,{c}00,{c}88,{c}00);'
+                      f'transform:scaleY(0);transform-origin:50% 0;'
+                      f'animation:lv5-charge 2.5s ease-in-out .8s infinite;'
+                      f'pointer-events:none;"></div>')
+            name_anim   = f"lu-shimmer 2.5s linear infinite,lv5-zap 2s ease-in-out 1s infinite"
+            emoji_extra = ",lv5-flash 2s ease-in-out .5s infinite"
+            banner_anim = f"lu-appear .5s cubic-bezier(.34,1.56,.64,1) both,lu-pulse 1s ease-in-out 1s infinite"
+
+        else:
+            kf_extra = f"""
+  @keyframes lv6-rainbow {{0%{{background-position:0% 50%}}50%{{background-position:100% 50%}}100%{{background-position:0% 50%}}}}
+  @keyframes lv6-fall    {{0%{{transform:translateY(-10px) rotate(0deg);opacity:1}}100%{{transform:translateY(280px) rotate(720deg);opacity:0}}}}
+  @keyframes lv6-crown   {{0%,100%{{transform:scale(1) rotateY(0deg)}}50%{{transform:scale(1.15) rotateY(180deg)}}}}
+  @keyframes lv6-border  {{0%,100%{{box-shadow:0 0 0 2px #f0abfc,0 0 40px #f0abfc44,0 0 80px #818cf822}}33%{{box-shadow:0 0 0 2px #818cf8,0 0 40px #818cf844,0 0 80px #67e8f822}}66%{{box-shadow:0 0 0 2px #67e8f9,0 0 40px #67e8f944,0 0 80px #facc1522}}}}"""
+            CONF = ["#f0abfc","#818cf8","#67e8f9","#facc15","#f472b6","#a3e635","#fb923c","#38bdf8"]
+            for i in range(18):
+                col   = CONF[i % len(CONF)]
+                left  = _r.randint(3, 96)
+                top   = _r.randint(-20, 10)
+                delay = round(_r.uniform(0, 3.0), 1)
+                dur   = round(_r.uniform(2.0, 4.5), 1)
+                rot   = _r.randint(0, 359)
+                w, h  = _r.randint(5, 11), _r.randint(3, 6)
+                ptcls += (f'<span style="position:absolute;left:{left}%;top:{top}px;'
+                          f'width:{w}px;height:{h}px;background:{col};'
+                          f'transform:rotate({rot}deg);'
+                          f'animation:lv6-fall {dur}s ease-in {delay}s infinite;'
+                          f'pointer-events:none;"></span>')
+            name_anim   = "lv6-rainbow 2.5s ease-in-out infinite"
+            emoji_extra = ",lv6-crown 3s ease-in-out .4s infinite"
+            border_rule = "border:none;"
+            banner_anim = "lu-appear .75s cubic-bezier(.34,1.56,.64,1) both,lv6-border 3s ease-in-out 1s infinite"
+
+        if lvl_num == 6:
+            name_css = (f"font-family:'Press Start 2P',monospace;font-size:clamp(9px,2.2vw,14px);"
+                        f"background:linear-gradient(90deg,#f0abfc,#818cf8,#67e8f9,#facc15,#f0abfc);"
+                        f"-webkit-background-clip:text;-webkit-text-fill-color:transparent;"
+                        f"background-size:300%;animation:{name_anim};"
+                        f"letter-spacing:2px;margin-bottom:12px;line-height:1.8;")
+        else:
+            name_css = (f"font-family:'Press Start 2P',monospace;font-size:clamp(9px,2.2vw,14px);"
+                        f"background:{grad};-webkit-background-clip:text;-webkit-text-fill-color:transparent;"
+                        f"background-size:300%;animation:{name_anim};"
+                        f"letter-spacing:2px;margin-bottom:12px;line-height:1.8;")
 
         return f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  @keyframes lu-appear  {{0%{{opacity:0;transform:scale(.65) translateY(20px)}}70%{{transform:scale(1.04) translateY(-4px)}}100%{{opacity:1;transform:scale(1) translateY(0)}}}}
-  @keyframes lu-glow    {{0%,100%{{text-shadow:0 0 20px {color}cc,0 0 40px {color}66}}50%{{text-shadow:0 0 50px {color},0 0 90px {color}88,0 0 120px {color}44}}}}
-  @keyframes lu-pulse   {{0%,100%{{box-shadow:0 0 0 0 {color}55,0 0 60px {color}22}}60%{{box-shadow:0 0 0 18px transparent,0 0 80px {color}44}}}}
-  @keyframes lu-shimmer {{0%{{background-position:-300% 0}}100%{{background-position:300% 0}}}}
-  @keyframes lu-stars   {{0%,100%{{opacity:.9;letter-spacing:6px}}50%{{opacity:.25;letter-spacing:10px}}}}
-  @keyframes lu-emoji   {{0%{{transform:scale(0) rotate(-20deg)}}70%{{transform:scale(1.2) rotate(5deg)}}100%{{transform:scale(1) rotate(0)}}}}
+{kf_shared}
+{kf_extra}
 </style>
-<div style="
-  background:linear-gradient(160deg,#06000f,#0d0020,#06000f);
-  border:3px solid {color};
-  border-radius:6px;
-  max-width:840px;
-  margin:6px 0 16px;
-  padding:28px 20px 24px;
-  text-align:center;
-  animation:lu-appear .75s cubic-bezier(.34,1.56,.64,1) both, lu-pulse 2.2s ease-in-out 1s infinite;
-  font-family:'Segoe UI',Roboto,sans-serif;
-">
-  <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{color}55;letter-spacing:6px;margin-bottom:14px;animation:lu-stars 1.8s ease-in-out infinite;">
-    ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦
-  </div>
-
-  <div style="font-family:'Press Start 2P',monospace;font-size:clamp(15px,4vw,24px);color:{color};letter-spacing:5px;margin-bottom:18px;animation:lu-glow 1.6s ease-in-out infinite;">
-    ⬆ ¡NIVEL UP!
-  </div>
-
-  <div style="font-size:clamp(44px,10vw,64px);line-height:1;margin-bottom:18px;animation:lu-emoji .6s cubic-bezier(.34,1.56,.64,1) .2s both;">
-    {emoji}
-  </div>
-
-  <div style="
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(9px,2.2vw,14px);
-    background:{grad};
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-size:300%;
-    animation:lu-shimmer 2.5s linear infinite;
-    letter-spacing:2px;
-    margin-bottom:12px;
-    line-height:1.8;
-  ">{lvl_name}</div>
-
-  <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#555577;letter-spacing:3px;margin-bottom:14px;">
-    NIVEL {lvl_num} DESBLOQUEADO
-  </div>
-
-  <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{color}55;letter-spacing:6px;animation:lu-stars 1.8s ease-in-out infinite .9s;">
-    ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦
+<div style="background:{bg};{border_rule}border-radius:6px;max-width:840px;margin:6px 0 16px;padding:28px 20px 24px;text-align:center;position:relative;overflow:hidden;font-family:'Segoe UI',Roboto,sans-serif;animation:{banner_anim};">
+  {ptcls}
+  <div style="position:relative;z-index:1;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{c}55;letter-spacing:6px;margin-bottom:14px;animation:lu-stars 1.8s ease-in-out infinite;">
+      ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦
+    </div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:clamp(15px,4vw,24px);color:{c};letter-spacing:5px;margin-bottom:18px;animation:lu-glow 1.6s ease-in-out infinite;">
+      ⬆ ¡NIVEL UP!
+    </div>
+    <div style="font-size:clamp(44px,10vw,64px);line-height:1;margin-bottom:18px;animation:lu-emoji .6s cubic-bezier(.34,1.56,.64,1) .2s both{emoji_extra};">
+      {emoji}
+    </div>
+    <div style="{name_css}">{lvl_name}</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#555577;letter-spacing:3px;margin-bottom:14px;">
+      NIVEL {lvl_num} DESBLOQUEADO
+    </div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{c}55;letter-spacing:6px;animation:lu-stars 1.8s ease-in-out infinite .9s;">
+      ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦ &nbsp; ✦
+    </div>
   </div>
 </div>'''
 
@@ -1873,26 +2036,23 @@ async function agRegister() {{
     # ── RESUMEN FINAL ────────────────────────────────────────
 
     def resumen(self):
-        earned, possible, pct = self._totals()
-        n                     = self._nombre()
-        lvl_num, lvl_name     = _level_info(pct)
+        _, _, pct     = self._totals()
+        n             = self._nombre()
+        lvl_num, lvl_name = _level_info(pct)
 
-        if pct >= 90:
-            nota, nota_msg, nota_color = "AD", "Logro Destacado", "#39ff14"
-        elif pct >= 75:
-            nota, nota_msg, nota_color = "A",  "Logro Esperado",  "#ffd700"
-        elif pct >= 55:
-            nota, nota_msg, nota_color = "B",  "En Proceso",      "#ff6b35"
-        else:
-            nota, nota_msg, nota_color = "C",  "En Inicio",       "#ff3366"
+        core_earned    = sum(e for k, (e, _) in self._scores.items() if k not in _BONUS_KEYS)
+        bonus_earned   = sum(e for k, (e, _) in self._scores.items() if k in _BONUS_KEYS)
+        bonus_possible = sum(p for k, (_, p) in self._scores.items() if k in _BONUS_KEYS)
+        core_pct       = min(round(core_earned / _CORE_MAX * 100), 100)
+        core_unlocked  = core_pct == 100
 
-        if pct >= 96:
+        if core_pct >= 96:
             final_msg = f"💎 LEYENDA ABSOLUTA. {n.upper()}, eres el Dios del Código Eterno."
-        elif pct >= 90:
+        elif core_pct >= 90:
             final_msg = f"⚡ ¡INCREÍBLE, {n}! Archimago confirmado. El Notebook 2 te aguarda."
-        elif pct >= 75:
-            final_msg = f"¡Bien hecho, {n}! Repasa los ✖ para alcanzar el AD."
-        elif pct >= 55:
+        elif core_pct >= 75:
+            final_msg = f"¡Bien hecho, {n}! Repasa los ✖ para llegar al 100%."
+        elif core_pct >= 55:
             final_msg = f"Buen comienzo, {n}. Dedica tiempo a los ejercicios que fallaron."
         else:
             final_msg = f"{n}, relee la teoría de cada sección. ¡Cada intento suma XP!"
@@ -1933,8 +2093,8 @@ async function agRegister() {{
         _LVL_COLOR = {1:"#6666aa",2:"#39ff14",3:"#00f5d4",4:"#9d4edd",5:"#ffd700",6:"#ff3366"}
         lvl_color = _LVL_COLOR.get(lvl_num, "#6666aa")
 
-        # ── Breakdown grid ────────────────────────────────────
-        labels = {
+        # ── Core breakdown ────────────────────────────────────
+        core_labels = {
             "mini_a":     "Misión A: Mi Perfil",
             "t1":         "Quiz T1: Tipo int",
             "mini_b":     "Misión B: Tipos correctos",
@@ -1957,22 +2117,18 @@ async function agRegister() {{
             "ex5":        "Ejercicio 5: Email",
             "ex6":        "Ejercicio 6: Conversor",
             "ex7":        "⚔️ Jefe 1: Fiesta",
-            "cohete":     "⚔️ Jefe 2: Cohete",
-            "reto1":      "🌌 Reto 1: Proyectil",
-            "reto2":      "🌌 Reto 2: Relatividad",
-            "reto3":      "🌌 Reto 3: Gravitación",
         }
-        breakdown_items = ""
-        for key, label in labels.items():
+        core_breakdown = ""
+        for key, label in core_labels.items():
             if key in self._scores:
                 e, p = self._scores[key]
                 if e == p:
-                    bc, tc, bd_icon = "rgba(57,255,20,.07)",   "#39ff14", "★"
+                    bc, tc, bd_icon = "rgba(57,255,20,.07)",  "#39ff14", "★"
                 elif e > 0:
-                    bc, tc, bd_icon = "rgba(255,215,0,.07)",   "#ffd700", "◆"
+                    bc, tc, bd_icon = "rgba(255,215,0,.07)",  "#ffd700", "◆"
                 else:
-                    bc, tc, bd_icon = "rgba(255,51,102,.07)",  "#ff3366", "✖"
-                breakdown_items += (
+                    bc, tc, bd_icon = "rgba(255,51,102,.07)", "#ff3366", "✖"
+                core_breakdown += (
                     f'<div style="background:{bc};border:1px solid {tc}40;border-radius:3px;'
                     f'padding:7px 11px;display:flex;justify-content:space-between;align-items:center;">'
                     f'<span style="color:#a8a8cc;font-size:11px;">{bd_icon} {label}</span>'
@@ -1980,6 +2136,62 @@ async function agRegister() {{
                     f'font-family:\'Press Start 2P\',monospace;font-size:8px;">{e}/{p}</span>'
                     f'</div>'
                 )
+
+        # ── Bonus section ─────────────────────────────────────
+        bonus_labels = {
+            "cohete": "⚔️ Jefe 2: Cohete",
+            "reto1":  "🌌 Reto 1: Proyectil",
+            "reto2":  "🌌 Reto 2: Relatividad",
+            "reto3":  "🌌 Reto 3: Gravitación",
+        }
+        if core_unlocked:
+            _bbpct = round(bonus_earned / _BONUS_MAX * 100) if bonus_possible else 0
+            bonus_items = ""
+            for key, label in bonus_labels.items():
+                if key in self._scores:
+                    e, p = self._scores[key]
+                    if e == p:
+                        bc, tc, bd_icon = "rgba(0,245,212,.07)",  "#00f5d4", "★"
+                    elif e > 0:
+                        bc, tc, bd_icon = "rgba(0,245,212,.04)",  "#00c4aa", "◆"
+                    else:
+                        bc, tc, bd_icon = "rgba(255,51,102,.07)", "#ff3366", "✖"
+                    bonus_items += (
+                        f'<div style="background:{bc};border:1px solid {tc}40;border-radius:3px;'
+                        f'padding:7px 11px;display:flex;justify-content:space-between;align-items:center;">'
+                        f'<span style="color:#a8a8cc;font-size:11px;">{bd_icon} {label}</span>'
+                        f'<span style="color:{tc};font-weight:bold;'
+                        f'font-family:\'Press Start 2P\',monospace;font-size:8px;">{e}/{p}</span>'
+                        f'</div>'
+                    )
+                else:
+                    bonus_items += (
+                        f'<div style="background:rgba(20,20,40,.5);border:1px solid #2a2a4a40;border-radius:3px;'
+                        f'padding:7px 11px;">'
+                        f'<span style="color:#444466;font-size:11px;">🔒 {label} — sin intentar</span>'
+                        f'</div>'
+                    )
+            bonus_section_html = (
+                f'<div style="padding:16px 20px;border-bottom:1px solid #1a3a3a;background:rgba(0,245,212,.02);">'
+                f'<div style="font-family:\'Press Start 2P\',monospace;font-size:8px;color:#00f5d4;margin-bottom:10px;letter-spacing:1px;">🌌 DESAFÍOS DESBLOQUEADOS — BONUS XP</div>'
+                f'<div style="display:flex;justify-content:space-between;margin-bottom:5px;">'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#00f5d4;">Bonus XP: {bonus_earned}/{_BONUS_MAX}</span>'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#00f5d4;">{_bbpct}%</span>'
+                f'</div>'
+                f'<div style="width:100%;height:10px;background:#141428;border:1px solid #1a3a3a;border-radius:2px;overflow:hidden;margin-bottom:12px;">'
+                f'<div style="width:{_bbpct}%;height:100%;background:linear-gradient(90deg,#0e3a3a,#00f5d4);border-radius:2px;transform-origin:left;animation:pg-xpscale 1.5s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 8px rgba(0,245,212,.3);"></div>'
+                f'</div>'
+                f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;">{bonus_items}</div>'
+                f'</div>'
+            )
+        else:
+            remaining = _CORE_MAX - core_earned
+            bonus_section_html = (
+                f'<div style="padding:14px 20px;border-bottom:1px solid #1a1a3a;background:rgba(20,20,40,.4);text-align:center;">'
+                f'<span style="font-family:\'Press Start 2P\',monospace;font-size:8px;color:#2a2a5a;letter-spacing:1px;">'
+                f'🔒 Completa {remaining} pts más en Core para desbloquear los Desafíos</span>'
+                f'</div>'
+            )
 
         ach_section = ""
         if earned_ach:
@@ -2012,39 +2224,37 @@ async function agRegister() {{
     <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9d4edd;letter-spacing:2px;">PYTHON QUEST — NOTEBOOK I</div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #1a1a3a;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #1a1a3a;">
     <div style="padding:20px;border-right:1px solid #1a1a3a;text-align:center;">
       <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;margin-bottom:10px;letter-spacing:1px;">AGENTE</div>
       <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:#e8e8ff;letter-spacing:2px;word-break:break-all;">{n.upper()}</div>
     </div>
-    <div style="padding:20px;border-right:1px solid #1a1a3a;text-align:center;">
+    <div style="padding:20px;text-align:center;">
       <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;margin-bottom:10px;letter-spacing:1px;">NIVEL</div>
       <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:{lvl_color};line-height:1.6;">{lvl_name}</div>
-    </div>
-    <div style="padding:20px;text-align:center;">
-      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;margin-bottom:10px;letter-spacing:1px;">CALIFICACIÓN</div>
-      <div style="font-family:'Press Start 2P',monospace;font-size:26px;color:{nota_color};text-shadow:0 0 14px {nota_color};">{nota}</div>
-      <div style="font-size:11px;color:{nota_color}99;margin-top:5px;">{nota_msg}</div>
     </div>
   </div>
 
   <div style="padding:18px 20px;border-bottom:1px solid #1a1a3a;">
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;margin-bottom:8px;letter-spacing:1px;">⚡ CORE XP</div>
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444466;">XP TOTAL: {earned}/{_NOTEBOOK_MAX}</span>
-      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;">{pct}%</span>
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;">{core_earned}/{_CORE_MAX} pts</span>
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;">{core_pct}%</span>
     </div>
     <div style="width:100%;height:14px;background:#141428;border:1px solid #2a2a4a;border-radius:3px;overflow:hidden;">
-      <div style="width:{pct}%;height:100%;background:{xp_grad};border-radius:3px;transform-origin:left;animation:pg-xpscale 1.5s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 10px rgba(255,215,0,.25);"></div>
+      <div style="width:{core_pct}%;height:100%;background:{xp_grad};border-radius:3px;transform-origin:left;animation:pg-xpscale 1.5s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 10px rgba(255,215,0,.25);"></div>
     </div>
     <div style="text-align:center;margin-top:14px;font-family:'Press Start 2P',monospace;font-size:8px;color:#ffd700;animation:pg-float 3s ease-in-out infinite;">{final_msg}</div>
   </div>
 
+  {bonus_section_html}
+
   {ach_section}
 
   <div style="padding:16px 20px;border-bottom:1px solid #1a1a3a;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#89b4fa;margin-bottom:12px;letter-spacing:1px;">📊 DETALLE DE MISIONES</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#89b4fa;margin-bottom:12px;letter-spacing:1px;">📊 DETALLE DE MISIONES CORE</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;">
-      {breakdown_items}
+      {core_breakdown}
     </div>
   </div>
 
@@ -2058,4 +2268,4 @@ async function agRegister() {{
 
 </div>'''
         display(HTML(html))
-        self._submit_to_supabase(earned, possible, pct, lvl_num, lvl_name)
+        self._submit_to_supabase(core_earned, _CORE_MAX, core_pct, lvl_num, lvl_name)

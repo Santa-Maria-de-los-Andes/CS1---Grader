@@ -561,14 +561,12 @@ function renderPodiumCard(player, rank) {
   const rankCls  = ['', 'rank1', 'rank2', 'rank3'];
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
   const name     = playerName(player);
-  const grado    = playerGrado(player);
   const note     = noteLabel(player.pct);
   return `
     <div class="podium-card ${rankCls[rank]}">
       <div class="podium-crown">${crowns[rank]}</div>
       <div class="px podium-rank">#${rank}</div>
       <div class="px podium-name">${name}</div>
-      ${grado ? `<div style="font-size:9px;color:#8888bb;margin-top:3px;">${grado}</div>` : ''}
       <div class="px podium-pct">${player.pct}%</div>
       <div class="px podium-level ${lvClass(player.level_num)}">${player.level_name}</div>
       <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
@@ -582,7 +580,6 @@ function renderPodiumCard(player, rank) {
 function renderRankRow(player, rank, delay) {
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
   const name     = playerName(player);
-  const grado    = playerGrado(player);
   const note     = noteLabel(player.pct);
   return `
     <div class="rank-row" style="animation-delay:${delay}ms;">
@@ -591,7 +588,6 @@ function renderRankRow(player, rank, delay) {
         <div class="px rank-name">${name}</div>
         <div style="display:flex;gap:8px;align-items:center;">
           <div class="px rank-level ${lvClass(player.level_num)}">${player.level_name}</div>
-          ${grado ? `<div style="font-size:9px;color:#8888bb;">${grado}</div>` : ''}
         </div>
         <div class="xp-track">
           <div class="xp-fill ${xpClass(player.level_num)}" style="width:${player.pct}%;animation-delay:${delay}ms;"></div>
