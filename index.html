@@ -401,6 +401,43 @@
     }
     .footer-school-name strong { color: #aaaac8; font-style: normal; }
 
+    /* ── Grade filter bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 12px 14px;
+      background: #09091a;
+      border: 1px solid #ffd70030;
+      border-radius: 4px;
+    }
+    .filter-label {
+      font-size: 7px;
+      color: #444466;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+    .filter-btn {
+      background: none;
+      border: 1px solid #2a2a4a;
+      color: #8888bb;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 5px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: #ffd70050; color: #ffd70080; }
+    .filter-btn.active {
+      background: #ffd70018;
+      border-color: #ffd700;
+      color: #ffd700;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .school-right { display: none; }
@@ -469,6 +506,12 @@
 
   <!-- ── Main content (hidden until data loads) ── -->
   <div id="main-content" style="display:none;">
+
+    <!-- Grade filter -->
+    <div class="filter-bar" id="filter-bar">
+      <span class="px filter-label">GRADO:</span>
+      <button class="filter-btn active" data-grade="all" onclick="setFilter('all')">TODOS</button>
+    </div>
 
     <!-- Podium -->
     <div class="section-header">
@@ -604,10 +647,41 @@ function renderRankRow(player, rank, delay) {
     </div>`;
 }
 
+// ── Filter state ─────────────────────────────────────────────
+let allPlayers    = [];
+let activeFilter  = 'all';
+
+function buildFilterButtons(players) {
+  const grades = [...new Set(
+    players.map(p => p.grado).filter(Boolean).sort()
+  )];
+  const bar = document.getElementById('filter-bar');
+  // Remove any previously generated grade buttons
+  bar.querySelectorAll('[data-grade]:not([data-grade="all"])').forEach(el => el.remove());
+  grades.forEach(grade => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn px';
+    btn.dataset.grade = grade;
+    btn.textContent = grade;
+    btn.onclick = () => setFilter(grade);
+    bar.appendChild(btn);
+  });
+}
+
+function setFilter(grade) {
+  activeFilter = grade;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.grade === grade);
+  });
+  const filtered = grade === 'all'
+    ? allPlayers
+    : allPlayers.filter(p => p.grado === grade);
+  renderLeaderboard(filtered);
+}
+
 // ── Main render ──────────────────────────────────────────────
 function renderLeaderboard(players) {
   const top3    = players.slice(0, 3);
-  const rest    = players.slice(3);
   const avgPct  = players.length
     ? Math.round(players.reduce((s, p) => s + p.pct, 0) / players.length)
     : 0;
@@ -641,7 +715,9 @@ function renderLeaderboard(players) {
 
   // Full ranked list (all players)
   const listEl = document.getElementById('rank-list');
-  listEl.innerHTML = players.map((p, i) => renderRankRow(p, i + 1, i * 40)).join('');
+  listEl.innerHTML = players.length
+    ? players.map((p, i) => renderRankRow(p, i + 1, i * 40)).join('')
+    : '<div class="empty"><div class="empty-icon">🔍</div><div class="px empty-text">Sin jugadores en este grado.</div></div>';
 
   // Show content
   document.getElementById('loading-state').style.display = 'none';
@@ -669,7 +745,9 @@ async function loadLeaderboard() {
       return;
     }
 
-    renderLeaderboard(dedup(data));
+    allPlayers = dedup(data);
+    buildFilterButtons(allPlayers);
+    setFilter(activeFilter);   // re-apply current filter (or 'all' on first load)
   } catch (err) {
     console.error(err);
     document.getElementById('loading-state').style.display = 'none';
