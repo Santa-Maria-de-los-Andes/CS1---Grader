@@ -232,7 +232,7 @@ setTimeout(function(){{
     margin-bottom:8px;display:flex;align-items:center;gap:5px; }}
   .ag-field {{ display:flex;flex-direction:column; }}
 </style>
-<div style="background:#0d0d1a;border:2px solid #9d4edd;border-radius:4px;width:100%;box-sizing:border-box;
+<div style="background:#0d0d1a;border:2px solid #9d4edd;border-radius:4px;max-width:840px;
   margin:10px 0;overflow:hidden;box-shadow:0 0 40px rgba(157,78,221,.15),0 10px 30px rgba(0,0,0,.8);">
 
   <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;
@@ -298,23 +298,28 @@ async function agRegister() {{
                 pass
 
     def _print_welcome(self):
-        html = '''
+        _logo = self._logo_tag
+        html = f'''
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  @keyframes pg-glow  {0%,100%{text-shadow:0 0 12px rgba(255,215,0,.8),2px 2px 0 #7a5500}50%{text-shadow:0 0 28px rgba(255,215,0,1),0 0 55px rgba(255,140,0,.5),2px 2px 0 #7a5500}}
-  @keyframes pg-blink {50%{opacity:0}}
-  @keyframes pg-float {0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-  @keyframes pg-combo {0%,100%{transform:scale(1)}25%{transform:scale(1.12) rotate(-2deg)}75%{transform:scale(1.12) rotate(2deg)}}
-  @keyframes pg-achieve{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
-  @keyframes pg-xpscale{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-  @keyframes pg-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-  @keyframes pg-levelup{0%{opacity:0;transform:scale(.85)}60%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+  @keyframes pg-glow  {{0%,100%{{text-shadow:0 0 12px rgba(255,215,0,.8),2px 2px 0 #7a5500}}50%{{text-shadow:0 0 28px rgba(255,215,0,1),0 0 55px rgba(255,140,0,.5),2px 2px 0 #7a5500}}}}
+  @keyframes pg-blink {{50%{{opacity:0}}}}
+  @keyframes pg-float {{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-5px)}}}}
+  @keyframes pg-combo {{0%,100%{{transform:scale(1)}}25%{{transform:scale(1.12) rotate(-2deg)}}75%{{transform:scale(1.12) rotate(2deg)}}}}
+  @keyframes pg-achieve{{from{{opacity:0;transform:translateX(28px)}}to{{opacity:1;transform:translateX(0)}}}}
+  @keyframes pg-xpscale{{from{{transform:scaleX(0)}}to{{transform:scaleX(1)}}}}
+  @keyframes pg-shimmer{{0%{{background-position:-200% 0}}100%{{background-position:200% 0}}}}
+  @keyframes pg-levelup{{0%{{opacity:0;transform:scale(.85)}}60%{{transform:scale(1.04)}}100%{{opacity:1;transform:scale(1)}}}}
 </style>
 <div style="background:#0d0d1a;border:2px solid #ffd700;border-radius:4px;max-width:840px;margin:10px 0;overflow:hidden;box-shadow:0 0 0 1px #0d0d1a,0 0 0 4px #ffd700,0 0 50px rgba(255,215,0,.12),0 10px 36px rgba(0,0,0,.8);position:relative;">
   <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:5;"></div>
-  <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;padding:20px 24px;text-align:center;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:20px;color:#ffd700;animation:pg-glow 2.5s ease-in-out infinite;letter-spacing:3px;margin-bottom:10px;">⚔ PYTHON QUEST ⚔</div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#9d4edd;letter-spacing:2px;">NOTEBOOK I — FUNDAMENTOS DE PYTHON</div>
+  <div style="background:linear-gradient(90deg,#120f00,#231a00,#120f00);border-bottom:2px solid #ffd700;padding:18px 24px;position:relative;display:flex;align-items:center;justify-content:center;min-height:80px;">
+    <div style="position:absolute;left:20px;top:50%;transform:translateY(-50%);z-index:1;">{_logo}</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:20px;color:#ffd700;animation:pg-glow 2.5s ease-in-out infinite;letter-spacing:3px;margin-bottom:10px;">⚔ PYTHON QUEST ⚔</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#9d4edd;letter-spacing:2px;">NOTEBOOK I — FUNDAMENTOS DE PYTHON</div>
+    </div>
+    <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);z-index:1;">{_logo}</div>
   </div>
   <div style="padding:20px 24px;">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
@@ -340,6 +345,22 @@ async function agRegister() {{
         display(HTML(html))
 
     # ── Internal helpers ────────────────────────────────────
+
+    @property
+    def _logo_tag(self):
+        if LOGO_URL:
+            return (f'<img src="{LOGO_URL}" style="height:40px;object-fit:contain;" '
+                    f'onerror="this.style.display:\'none\'">')
+        return ('<span style="font-family:\'Press Start 2P\',monospace;font-size:11px;'
+                'color:#ffd700;letter-spacing:2px;">SMA</span>')
+
+    @property
+    def _logo_tag_sm(self):
+        if LOGO_URL:
+            return (f'<img src="{LOGO_URL}" style="height:24px;object-fit:contain;" '
+                    f'onerror="this.style.display:\'none\'">')
+        return ('<span style="font-family:\'Press Start 2P\',monospace;font-size:8px;'
+                'color:#ffd700;letter-spacing:1px;">SMA</span>')
 
     def _nombre(self):
         if self._nombre_real:
@@ -555,6 +576,7 @@ async function agRegister() {{
 
         curr_icon  = getattr(self, '_curr_icon', '⚔')
         curr_title = getattr(self, '_curr_title', 'MISIÓN').upper()
+        _logo_sm   = self._logo_tag_sm
 
         card_html = f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -565,7 +587,10 @@ async function agRegister() {{
 </style>
 <div style="background:#0d0d1a;border:2px solid {border_color};border-radius:4px;max-width:840px;margin-bottom:14px;overflow:hidden;box-shadow:{glow},0 6px 24px rgba(0,0,0,.6);font-family:'Segoe UI',Roboto,sans-serif;">
   <div style="background:{border_color}0d;border-bottom:1px solid {border_color}40;padding:9px 16px;display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:{border_color};letter-spacing:1px;">{curr_icon} {curr_title}</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      {_logo_sm}
+      <span style="font-family:'Press Start 2P',monospace;font-size:9px;color:{border_color};letter-spacing:1px;">{curr_icon} {curr_title}</span>
+    </div>
     <div style="display:flex;align-items:center;gap:10px;">
       {stars_html}
       <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ff3366;background:rgba(255,51,102,.08);border:1px solid rgba(255,51,102,.35);padding:3px 8px;border-radius:2px;">MAX {max_pts} XP</div>
