@@ -604,7 +604,6 @@ function renderPodiumCard(player, rank) {
   const rankCls  = ['', 'rank1', 'rank2', 'rank3'];
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
   const name     = playerName(player);
-  const note     = noteLabel(player.pct);
   return `
     <div class="podium-card ${rankCls[rank]}">
       <div class="podium-crown">${crowns[rank]}</div>
@@ -615,7 +614,6 @@ function renderPodiumCard(player, rank) {
       <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
         <span class="px badge badge-ach">🏅 ${achCount}</span>
         ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
-        <span class="px badge ${note.cls}">${note.text}</span>
       </div>
     </div>`;
 }
@@ -623,26 +621,22 @@ function renderPodiumCard(player, rank) {
 function renderRankRow(player, rank, delay) {
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
   const name     = playerName(player);
-  const note     = noteLabel(player.pct);
   return `
     <div class="rank-row" style="animation-delay:${delay}ms;">
       <div class="px rank-num">${rank}</div>
       <div class="rank-info">
-        <div class="px rank-name">${name}</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <div class="px rank-level ${lvClass(player.level_num)}">${player.level_name}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <div class="px rank-name" style="margin-bottom:0;">${name}</div>
+          <span class="px badge badge-ach">🏅 ${achCount}</span>
+          ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
         </div>
+        <div class="px rank-level ${lvClass(player.level_num)}" style="margin-bottom:6px;">${player.level_name}</div>
         <div class="xp-track">
           <div class="xp-fill ${xpClass(player.level_num)}" style="width:${player.pct}%;animation-delay:${delay}ms;"></div>
         </div>
       </div>
       <div class="rank-meta">
         <div class="px rank-pct ${lvClass(player.level_num)}">${player.pct}%</div>
-        <div class="rank-badges">
-          <span class="px badge badge-ach">🏅 ${achCount}</span>
-          ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
-          <span class="px badge ${note.cls}">${note.text}</span>
-        </div>
       </div>
     </div>`;
 }
