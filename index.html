@@ -592,9 +592,12 @@ function dedup(rows) {
       best[key] = row;
     }
   }
-  return Object.values(best).sort((a, b) =>
-    b.pct !== a.pct ? b.pct - a.pct : b.earned - a.earned
-  );
+  return Object.values(best).sort((a, b) => {
+    if (b.pct   !== a.pct)   return b.pct   - a.pct;
+    if (b.earned !== a.earned) return b.earned - a.earned;
+    // Tiebreaker: whoever reached this score FIRST wins
+    return new Date(a.submitted_at) - new Date(b.submitted_at);
+  });
 }
 
 // ── Render helpers ───────────────────────────────────────────
@@ -722,13 +725,13 @@ function renderLeaderboard(players) {
 // ── Fetch ────────────────────────────────────────────────────
 async function loadLeaderboard() {
   try {
+    // get_best_submissions(nb) returns exactly one row per student (their best score),
+    // so no client-side dedup or row-limit issues.
     const { data, error } = await db
-      .from('submissions')
-      .select('email, dni, nombre, grado, notebook, earned, possible, pct, level_num, level_name, achievements, streak, submitted_at')
-      .eq('notebook', 'nb1')
-      .order('pct', { ascending: false })
-      .order('submitted_at', { ascending: false })
-      .limit(500);
+      .rpc('get_best_submissions', { nb: 'nb1' })
+      .order('pct',          { ascending: false })
+      .order('earned',       { ascending: false })
+      .order('submitted_at', { ascending: true });
 
     if (error) throw error;
 
@@ -739,7 +742,7 @@ async function loadLeaderboard() {
       return;
     }
 
-    allPlayers = dedup(data);
+    allPlayers = data;          // already one-row-per-student, sorted by the DB
     buildFilterButtons(allPlayers);
     setFilter(activeFilter);   // re-apply current filter (or 'all' on first load)
   } catch (err) {
