@@ -174,8 +174,9 @@ class Autograder:
   @keyframes ag-fadein {{from{{opacity:0;transform:translateY(8px)}}to{{opacity:1;transform:translateY(0)}}}}
   @keyframes ag-spin   {{to{{transform:rotate(360deg)}}}}
   @keyframes ag-start  {{0%{{opacity:0;transform:scale(.7)}}60%{{transform:scale(1.12)}}100%{{opacity:1;transform:scale(1)}}}}
+  @keyframes ag-dot    {{0%,80%,100%{{transform:scale(.6);opacity:.3}}40%{{transform:scale(1);opacity:1}}}}
 </style>
-<div style="width:100%;box-sizing:border-box;">
+<div style="max-width:840px;margin:10px 0;box-sizing:border-box;">
   <div style="background:#0a0000;border:1px solid #cc2200;border-radius:3px;padding:12px 18px;
     font-family:'Press Start 2P',monospace;font-size:8px;
     color:#cc2200;letter-spacing:1px;animation:ag-fadein .4s ease;">
@@ -183,21 +184,29 @@ class Autograder:
   </div>
   {_score_html}
   <div id="ag-loading" style="background:#0d0005;border:1px solid #2a1a1a;border-radius:3px;
-    padding:18px;margin-top:6px;text-align:center;animation:ag-fadein .5s ease .2s both;">
-    <div style="display:inline-block;width:28px;height:28px;border:3px solid #3a1a1a;
-      border-top-color:#8b1a1a;border-radius:50%;animation:ag-spin .8s linear infinite;margin-bottom:10px;"></div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#8b1a1a;letter-spacing:2px;">
+    padding:22px 18px;margin-top:6px;text-align:center;animation:ag-fadein .5s ease .2s both;">
+    <div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:#8b1a1a;
+        animation:ag-dot 1.2s ease-in-out 0s infinite;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#8b1a1a;
+        animation:ag-dot 1.2s ease-in-out .2s infinite;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#8b1a1a;
+        animation:ag-dot 1.2s ease-in-out .4s infinite;"></div>
+    </div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#444433;letter-spacing:2px;">
       PREPARANDO EL CAMPO DE BATALLA…
     </div>
   </div>
-  <div id="ag-start" style="display:none;background:#0d0005;border:2px solid #cc2200;border-radius:4px;
-    padding:24px;margin-top:6px;text-align:center;">
-    <div style="font-family:'Press Start 2P',monospace;font-size:28px;color:#cc2200;letter-spacing:6px;
-      text-shadow:0 0 20px rgba(204,34,0,.9),2px 2px 0 #7a1100;animation:ag-start .6s ease;">
-      ¡RAGNARÖK!
-    </div>
+  <div id="ag-start" style="display:none;background:linear-gradient(160deg,#0f0000,#1e0800);
+    border:2px solid #cc2200;border-radius:4px;padding:36px 24px;margin-top:6px;text-align:center;
+    box-shadow:0 0 40px rgba(204,34,0,.25),0 0 80px rgba(204,34,0,.06),0 6px 24px rgba(0,0,0,.9);">
+    <div style="font-size:44px;margin-bottom:14px;animation:ag-start .55s cubic-bezier(.34,1.56,.64,1);">⚔️</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:clamp(18px,4vw,30px);color:#cc2200;
+      letter-spacing:6px;text-shadow:0 0 24px rgba(204,34,0,.95),0 0 50px rgba(204,34,0,.4),
+      2px 2px 0 #7a1100;animation:ag-start .6s ease;margin-bottom:14px;">¡RAGNARÖK!</div>
     <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ffd700;
-      letter-spacing:2px;margin-top:10px;">EJECUTA LA PRIMERA CELDA PARA COMENZAR</div>
+      letter-spacing:2px;opacity:.85;margin-bottom:16px;">EJECUTA LA PRIMERA CELDA PARA COMENZAR</div>
+    <div style="font-size:11px;color:#8b1a1a;opacity:.35;letter-spacing:8px;">ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ</div>
   </div>
 </div>
 <script>
@@ -611,46 +620,163 @@ async function agRegister() {{
     # ── Level-up banner (God of War style) ───────────────────
 
     def _render_levelup(self, lvl_num, lvl_name):
-        color = _lv_color(lvl_num)
+        import random as _r
+        _r.seed(lvl_num * 97 + 31)
+        uid = f"lu{_r.randint(10000, 99999)}"
+
+        # ── Per-level config ──────────────────────────────────
+        _cfg = {
+            2: dict(bg="linear-gradient(160deg,#0f0000,#1e0500)",
+                    c="#8b1a1a", sc="#cc3300", rc="#8b1a1a",
+                    sub="ESPARTANO — TU ENTRENAMIENTO COMIENZA", icon="⚔️"),
+            3: dict(bg="linear-gradient(160deg,#150000,#2e0800)",
+                    c="#cc2200", sc="#ff4422", rc="#cc2200",
+                    sub="COMANDANTE — LAS LEGIONES MARCHAN CONTIGO", icon="🛡️"),
+            4: dict(bg="linear-gradient(160deg,#001018,#00203a)",
+                    c="#4aa8d8", sc="#80ccf0", rc="#4aa8d8",
+                    sub="SEMIDIÓS — EL BIFROST ABRE SUS PUERTAS", icon="🔱"),
+            5: dict(bg="linear-gradient(160deg,#160a00,#2e1600)",
+                    c="#ffd700", sc="#ff9933", rc="#ffd700",
+                    sub="DIOS DE LA GUERRA — EL OLIMPO TIEMBLA", icon="⚔️"),
+            6: dict(bg="linear-gradient(160deg,#0e0005,#00060f,#0e0005)",
+                    c="#ffd700", sc="#4aa8d8", rc="#cc2200",
+                    sub="FANTASMA DE ESPARTA — FUEGO Y HIELO UNIDOS", icon="👻"),
+        }
+        cfg = _cfg.get(lvl_num, _cfg[2])
+        c, sc, rc = cfg["c"], cfg["sc"], cfg["rc"]
+
+        # ── 8-direction sparks + 4 large cardinal sparks ─────
+        _sd = [(-50,-88),(0,-100),(50,-88),(92,-35),(78,55),(0,92),(-78,55),(-92,-35)]
+        _bd = [(-4,-115),(115,0),(4,115),(-115,0)]
+        spark_css, spark_html = "", ""
+        for i, (dx, dy) in enumerate(_sd):
+            d = 0.12 + i * 0.035
+            sz = 4 if i % 2 == 0 else 3
+            spark_css  += (f"@keyframes {uid}-s{i}{{0%{{transform:translate(0,0);opacity:1}}"
+                           f"100%{{transform:translate({dx}px,{dy}px);opacity:0}}}}")
+            spark_html += (f'<div style="position:absolute;top:50%;left:50%;width:{sz}px;height:{sz}px;'
+                           f'border-radius:50%;background:{sc};margin:-{sz//2}px;opacity:0;'
+                           f'animation:{uid}-s{i} .85s ease-out {d:.2f}s forwards;'
+                           f'pointer-events:none;z-index:6;"></div>')
+        for i, (dx, dy) in enumerate(_bd):
+            d = 0.08 + i * 0.08
+            spark_css  += (f"@keyframes {uid}-b{i}{{0%{{transform:translate(0,0);opacity:.9}}"
+                           f"100%{{transform:translate({dx}px,{dy}px);opacity:0}}}}")
+            spark_html += (f'<div style="position:absolute;top:50%;left:50%;width:6px;height:6px;'
+                           f'border-radius:50%;background:{c};margin:-3px;opacity:0;'
+                           f'animation:{uid}-b{i} 1.1s ease-out {d:.2f}s forwards;'
+                           f'pointer-events:none;z-index:6;"></div>')
+
+        extra_ring = ""
         if lvl_num == 6:
-            bg = "linear-gradient(135deg,#1a0000,#0a0a2a,#1a0000)"
-            glow = f"0 0 40px rgba(204,34,0,.4),0 0 80px rgba(74,168,216,.2)"
-            sub = "FUEGO Y HIELO FUSIONADOS"
-        elif lvl_num == 5:
-            bg = "linear-gradient(135deg,#1a0800,#2a1400)"
-            glow = f"0 0 40px rgba(255,215,0,.35)"
-            sub = "EL OLIMPO TIEMBLA"
-        elif lvl_num == 4:
-            bg = "linear-gradient(135deg,#001020,#002040)"
-            glow = f"0 0 40px rgba(74,168,216,.35)"
-            sub = "EL BIFROST TE LLAMA"
-        elif lvl_num == 3:
-            bg = "linear-gradient(135deg,#1a0000,#2a0000)"
-            glow = f"0 0 40px rgba(204,34,0,.35)"
-            sub = "LAS LEGIONES TE OBEDECEN"
-        else:
-            bg = "linear-gradient(135deg,#0a0000,#1a0000)"
-            glow = f"0 0 28px rgba(139,26,26,.3)"
-            sub = "TU CAMINO COMIENZA"
+            extra_ring = (f'<div style="position:absolute;top:50%;left:50%;width:100px;height:100px;'
+                          f'margin:-50px;border-radius:50%;border:2px solid #4aa8d8;opacity:0;'
+                          f'animation:{uid}-ring 1.6s ease-out .5s forwards;'
+                          f'pointer-events:none;z-index:5;"></div>')
 
         return f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  @keyframes gow-lu{{0%{{opacity:0;transform:scale(.8) translateY(12px)}}
-    60%{{transform:scale(1.04)}}100%{{opacity:1;transform:scale(1) translateY(0)}}}}
-  @keyframes gow-glow{{0%,100%{{opacity:.7}}50%{{opacity:1}}}}
+  @keyframes {uid}-flash{{0%{{opacity:.6}}35%{{opacity:.15}}100%{{opacity:0}}}}
+  @keyframes {uid}-ring {{0%{{transform:scale(.08);opacity:.95}}100%{{transform:scale(4.5);opacity:0}}}}
+  @keyframes {uid}-icon {{
+    0%  {{transform:scale(0) rotate(-25deg);opacity:0}}
+    55% {{transform:scale(1.22) rotate(6deg);opacity:1}}
+    72% {{transform:scale(0.91) rotate(-3deg)}}
+    86% {{transform:scale(1.06) rotate(2deg)}}
+    100%{{transform:scale(1) rotate(0deg)}}}}
+  @keyframes {uid}-slam {{
+    0%  {{transform:scaleX(3) scaleY(0.05);opacity:0;letter-spacing:16px}}
+    55% {{transform:scaleX(1.04) scaleY(1.04);opacity:1}}
+    100%{{transform:scale(1);letter-spacing:4px}}}}
+  @keyframes {uid}-rise {{
+    0%  {{transform:translateY(32px);opacity:0;filter:blur(6px)}}
+    100%{{transform:translateY(0);opacity:1;filter:blur(0)}}}}
+  @keyframes {uid}-sub  {{from{{opacity:0;letter-spacing:6px}}to{{opacity:1;letter-spacing:2px}}}}
+  @keyframes {uid}-cl   {{from{{transform:translateX(-115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
+  @keyframes {uid}-cr   {{from{{transform:translateX(115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
+  @keyframes {uid}-rl   {{from{{opacity:0;transform:translateY(-50%) translateX(-36px)}}
+                          to{{opacity:.16;transform:translateY(-50%) translateX(0)}}}}
+  @keyframes {uid}-rr   {{from{{opacity:0;transform:translateY(-50%) translateX(36px)}}
+                          to{{opacity:.16;transform:translateY(-50%) translateX(0)}}}}
+  @keyframes {uid}-pulse{{0%,100%{{text-shadow:0 0 10px {c}88,2px 2px 0 #000}}
+                          50%{{text-shadow:0 0 32px {c},0 0 64px {c}55,2px 2px 0 #000}}}}
+  {spark_css}
 </style>
-<div style="background:{bg};border:2px solid {color};border-radius:6px;max-width:840px;
-  margin:10px 0;padding:28px;text-align:center;
-  box-shadow:{glow},0 8px 32px rgba(0,0,0,.8);
-  animation:gow-lu .7s cubic-bezier(.22,1,.36,1) forwards;">
-  <div style="font-size:36px;margin-bottom:10px;animation:gow-glow 2s ease infinite;">⚔️</div>
-  <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{color};
-    letter-spacing:3px;margin-bottom:12px;">¡ASCENDISTE!</div>
-  <div style="font-family:'Press Start 2P',monospace;font-size:clamp(12px,2.5vw,20px);
-    color:{color};letter-spacing:4px;
-    text-shadow:0 0 20px {color}80,2px 2px 0 #000;margin-bottom:8px;">{lvl_name}</div>
-  <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#666655;
-    letter-spacing:2px;">{sub}</div>
+<div style="position:relative;overflow:hidden;background:{cfg['bg']};
+  border:2px solid {c};border-radius:6px;max-width:840px;margin:14px 0;
+  box-shadow:0 0 55px {c}44,0 0 110px {c}11,0 12px 50px rgba(0,0,0,.97);">
+
+  <!-- Flash burst -->
+  <div style="position:absolute;inset:0;background:{c};border-radius:4px;
+    animation:{uid}-flash .55s ease-out forwards;pointer-events:none;z-index:20;"></div>
+
+  <!-- Shockwave ring 1 (fastest) -->
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:3px solid {rc};opacity:0;
+    animation:{uid}-ring 1.05s ease-out .04s forwards;pointer-events:none;z-index:8;"></div>
+  <!-- Ring 2 -->
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:2px solid {sc}cc;opacity:0;
+    animation:{uid}-ring 1.35s ease-out .26s forwards;pointer-events:none;z-index:8;"></div>
+  <!-- Ring 3 (slowest) -->
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:1px solid {c}55;opacity:0;
+    animation:{uid}-ring 1.65s ease-out .48s forwards;pointer-events:none;z-index:8;"></div>
+  {extra_ring}
+
+  <!-- Sparks -->
+  {spark_html}
+
+  <!-- Norse runes left -->
+  <div style="position:absolute;left:14px;top:50%;
+    font-size:16px;color:{c};letter-spacing:5px;
+    animation:{uid}-rl .9s ease-out .6s both;pointer-events:none;z-index:7;">
+    ᚠ ᚢ ᚦ ᚨ ᚱ</div>
+  <!-- Norse runes right -->
+  <div style="position:absolute;right:14px;top:50%;
+    font-size:16px;color:{c};letter-spacing:5px;
+    animation:{uid}-rr .9s ease-out .6s both;pointer-events:none;z-index:7;">
+    ᚲ ᚷ ᚹ ᚺ ᚾ</div>
+
+  <!-- Main content -->
+  <div style="position:relative;z-index:15;padding:42px 60px 32px;text-align:center;">
+
+    <!-- Icon (bouncy drop) -->
+    <div style="font-size:54px;margin-bottom:16px;display:block;
+      animation:{uid}-icon .68s cubic-bezier(.34,1.56,.64,1) .15s both;">
+      {cfg['icon']}</div>
+
+    <!-- ¡ASCENDISTE! horizontal slam -->
+    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:{c};
+      letter-spacing:4px;margin-bottom:20px;
+      animation:{uid}-slam .52s cubic-bezier(.22,.61,.36,1) .38s both;">
+      ¡ASCENDISTE!</div>
+
+    <!-- Level name — rises with glow pulse -->
+    <div style="font-family:'Press Start 2P',monospace;
+      font-size:clamp(13px,2.8vw,22px);color:{c};letter-spacing:4px;margin-bottom:18px;
+      text-shadow:0 0 20px {c}88,2px 2px 0 #000;
+      animation:{uid}-rise .55s ease-out .72s both,
+                {uid}-pulse 2.8s ease-in-out 1.3s infinite;">
+      {lvl_name}</div>
+
+    <!-- Flavor sub-text -->
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;
+      color:#444433;letter-spacing:2px;
+      animation:{uid}-sub .5s ease-out 1.0s both;">{cfg['sub']}</div>
+
+    <!-- Chain ornament sliding in from both sides -->
+    <div style="display:flex;align-items:center;margin-top:26px;overflow:hidden;">
+      <div style="font-size:13px;color:{c};opacity:.4;letter-spacing:-3px;flex-shrink:0;
+        animation:{uid}-cl .6s ease-out .92s both;">⛓⛓⛓⛓⛓</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,{c}60,{c}10);margin:0 8px;"></div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{c};opacity:.65;
+        animation:{uid}-rise .4s ease-out 1.1s both;">LV {lvl_num}</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,{c}10,{c}60);margin:0 8px;"></div>
+      <div style="font-size:13px;color:{c};opacity:.4;letter-spacing:-3px;flex-shrink:0;
+        animation:{uid}-cr .6s ease-out .92s both;">⛓⛓⛓⛓⛓</div>
+    </div>
+  </div>
 </div>'''
 
     # ── Supabase submit ───────────────────────────────────────
