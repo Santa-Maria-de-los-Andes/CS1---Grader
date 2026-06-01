@@ -1371,51 +1371,33 @@ async function agRegister() {{
         """IntEx1 — Clasificador de Exoplanetas (6 pts)"""
         self._header("INTEGRACIÓN 1 — Exoplanetas ⭐", icon="⚔️", pts=6)
         checks = []
-        radio         = _get("radio")
-        temperatura   = _get("temperatura")
-        clasificacion = _get("clasificacion")
+        habitables = _get("habitables")
 
-        if radio is None:
-            checks.append((False, "radio", "No definida (en radios terrestres, ej: radio = 1.2)"))
-        elif isinstance(radio, bool) or not isinstance(radio, (int, float)):
-            checks.append((False, "radio", f"Debe ser número, recibí {type(radio).__name__}"))
-        else:
-            checks.append((True, "radio", f"✓  {radio} R⊕"))
+        # Expected classifications (loop over the 4 provided planets):
+        # HD 209458 b: radio=14.0 > 2      → Gigante gaseoso
+        # K2-18b:      radio=1.2, T=265    → Zona habitable   ✓
+        # 55 Cancri e: radio=1.9, T=1950   → Demasiado caliente
+        # TRAPPIST-1e: radio=0.9, T=230    → Zona habitable   ✓
+        # → habitables = 2
+        EXP_HABITABLES = 2
 
-        if temperatura is None:
-            checks.append((False, "temperatura", "No definida (en Kelvin, ej: temperatura = 265)"))
-        elif isinstance(temperatura, bool) or not isinstance(temperatura, (int, float)):
-            checks.append((False, "temperatura", f"Debe ser número, recibí {type(temperatura).__name__}"))
+        if habitables is None:
+            checks.append((False, "habitables",
+                           "No definida — inicializa: habitables = 0 antes del loop "
+                           "y suma 1 cada vez que clasificacion == 'Zona habitable'"))
+        elif isinstance(habitables, bool) or not isinstance(habitables, int):
+            checks.append((False, "habitables",
+                           f"Debe ser int (contador), recibí {type(habitables).__name__}"))
         else:
-            checks.append((True, "temperatura", f"✓  {temperatura} K"))
-
-        if clasificacion is None:
-            checks.append((False, "clasificacion",
-                           "No definida — guarda el resultado: clasificacion = '...'"))
-        elif not isinstance(clasificacion, str):
-            checks.append((False, "clasificacion", f"Debe ser str, recibí {type(clasificacion).__name__}"))
-        else:
-            if isinstance(radio, (int, float)) and not isinstance(radio, bool):
-                if radio > 2:
-                    expected = "gigante gaseoso"
-                elif isinstance(temperatura, (int, float)) and not isinstance(temperatura, bool):
-                    if temperatura > 600:
-                        expected = "demasiado caliente"
-                    elif temperatura >= 200:
-                        expected = "zona habitable"
-                    else:
-                        expected = "demasiado frio"
-                else:
-                    expected = None
-                if expected and clasificacion.strip().lower() == expected:
-                    checks.append((True, f"clasificacion correcta",
-                                   f"✓  '{clasificacion}' para radio={radio}, T={temperatura}K"))
-                elif expected:
-                    checks.append((False, "clasificacion",
-                                   f"Para radio={radio}, T={temperatura}K → esperaba "
-                                   f"'{expected.title()}', obtuve '{clasificacion}'"))
+            checks.append((True, "habitables es int", f"int ✓  {habitables}"))
+            if habitables == EXP_HABITABLES:
+                checks.append((True, f"habitables == {EXP_HABITABLES}",
+                               "✓  K2-18b (r=1.2, T=265 K) y TRAPPIST-1e (r=0.9, T=230 K) son habitables"))
             else:
-                checks.append((False, "clasificacion", "Define primero radio y temperatura"))
+                checks.append((False, "habitables",
+                               f"Debe ser {EXP_HABITABLES} — K2-18b y TRAPPIST-1e caen en zona habitable "
+                               f"(HD 209458 b es gigante gaseoso, 55 Cancri e es demasiado caliente). "
+                               f"Obtuve {habitables}"))
 
         return self._award("intex1", checks, 6)
 
@@ -1521,55 +1503,47 @@ async function agRegister() {{
         return self._award("intex4", checks, 10)
 
     def check_intex5(self):
-        """IntEx5 — Simulador de Misión Espacial (12 pts)"""
-        self._header("INTEGRACIÓN 5 — Misión Espacial ⭐⭐⭐", icon="⚔️", pts=12)
+        """IntEx5 — Control de Equipaje (12 pts)"""
+        self._header("INTEGRACIÓN 5 — Control de Equipaje ✈️ ⭐⭐⭐", icon="⚔️", pts=12)
         checks = []
-        # costos=[350,200,280,90,150], combustible=1000
-        # 1000-350=650, 650-200=450, 450-280=170, 170-90=80, 80<150 → ABORT
-        # etapas_completadas=4, combustible_usado=920, mision_exitosa=False
-        EXP_ETAPAS  = 4
-        EXP_USADO   = 920
-        EXP_EXITOSA = False
+        # pesos = [7.0, 25.0, 8.5, 23.5, 15.0]
+        # María  7.0  ≤10 → Sin cargo,      S/  0
+        # Juan  25.0  >20 → Cargo alto,      S/150
+        # Sofía  8.5  ≤10 → Sin cargo,       S/  0
+        # Luis  23.5  >20 → Cargo alto,      S/150
+        # Carmen15.0  ≤20 → Cargo moderado,  S/ 50
+        # recaudacion_total = 350, sin_cargo=2, cargo_moderado=1, cargo_alto=2
+        EXP_RECAUDACION = 350
+        EXP_SIN_CARGO   = 2
+        EXP_MODERADO    = 1
+        EXP_ALTO        = 2
 
-        mision_exitosa       = _get("mision_exitosa")
-        etapas_completadas   = _get("etapas_completadas")
-        combustible_usado    = _get("combustible_usado")
+        recaudacion_total = _get("recaudacion_total")
+        sin_cargo         = _get("sin_cargo")
+        cargo_moderado    = _get("cargo_moderado")
+        cargo_alto        = _get("cargo_alto")
 
-        if mision_exitosa is None:
-            checks.append((False, "mision_exitosa",
-                           "No definida — inicializa: mision_exitosa = True"))
-        elif mision_exitosa is EXP_EXITOSA:
-            checks.append((True, "mision_exitosa == False",
-                           "✓  misión abortada en Llegada (combustible insuficiente)"))
-        else:
-            checks.append((False, "mision_exitosa",
-                           f"Debe ser False (la misión se aborta al intentar 'Llegada'), "
-                           f"obtuve {mision_exitosa}"))
-
-        if etapas_completadas is None:
-            checks.append((False, "etapas_completadas",
-                           "No definida — inicializa: etapas_completadas = 0"))
-        elif isinstance(etapas_completadas, bool) or not isinstance(etapas_completadas, int):
-            checks.append((False, "etapas_completadas", "Debe ser int"))
-        elif etapas_completadas == EXP_ETAPAS:
-            checks.append((True, "etapas_completadas == 4",
-                           "✓  Despegue, Separación, Inserción orbital, Corrección"))
-        else:
-            checks.append((False, "etapas_completadas",
-                           f"Debe ser 4 (se completan 4 antes de quedarse sin combustible), "
-                           f"obtuve {etapas_completadas}"))
-
-        if combustible_usado is None:
-            checks.append((False, "combustible_usado",
-                           "No definida — inicializa: combustible_usado = 0"))
-        elif isinstance(combustible_usado, bool) or not isinstance(combustible_usado, (int, float)):
-            checks.append((False, "combustible_usado", "Debe ser número"))
-        elif _approx(combustible_usado, EXP_USADO, tol=0.5):
-            checks.append((True, f"combustible_usado == {EXP_USADO}",
-                           f"✓  350+200+280+90 = {EXP_USADO}"))
-        else:
-            checks.append((False, "combustible_usado",
-                           f"Debe ser {EXP_USADO}, obtuve {combustible_usado}"))
+        for vname, val, exp, desc in [
+            ("recaudacion_total", recaudacion_total, EXP_RECAUDACION,
+             "0+150+0+150+50 = 350"),
+            ("sin_cargo",         sin_cargo,         EXP_SIN_CARGO,
+             "María y Sofía (peso ≤10 kg)"),
+            ("cargo_moderado",    cargo_moderado,    EXP_MODERADO,
+             "Carmen (10 < peso ≤20 kg)"),
+            ("cargo_alto",        cargo_alto,        EXP_ALTO,
+             "Juan y Luis (peso >20 kg)"),
+        ]:
+            if val is None:
+                checks.append((False, vname,
+                               f"No definida — inicializa: {vname} = 0 antes del loop"))
+            elif isinstance(val, bool) or not isinstance(val, (int, float)):
+                checks.append((False, vname,
+                               f"Debe ser número, recibí {type(val).__name__}"))
+            elif _approx(val, exp, tol=0.5):
+                checks.append((True, f"{vname} == {exp}", f"✓  {desc}"))
+            else:
+                checks.append((False, vname,
+                               f"Debe ser {exp} ({desc}), obtuve {val}"))
 
         return self._award("intex5", checks, 12)
 

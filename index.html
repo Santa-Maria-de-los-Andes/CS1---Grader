@@ -3,778 +3,436 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Python Quest · I.E. Santa María de los Andes</title>
+  <title>Python Quest · Hub · I.E. Santa María de los Andes</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* ── Reset & base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 16px; }
     body {
-      background: #0d0d1a;
+      background: #07070f;
       color: #e8e8ff;
       font-family: 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* ── Scanlines overlay ── */
+    /* scanlines */
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: repeating-linear-gradient(
-        0deg,
-        transparent 0px,
-        transparent 3px,
-        rgba(0,0,0,.04) 3px,
-        rgba(0,0,0,.04) 4px
+        0deg, transparent 0px, transparent 3px,
+        rgba(0,0,0,.04) 3px, rgba(0,0,0,.04) 4px
       );
-      pointer-events: none;
-      z-index: 1000;
+      pointer-events: none; z-index: 1000;
     }
 
-    /* ── Pixel font shorthand ── */
     .px { font-family: 'Press Start 2P', monospace; }
 
     /* ── Keyframes ── */
     @keyframes glow-gold {
       0%,100% { text-shadow: 0 0 14px rgba(255,215,0,.8), 2px 2px 0 #7a5500; }
-      50%      { text-shadow: 0 0 32px rgba(255,215,0,1), 0 0 60px rgba(255,140,0,.5), 2px 2px 0 #7a5500; }
+      50%      { text-shadow: 0 0 36px rgba(255,215,0,1), 0 0 70px rgba(255,140,0,.5), 2px 2px 0 #7a5500; }
     }
-    @keyframes blink     { 50% { opacity: 0; } }
-    @keyframes float     { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-    @keyframes xp-fill   { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-    @keyframes slide-in  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
-    @keyframes shimmer   { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    @keyframes pulse-ring {
-      0%   { box-shadow: 0 0 0 0 rgba(255,215,0,.45); }
-      70%  { box-shadow: 0 0 0 10px rgba(255,215,0,0); }
-      100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
+    @keyframes float   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+    @keyframes blink   { 50% { opacity: 0; } }
+    @keyframes pulse-gold {
+      0%   { box-shadow: 0 0 0 0 rgba(255,215,0,.4), 0 8px 32px rgba(0,0,0,.7); }
+      70%  { box-shadow: 0 0 0 10px rgba(255,215,0,0), 0 8px 32px rgba(0,0,0,.7); }
+      100% { box-shadow: 0 0 0 0 rgba(255,215,0,0), 0 8px 32px rgba(0,0,0,.7); }
     }
-    @keyframes ticker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+    @keyframes pulse-red {
+      0%   { box-shadow: 0 0 0 0 rgba(255,60,60,.4), 0 8px 32px rgba(0,0,0,.7); }
+      70%  { box-shadow: 0 0 0 10px rgba(255,60,60,0), 0 8px 32px rgba(0,0,0,.7); }
+      100% { box-shadow: 0 0 0 0 rgba(255,60,60,0), 0 8px 32px rgba(0,0,0,.7); }
+    }
     @keyframes spin-dot { to { transform: rotate(360deg); } }
-    @keyframes count-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes ticker   { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+    @keyframes slide-up { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes lock-float { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-4px) rotate(5deg); } }
 
-    /* ── Layout ── */
-    .page { max-width: 960px; margin: 0 auto; padding: 0 16px 40px; }
-
-    /* ── Header ── */
-    .header {
-      text-align: center;
-      padding: 32px 16px 24px;
-      border-bottom: 2px solid #ffd70040;
-      margin-bottom: 24px;
+    /* ── School banner ── */
+    .school-banner {
+      width: 100%; background: #04040c;
+      border-bottom: 1px solid #ffd70028;
+      padding: 0 20px; height: 38px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 200;
     }
-    .header-title {
-      font-size: clamp(14px, 3vw, 22px);
-      color: #ffd700;
+    .school-left  { display: flex; align-items: center; gap: 10px; }
+    .school-emblem {
+      width: 28px; height: 28px; border-radius: 50%; overflow: hidden;
+      filter: drop-shadow(0 0 4px rgba(255,215,0,.35));
+    }
+    .school-emblem img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .school-name-text {
+      font-family: 'Segoe UI', Georgia, serif;
+      font-size: clamp(10px,1.8vw,13px); color: #c8c8e8;
+      letter-spacing: .5px; font-style: italic;
+    }
+    .school-name-text strong { font-style: normal; color: #e8e8ff; font-weight: 600; }
+    .school-right {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px; color: #ffd70050; letter-spacing: 1px;
+    }
+
+    /* ── Page wrapper ── */
+    .page { max-width: 900px; margin: 0 auto; padding: 0 16px 60px; }
+
+    /* ── Hero header ── */
+    .hero {
+      text-align: center; padding: 48px 16px 32px;
+      border-bottom: 2px solid #ffd70030; margin-bottom: 36px;
+    }
+    .hero-title {
+      font-size: clamp(16px, 4vw, 28px); color: #ffd700;
       animation: glow-gold 2.5s ease-in-out infinite;
-      letter-spacing: 3px;
-      margin-bottom: 10px;
+      letter-spacing: 4px; margin-bottom: 12px;
     }
-    .header-sub {
-      font-size: 8px;
-      color: #9d4edd;
-      letter-spacing: 2px;
-      margin-bottom: 16px;
+    .hero-sub { font-size: 8px; color: #9d4edd; letter-spacing: 2px; margin-bottom: 20px; }
+    .hero-prompt {
+      font-size: 8px; color: #6666aa; letter-spacing: 2px;
+      animation: blink 1.4s step-end infinite;
     }
 
     /* ── Live ticker ── */
     .ticker-wrap {
-      overflow: hidden;
-      background: #09091a;
-      border: 1px solid #ffd70030;
-      border-radius: 2px;
-      height: 28px;
-      display: flex;
-      align-items: center;
+      overflow: hidden; background: #09091a;
+      border: 1px solid #ffd70030; border-radius: 2px;
+      height: 28px; display: flex; align-items: center; margin-bottom: 36px;
     }
     .ticker-label {
-      flex-shrink: 0;
-      background: #ffd700;
-      color: #0d0d1a;
-      font-size: 7px;
-      padding: 0 10px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      letter-spacing: 1px;
+      flex-shrink: 0; background: #ffd700; color: #0d0d1a;
+      font-size: 7px; padding: 0 10px; height: 100%;
+      display: flex; align-items: center; letter-spacing: 1px;
     }
     .ticker-inner {
-      white-space: nowrap;
-      animation: ticker 28s linear infinite;
-      font-size: 8px;
-      color: #ffd700;
-      padding: 0 40px;
+      white-space: nowrap; animation: ticker 30s linear infinite;
+      font-size: 8px; color: #ffd700; padding: 0 40px;
     }
 
-    /* ── Stats row ── */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 28px;
+    /* ── Section label ── */
+    .section-label {
+      font-size: 7px; color: #89b4fa; letter-spacing: 2px; margin-bottom: 20px;
     }
-    .stat-card {
-      background: #09091a;
-      border: 1px solid #ffd70030;
-      border-radius: 4px;
-      padding: 16px 12px;
-      text-align: center;
-    }
-    .stat-label { font-size: 7px; color: #444466; letter-spacing: 1px; margin-bottom: 10px; }
-    .stat-value { font-size: clamp(14px, 3vw, 22px); color: #ffd700; }
-    .stat-value.green { color: #39ff14; }
-    .stat-value.cyan  { color: #00f5d4; }
 
-    /* ── Podium ── */
-    .podium-wrap {
+    /* ── Quest grid ── */
+    .quest-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 28px;
-      align-items: end;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
     }
-    .podium-card {
-      border-radius: 4px;
-      padding: 16px 12px 14px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+    @media (max-width: 560px) { .quest-grid { grid-template-columns: 1fr; } }
+
+    /* ── Quest card base ── */
+    .quest-card {
+      border-radius: 8px; padding: 24px 20px;
+      display: flex; flex-direction: column; gap: 14px;
+      position: relative; overflow: hidden;
+      text-decoration: none; color: inherit;
+      transition: transform .18s, border-color .18s;
     }
-    .podium-card.rank1 {
-      background: linear-gradient(160deg, #120f00, #231900);
+    .quest-card:not(.locked):hover { transform: translateY(-4px); }
+
+    /* NB1 — gold */
+    .quest-card.nb1 {
+      background: linear-gradient(145deg, #110e00, #1e1800);
       border: 2px solid #ffd700;
-      box-shadow: 0 0 28px rgba(255,215,0,.22), 0 8px 24px rgba(0,0,0,.6);
-      order: 2;
-      animation: pulse-ring 2.5s ease-in-out infinite;
+      box-shadow: 0 0 32px rgba(255,215,0,.18), 0 8px 32px rgba(0,0,0,.7);
+      animation: pulse-gold 3s ease-in-out infinite;
     }
-    .podium-card.rank2 {
-      background: linear-gradient(160deg, #0a0a14, #121220);
-      border: 2px solid #c0c0c0;
-      box-shadow: 0 0 16px rgba(192,192,192,.14), 0 6px 18px rgba(0,0,0,.5);
-      order: 1;
-    }
-    .podium-card.rank3 {
-      background: linear-gradient(160deg, #0e0804, #1a1008);
-      border: 2px solid #cd7f32;
-      box-shadow: 0 0 12px rgba(205,127,50,.12), 0 6px 18px rgba(0,0,0,.5);
-      order: 3;
-    }
-    .podium-crown { font-size: 28px; margin-bottom: 6px; animation: float 3s ease-in-out infinite; }
-    .podium-rank  { font-size: 7px; color: #444466; letter-spacing: 1px; margin-bottom: 8px; }
-    .podium-name  { font-size: clamp(7px, 1.5vw, 10px); color: #e8e8ff; margin-bottom: 10px; word-break: break-all; }
-    .podium-pct   { font-size: clamp(16px, 3.5vw, 26px); margin-bottom: 8px; }
-    .podium-card.rank1 .podium-pct { color: #ffd700; text-shadow: 0 0 14px rgba(255,215,0,.6); }
-    .podium-card.rank2 .podium-pct { color: #c0c0c0; }
-    .podium-card.rank3 .podium-pct { color: #cd7f32; }
-    .podium-level { font-size: 7px; color: #8888bb; line-height: 1.6; }
+    .quest-card.nb1:hover { border-color: #ffe060; }
 
-    /* ── Rank list ── */
-    .rank-list { display: flex; flex-direction: column; gap: 6px; }
-
-    .rank-row {
-      display: grid;
-      grid-template-columns: 40px 1fr auto;
-      align-items: center;
-      gap: 12px;
-      background: #09091a;
-      border: 1px solid #1a1a3a;
-      border-radius: 3px;
-      padding: 10px 14px;
-      animation: slide-in .35s ease both;
-      transition: border-color .2s;
+    /* NB2 — blood red */
+    .quest-card.nb2 {
+      background: linear-gradient(145deg, #130008, #200010);
+      border: 2px solid #ff3c3c;
+      box-shadow: 0 0 32px rgba(255,60,60,.18), 0 8px 32px rgba(0,0,0,.7);
+      animation: pulse-red 3s ease-in-out infinite;
     }
-    .rank-row:hover { border-color: #ffd70050; }
+    .quest-card.nb2:hover { border-color: #ff6666; }
 
-    .rank-num {
-      font-size: 10px;
-      color: #444466;
-      text-align: center;
-      width: 40px;
+    /* Locked */
+    .quest-card.locked {
+      background: linear-gradient(145deg, #0a0a12, #0e0e18);
+      border: 2px solid #2a2a3a;
+      box-shadow: 0 4px 20px rgba(0,0,0,.6);
+      cursor: not-allowed;
     }
 
-    .rank-info { min-width: 0; }
-    .rank-name { font-size: clamp(7px, 1.2vw, 9px); color: #e8e8ff; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rank-level { font-size: 7px; color: #8888bb; margin-bottom: 6px; }
-
-    .xp-track {
-      width: 100%;
-      height: 7px;
-      background: #141428;
-      border: 1px solid #2a2a4a;
-      border-radius: 2px;
-      overflow: hidden;
+    /* corner glow */
+    .quest-card::before {
+      content: ''; position: absolute; top: 0; left: 0;
+      width: 60px; height: 60px; border-radius: 0 0 100% 0; opacity: .35;
     }
-    .xp-fill {
-      height: 100%;
-      border-radius: 2px;
-      transform-origin: left;
-      animation: xp-fill .9s cubic-bezier(.4,0,.2,1) both;
+    .quest-card.nb1::before  { background: radial-gradient(circle at top left, #ffd700, transparent 70%); }
+    .quest-card.nb2::before  { background: radial-gradient(circle at top left, #ff3c3c, transparent 70%); }
+    .quest-card.locked::before { display: none; }
+
+    /* ── Card internals ── */
+    .card-nb-tag { font-size: 7px; letter-spacing: 2px; margin-bottom: 2px; }
+    .nb1 .card-nb-tag    { color: #ffd700; }
+    .nb2 .card-nb-tag    { color: #ff3c3c; }
+    .locked .card-nb-tag { color: #333355; }
+
+    .card-title { font-size: clamp(9px, 1.8vw, 12px); letter-spacing: 1px; line-height: 1.7; }
+    .nb1 .card-title    { color: #ffe580; }
+    .nb2 .card-title    { color: #ff8080; }
+    .locked .card-title { color: #2a2a44; }
+
+    .card-desc { font-size: 11px; color: #6666aa; line-height: 1.6; }
+    .locked .card-desc { color: #1e1e30; }
+
+    /* mini stats */
+    .card-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stat-pill {
+      font-size: 7px; padding: 4px 9px; border-radius: 2px;
+      white-space: nowrap; letter-spacing: 1px;
+    }
+    .nb1 .stat-pill {
+      background: rgba(255,215,0,.08); border: 1px solid #ffd70040; color: #ccaa00;
+    }
+    .nb2 .stat-pill {
+      background: rgba(255,60,60,.08); border: 1px solid #ff3c3c40; color: #cc3333;
+    }
+    .stat-pill.live::before {
+      content: '● '; color: #39ff14;
+      animation: blink .9s step-end infinite;
     }
 
-    .rank-meta {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 5px;
-      flex-shrink: 0;
+    /* CTA button */
+    .card-btn {
+      display: inline-block; align-self: flex-start;
+      font-size: 8px; letter-spacing: 1px;
+      padding: 9px 16px; border-radius: 3px;
+      text-decoration: none; transition: opacity .18s;
     }
-    .rank-pct   { font-size: clamp(10px, 2vw, 14px); }
-    .rank-badges { display: flex; gap: 5px; }
-    .badge {
-      font-size: 7px;
-      padding: 2px 6px;
-      border-radius: 2px;
-      white-space: nowrap;
+    .nb1 .card-btn {
+      background: rgba(255,215,0,.18); border: 1px solid #ffd70070; color: #ffd700;
     }
-    .badge-ach  { background: rgba(157,78,221,.12); border: 1px solid #9d4edd40; color: #cba6f7; }
-    .badge-str  { background: rgba(255,107,53,.10); border: 1px solid #ff6b3540; color: #fab387; }
-    .badge-note { background: rgba(137,180,250,.10); border: 1px solid #89b4fa40; color: #89b4fa; }
-
-    /* ── Level colors ── */
-    .lv1 { color: #6666aa; }
-    .lv2 { color: #39ff14; }
-    .lv3 { color: #00f5d4; }
-    .lv4 { color: #9d4edd; }
-    .lv5 { color: #ffd700; }
-    .lv6 { background: linear-gradient(90deg,#ff3366,#ffd700,#39ff14,#00f5d4,#9d4edd);
-           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-           background-size: 200%; animation: shimmer 3s linear infinite; }
-
-    .xp-lv1 { background: linear-gradient(90deg,#333355,#6666aa); }
-    .xp-lv2 { background: linear-gradient(90deg,#1b3a0e,#39ff14); }
-    .xp-lv3 { background: linear-gradient(90deg,#0e1b3a,#00f5d4); }
-    .xp-lv4 { background: linear-gradient(90deg,#2d0e3a,#9d4edd); }
-    .xp-lv5 { background: linear-gradient(90deg,#3a2800,#ffd700); }
-    .xp-lv6 { background: linear-gradient(90deg,#ff3366,#ffd700,#39ff14,#00f5d4,#9d4edd); background-size: 200%; animation: shimmer 3s linear infinite; }
-
-    /* ── Loading / empty states ── */
-    .loading {
-      text-align: center;
-      padding: 60px 20px;
+    .nb2 .card-btn {
+      background: rgba(255,60,60,.18); border: 1px solid #ff3c3c70; color: #ff6666;
     }
+    .quest-card:not(.locked):hover .card-btn { opacity: .75; }
+
+    /* spinner */
     .spin-dot {
-      width: 14px; height: 14px;
-      border: 2px solid #ffd70040;
-      border-top-color: #ffd700;
-      border-radius: 50%;
-      display: inline-block;
-      animation: spin-dot .8s linear infinite;
-      margin-bottom: 16px;
+      width: 10px; height: 10px;
+      border: 2px solid #ffd70030; border-top-color: #ffd700;
+      border-radius: 50%; display: inline-block;
+      animation: spin-dot .8s linear infinite; vertical-align: middle;
     }
-    .loading-text { font-size: 8px; color: #444466; letter-spacing: 1px; }
+    .spin-dot.red { border-color: #ff3c3c30; border-top-color: #ff3c3c; }
 
-    .empty { text-align: center; padding: 60px 20px; }
-    .empty-icon { font-size: 40px; margin-bottom: 16px; }
-    .empty-text { font-size: 8px; color: #444466; line-height: 2; }
-
-    /* ── Section header ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
+    /* lock overlay */
+    .lock-overlay {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; padding: 10px 0;
     }
-    .section-title { font-size: 8px; color: #89b4fa; letter-spacing: 1px; }
-
-    /* ── Refresh button ── */
-    .refresh-btn {
-      background: none;
-      border: 1px solid #ffd70050;
-      color: #ffd70080;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      padding: 5px 10px;
-      border-radius: 2px;
-      cursor: pointer;
-      transition: all .2s;
+    .lock-icon {
+      font-size: 36px;
+      animation: lock-float 3s ease-in-out infinite;
+      filter: grayscale(1) opacity(.25);
     }
-    .refresh-btn:hover { border-color: #ffd700; color: #ffd700; }
+    .lock-text {
+      font-size: 8px; color: #2a2a44; letter-spacing: 2px;
+      text-align: center; line-height: 2;
+    }
+    .lock-badge {
+      font-size: 7px; padding: 5px 12px; border-radius: 2px;
+      background: rgba(42,42,58,.5); border: 1px solid #2a2a3a;
+      color: #333355; letter-spacing: 1px;
+    }
 
-    /* ── Countdown ── */
-    .countdown { font-size: 7px; color: #444466; }
+    /* ── Teacher link ── */
+    .teacher-link {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 40px; padding: 14px 20px;
+      background: #08080f; border: 1px solid #1e1e3a; border-radius: 6px;
+      text-decoration: none; color: #5a5a8a;
+      font-size: 8px; letter-spacing: 1px;
+      transition: border-color .2s, color .2s;
+    }
+    .teacher-link:hover { border-color: #4361ee50; color: #7b9eff; }
 
     /* ── Footer ── */
-    .footer {
-      text-align: center;
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid #1a1a3a;
-    }
+    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #1a1a3a; }
     .footer-logo {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      background: #0a0a14;
-      border: 2px solid #ffd700;
-      border-radius: 6px;
-      padding: 18px 32px;
+      display: inline-flex; flex-direction: column; align-items: center; gap: 10px;
+      background: #0a0a14; border: 2px solid #ffd700; border-radius: 6px; padding: 18px 32px;
       box-shadow: 0 0 28px rgba(255,215,0,.18), 0 0 60px rgba(255,215,0,.06);
     }
     .footer-logo-img {
-      width: 72px;
-      height: 72px;
-      object-fit: contain;
+      width: 72px; height: 72px; object-fit: contain;
       filter: drop-shadow(0 0 10px rgba(255,215,0,.4));
       animation: float 4s ease-in-out infinite;
     }
     .footer-logo-label {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 10px;
-      background: linear-gradient(135deg,#ffd700,#ff6b35,#ffd700);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-size: 200%;
-      animation: shimmer 3s linear infinite;
-      letter-spacing: 3px;
+      font-family: 'Press Start 2P', monospace; font-size: 10px;
+      background: linear-gradient(135deg, #ffd700, #ff6b35, #ffd700);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 200%; animation: shimmer 3s linear infinite; letter-spacing: 3px;
     }
     .footer-sub { font-size: 7px; color: #2a2a4a; margin-top: 10px; letter-spacing: 1px; }
 
-    /* ── School banner ── */
-    .school-banner {
-      width: 100%;
-      background: #06060f;
-      border-bottom: 1px solid #ffd70028;
-      padding: 0 20px;
-      height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 200;
-    }
-    .school-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .school-emblem {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      overflow: hidden;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 4px rgba(255,215,0,.35));
-    }
-    .school-emblem img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .school-name-text {
-      font-family: 'Segoe UI', Georgia, serif;
-      font-size: clamp(10px, 1.8vw, 13px);
-      color: #c8c8e8;
-      letter-spacing: 0.5px;
-      font-style: italic;
-    }
-    .school-name-text strong {
-      font-style: normal;
-      color: #e8e8ff;
-      font-weight: 600;
-    }
-    .school-right {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      color: #ffd70050;
-      letter-spacing: 1px;
-    }
+    /* slide-in stagger */
+    .quest-card { animation: slide-up .4s ease both; }
+    .quest-card:nth-child(1) { animation-delay: .05s; }
+    .quest-card:nth-child(2) { animation-delay: .12s; }
+    .quest-card:nth-child(3) { animation-delay: .19s; }
+    .quest-card:nth-child(4) { animation-delay: .26s; }
 
-    /* ── Footer school block ── */
-    .footer-school {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-    .footer-school-name {
-      font-family: 'Segoe UI', Georgia, serif;
-      font-size: 13px;
-      color: #8888aa;
-      font-style: italic;
-      letter-spacing: 0.5px;
-    }
-    .footer-school-name strong { color: #aaaac8; font-style: normal; }
-
-    /* ── Grade filter bar ── */
-    .filter-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-      padding: 12px 14px;
-      background: #09091a;
-      border: 1px solid #ffd70030;
-      border-radius: 4px;
-    }
-    .filter-label {
-      font-size: 7px;
-      color: #444466;
-      letter-spacing: 1px;
-      flex-shrink: 0;
-    }
-    .filter-btn {
-      background: none;
-      border: 1px solid #2a2a4a;
-      color: #8888bb;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      padding: 5px 10px;
-      border-radius: 2px;
-      cursor: pointer;
-      transition: all .2s;
-      white-space: nowrap;
-    }
-    .filter-btn:hover { border-color: #ffd70050; color: #ffd70080; }
-    .filter-btn.active {
-      background: #ffd70018;
-      border-color: #ffd700;
-      color: #ffd700;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
+    @media (max-width: 480px) {
       .school-right { display: none; }
-      .stats-row { grid-template-columns: 1fr 1fr; }
-      .stats-row .stat-card:last-child { grid-column: span 2; }
-      .podium-wrap { grid-template-columns: 1fr; }
-      .podium-card { order: unset !important; }
-      .rank-row { grid-template-columns: 32px 1fr auto; }
+      .hero-title { font-size: 14px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── School identity banner (sticky top) ── -->
 <div class="school-banner">
   <div class="school-left">
-    <div class="school-emblem">
-      <img src="icono%20SMA.png" alt="SMA">
-    </div>
-    <span class="school-name-text">
-      <strong>I.E. Santa María de los Andes</strong>
-    </span>
+    <div class="school-emblem"><img src="icono%20SMA.png" alt="SMA"></div>
+    <span class="school-name-text"><strong>I.E. Santa María de los Andes</strong></span>
   </div>
-  <div class="school-right">PYTHON QUEST · 2026</div>
+  <div class="school-right px">PYTHON QUEST · 2026</div>
 </div>
 
 <div class="page">
 
-  <!-- ── Header ── -->
-  <div class="header">
-    <div class="px header-title">⚔ PYTHON QUEST ⚔</div>
-    <div class="px header-sub">TABLA DE CLASIFICACIÓN — NOTEBOOK I</div>
-    <div class="ticker-wrap">
-      <div class="px ticker-label">LIVE</div>
-      <div class="px ticker-inner" id="ticker">Cargando datos…</div>
-    </div>
+  <div class="hero">
+    <div class="px hero-title">⚔ PYTHON QUEST ⚔</div>
+    <div class="px hero-sub">SELECCIONA TU MISIÓN</div>
+    <div class="px hero-prompt">▶ ELIGE UN NOTEBOOK PARA CONTINUAR…</div>
   </div>
 
-  <!-- ── Stats row ── -->
-  <div class="stats-row" id="stats-row">
-    <div class="stat-card">
-      <div class="px stat-label">JUGADORES</div>
-      <div class="px stat-value" id="stat-players">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="px stat-label">SCORE MÁXIMO</div>
-      <div class="px stat-value green" id="stat-top">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="px stat-label">PROMEDIO CLASE</div>
-      <div class="px stat-value cyan" id="stat-avg">—</div>
-    </div>
+  <div class="ticker-wrap">
+    <div class="px ticker-label">LIVE</div>
+    <div class="px ticker-inner" id="ticker">Cargando estadísticas…</div>
   </div>
 
-  <!-- ── Loading ── -->
-  <div class="loading" id="loading-state">
-    <div class="spin-dot"></div>
-    <div class="px loading-text">CARGANDO LEADERBOARD…</div>
-  </div>
+  <div class="px section-label">📜 MISIONES DISPONIBLES</div>
 
-  <!-- ── Error ── -->
-  <div class="empty" id="error-state" style="display:none;">
-    <div class="empty-icon">⚠️</div>
-    <div class="px empty-text" id="error-msg">Error al cargar datos.</div>
-  </div>
+  <div class="quest-grid">
 
-  <!-- ── Main content (hidden until data loads) ── -->
-  <div id="main-content" style="display:none;">
+    <!-- NB1 -->
+    <a href="nb1.html" class="quest-card nb1">
+      <div class="px card-nb-tag">NOTEBOOK I</div>
+      <div class="px card-title">⚡ FUNDAMENTOS</div>
+      <div class="card-desc">Variables, tipos de datos, operadores y lógica booleana. La base de todo guerrero del código.</div>
+      <div class="card-stats" id="stats-nb1">
+        <span class="px stat-pill"><span class="spin-dot"></span></span>
+      </div>
+      <span class="px card-btn">▶ VER RANKING</span>
+    </a>
 
-    <!-- Grade filter -->
-    <div class="filter-bar" id="filter-bar">
-      <span class="px filter-label">GRADO:</span>
-      <button class="filter-btn active" data-grade="all" onclick="setFilter('all')">TODOS</button>
-    </div>
+    <!-- NB2 -->
+    <a href="nb2.html" class="quest-card nb2">
+      <div class="px card-nb-tag">NOTEBOOK II</div>
+      <div class="px card-title">🩸 CONTROL DE FLUJO</div>
+      <div class="card-desc">Condicionales, bucles y lógica de control. El sendero del Dios de la Guerra.</div>
+      <div class="card-stats" id="stats-nb2">
+        <span class="px stat-pill"><span class="spin-dot red"></span></span>
+      </div>
+      <span class="px card-btn">▶ VER RANKING</span>
+    </a>
 
-    <!-- Podium -->
-    <div class="section-header">
-      <div class="px section-title">🏆 PODIO</div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span class="px countdown" id="countdown"></span>
-        <button class="refresh-btn" onclick="loadLeaderboard()">↺ REFRESH</button>
+    <!-- NB3 locked -->
+    <div class="quest-card locked">
+      <div class="px card-nb-tag">NOTEBOOK III</div>
+      <div class="px card-title">??? FUNCIONES</div>
+      <div class="lock-overlay">
+        <div class="lock-icon">🔒</div>
+        <div class="px lock-text">AÚN NO<br>DESBLOQUEADO</div>
+        <div class="px lock-badge">PRÓXIMAMENTE</div>
       </div>
     </div>
-    <div class="podium-wrap" id="podium"></div>
 
-    <!-- Full ranking -->
-    <div class="section-header" style="margin-top:28px;">
-      <div class="px section-title">📊 CLASIFICACIÓN COMPLETA</div>
+    <!-- NB4 locked -->
+    <div class="quest-card locked">
+      <div class="px card-nb-tag">NOTEBOOK IV</div>
+      <div class="px card-title">??? ESTRUCTURAS</div>
+      <div class="lock-overlay">
+        <div class="lock-icon">🔒</div>
+        <div class="px lock-text">AÚN NO<br>DESBLOQUEADO</div>
+        <div class="px lock-badge">PRÓXIMAMENTE</div>
+      </div>
     </div>
-    <div class="rank-list" id="rank-list"></div>
 
   </div>
 
-  <!-- ── Footer ── -->
+  <a href="dashboard.html" class="teacher-link px">
+    <span>⚙</span>
+    <span>DASHBOARD DOCENTE</span>
+    <span>→</span>
+  </a>
+
   <div class="footer">
     <div class="footer-logo">
       <img class="footer-logo-img" src="icono%20SMA.png" alt="I.E. Santa María de los Andes">
-      <span class="footer-logo-label">SMA</span>
+      <span class="footer-logo-label px">SMA</span>
     </div>
-    <div class="footer-school">
-      <span class="footer-school-name">
-        <strong>I.E. Santa María de los Andes</strong>
-      </span>
-    </div>
-    <div class="px footer-sub" style="margin-top:14px;">PYTHON QUEST v3 · AUTOGRADER LEADERBOARD</div>
+    <div class="px footer-sub" style="margin-top:14px;">PYTHON QUEST v3 · 2026</div>
   </div>
 
 </div>
 
-<!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── Config ──────────────────────────────────────────────────
-// Reemplaza estos valores con los de tu proyecto Supabase
 const SUPABASE_URL      = 'https://uwykikwutjtkpffwmdiq.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu';
 
-// ── Init ────────────────────────────────────────────────────
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ── Helpers ─────────────────────────────────────────────────
-const LV_CLASS = ['','lv1','lv2','lv3','lv4','lv5','lv6'];
-const XP_CLASS = ['','xp-lv1','xp-lv2','xp-lv3','xp-lv4','xp-lv5','xp-lv6'];
+async function loadStats() {
+  const nbs = [
+    { nb: 'nb1', elId: 'stats-nb1' },
+    { nb: 'nb2', elId: 'stats-nb2' },
+  ];
 
-function lvClass(n)  { return LV_CLASS[Math.min(n, 6)] || 'lv1'; }
-function xpClass(n)  { return XP_CLASS[Math.min(n, 6)] || 'xp-lv1'; }
+  const results = await Promise.all(nbs.map(({ nb }) =>
+    db.rpc('get_best_submissions', { nb })
+      .order('pct', { ascending: false })
+      .catch(() => ({ data: null }))
+  ));
 
-function playerName(player) {
-  if (player.nombre) return player.nombre;
-  return (player.email || 'anon').split('@')[0];
-}
+  const tickerParts = [];
 
-function playerGrado(player) {
-  return player.grado || '';
-}
+  results.forEach(({ data }, i) => {
+    const { elId } = nbs[i];
+    const el = document.getElementById(elId);
 
-function noteLabel(pct) {
-  if (pct >= 90) return { text: 'AD', cls: 'badge-note' };
-  if (pct >= 75) return { text: 'A',  cls: 'badge-note' };
-  if (pct >= 55) return { text: 'B',  cls: 'badge-note' };
-  return { text: 'C', cls: 'badge-str' };
-}
-
-// Deduplicate: keep best score per email
-function dedup(rows) {
-  const best = {};
-  for (const row of rows) {
-    const key = row.dni || row.email;
-    if (!best[key] || row.pct > best[key].pct ||
-        (row.pct === best[key].pct && row.earned > best[key].earned)) {
-      best[key] = row;
-    }
-  }
-  return Object.values(best).sort((a, b) => {
-    if (b.pct   !== a.pct)   return b.pct   - a.pct;
-    if (b.earned !== a.earned) return b.earned - a.earned;
-    // Tiebreaker: whoever reached this score FIRST wins
-    return new Date(a.submitted_at) - new Date(b.submitted_at);
-  });
-}
-
-// ── Render helpers ───────────────────────────────────────────
-function renderPodiumCard(player, rank) {
-  if (!player) return '<div></div>';
-  const crowns   = ['', '🥇', '🥈', '🥉'];
-  const rankCls  = ['', 'rank1', 'rank2', 'rank3'];
-  const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
-  const name     = playerName(player);
-  return `
-    <div class="podium-card ${rankCls[rank]}">
-      <div class="podium-crown">${crowns[rank]}</div>
-      <div class="px podium-rank">#${rank}</div>
-      <div class="px podium-name">${name}</div>
-      <div class="px podium-pct">${player.pct}%</div>
-      <div class="px podium-level ${lvClass(player.level_num)}">${player.level_name}</div>
-      <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-        <span class="px badge badge-ach">🏅 ${achCount}</span>
-        ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
-      </div>
-    </div>`;
-}
-
-function renderRankRow(player, rank, delay) {
-  const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
-  const name     = playerName(player);
-  return `
-    <div class="rank-row" style="animation-delay:${delay}ms;">
-      <div class="px rank-num">${rank}</div>
-      <div class="rank-info">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-          <div class="px rank-name" style="margin-bottom:0;">${name}</div>
-          <span class="px badge badge-ach">🏅 ${achCount}</span>
-          ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
-        </div>
-        <div class="px rank-level ${lvClass(player.level_num)}" style="margin-bottom:6px;">${player.level_name}</div>
-        <div class="xp-track">
-          <div class="xp-fill ${xpClass(player.level_num)}" style="width:${player.pct}%;animation-delay:${delay}ms;"></div>
-        </div>
-      </div>
-      <div class="rank-meta">
-        <div class="px rank-pct ${lvClass(player.level_num)}">${player.pct}%</div>
-      </div>
-    </div>`;
-}
-
-// ── Filter state ─────────────────────────────────────────────
-let allPlayers    = [];
-let activeFilter  = 'all';
-
-function buildFilterButtons(players) {
-  const grades = [...new Set(
-    players.map(p => p.grado).filter(Boolean).sort()
-  )];
-  const bar = document.getElementById('filter-bar');
-  // Remove any previously generated grade buttons
-  bar.querySelectorAll('[data-grade]:not([data-grade="all"])').forEach(el => el.remove());
-  grades.forEach(grade => {
-    const btn = document.createElement('button');
-    btn.className = 'filter-btn px';
-    btn.dataset.grade = grade;
-    btn.textContent = grade;
-    btn.onclick = () => setFilter(grade);
-    bar.appendChild(btn);
-  });
-}
-
-function setFilter(grade) {
-  activeFilter = grade;
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.grade === grade);
-  });
-  const filtered = grade === 'all'
-    ? allPlayers
-    : allPlayers.filter(p => p.grado === grade);
-  renderLeaderboard(filtered);
-}
-
-// ── Main render ──────────────────────────────────────────────
-function renderLeaderboard(players) {
-  const top3    = players.slice(0, 3);
-  const avgPct  = players.length
-    ? Math.round(players.reduce((s, p) => s + p.pct, 0) / players.length)
-    : 0;
-  const topPct  = players.length ? players[0].pct : 0;
-
-  // Stats
-  document.getElementById('stat-players').textContent = players.length;
-  document.getElementById('stat-top').textContent     = topPct + '%';
-  document.getElementById('stat-avg').textContent     = avgPct + '%';
-
-  // Ticker
-  const achLeader = [...players].sort((a,b) =>
-    (b.achievements||[]).length - (a.achievements||[]).length)[0];
-  const streakLeader = [...players].sort((a,b) => (b.streak||0) - (a.streak||0))[0];
-  const tickerParts = [
-    `${players.length} GUERREROS EN COMBATE`,
-    topPct > 0 ? `LÍDER: ${playerName(top3[0])} · ${topPct}%` : '',
-    avgPct > 0 ? `PROMEDIO CLASE: ${avgPct}%` : '',
-    achLeader ? `MÁS LOGROS: ${playerName(achLeader)} · ${(achLeader.achievements||[]).length} 🏅` : '',
-    streakLeader?.streak >= 2 ? `RACHA MÁS ALTA: ${playerName(streakLeader)} · 🔥×${streakLeader.streak}` : '',
-  ].filter(Boolean).join('   ⚔   ');
-  document.getElementById('ticker').textContent = tickerParts;
-
-  // Podium (order: 2nd · 1st · 3rd for visual podium effect)
-  const podiumEl = document.getElementById('podium');
-  podiumEl.innerHTML = [
-    renderPodiumCard(top3[1], 2),
-    renderPodiumCard(top3[0], 1),
-    renderPodiumCard(top3[2], 3),
-  ].join('');
-
-  // Full ranked list (all players)
-  const listEl = document.getElementById('rank-list');
-  listEl.innerHTML = players.length
-    ? players.map((p, i) => renderRankRow(p, i + 1, i * 40)).join('')
-    : '<div class="empty"><div class="empty-icon">🔍</div><div class="px empty-text">Sin jugadores en este grado.</div></div>';
-
-  // Show content
-  document.getElementById('loading-state').style.display = 'none';
-  document.getElementById('error-state').style.display   = 'none';
-  document.getElementById('main-content').style.display  = 'block';
-}
-
-// ── Fetch ────────────────────────────────────────────────────
-async function loadLeaderboard() {
-  try {
-    // get_best_submissions(nb) returns exactly one row per student (their best score),
-    // so no client-side dedup or row-limit issues.
-    const { data, error } = await db
-      .rpc('get_best_submissions', { nb: 'nb1' })
-      .order('pct',          { ascending: false })
-      .order('earned',       { ascending: false })
-      .order('submitted_at', { ascending: true });
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      document.getElementById('loading-state').style.display = 'none';
-      document.getElementById('error-state').style.display   = 'block';
-      document.getElementById('error-msg').textContent        = 'Aún no hay submissions. ¡Sé el primero!';
+    if (!data || !data.length) {
+      el.innerHTML = `<span class="px stat-pill">Sin datos aún</span>`;
       return;
     }
 
-    allPlayers = data;          // already one-row-per-student, sorted by the DB
-    buildFilterButtons(allPlayers);
-    setFilter(activeFilter);   // re-apply current filter (or 'all' on first load)
-  } catch (err) {
-    console.error(err);
-    document.getElementById('loading-state').style.display = 'none';
-    document.getElementById('error-state').style.display   = 'block';
-    document.getElementById('error-msg').textContent =
-      'Error: ' + (err.message || 'No se pudo conectar a Supabase.');
+    const players = data.length;
+    const top     = data[0].pct;
+    const avg     = Math.round(data.reduce((s, r) => s + r.pct, 0) / players);
+    const topName = data[0].nombre || (data[0].email || 'Guerrero').split('@')[0];
+
+    el.innerHTML = `
+      <span class="px stat-pill live">${players} JUGADORES</span>
+      <span class="px stat-pill">TOP ${top}%</span>
+      <span class="px stat-pill">AVG ${avg}%</span>
+    `;
+
+    const label = i === 0 ? 'NB1' : 'NB2';
+    tickerParts.push(`${label} LÍDER: ${topName} · ${top}%`);
+    tickerParts.push(`${label} · ${players} GUERREROS · PROMEDIO ${avg}%`);
+  });
+
+  if (tickerParts.length) {
+    document.getElementById('ticker').textContent = tickerParts.join('   ⚔   ');
   }
 }
 
-// ── Auto-refresh countdown ────────────────────────────────────
-const REFRESH_SEC = 60;
-let secondsLeft   = REFRESH_SEC;
-let countdownId   = null;
-
-function startCountdown() {
-  clearInterval(countdownId);
-  secondsLeft = REFRESH_SEC;
-  countdownId = setInterval(() => {
-    secondsLeft--;
-    const el = document.getElementById('countdown');
-    if (el) el.textContent = `🔄 ${secondsLeft}s`;
-    if (secondsLeft <= 0) {
-      clearInterval(countdownId);
-      loadLeaderboard().then(startCountdown);
-    }
-  }, 1000);
-}
-
-// ── Boot ─────────────────────────────────────────────────────
-loadLeaderboard().then(startCountdown);
+loadStats();
 </script>
 </body>
 </html>
