@@ -31,8 +31,10 @@ SUPABASE_ANON_KEY = "sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu"
 LOGO_URL = "https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/icono%20SMA.png"
 
 # ─── Deadline control ────────────────────────────────────────
-# Set to True to block DB submissions after the deadline
-DEADLINE_PASSED = True
+# Deadline: 2026-05-31 23:59 Peru time (UTC-5) = 2026-06-01 04:59 UTC
+import datetime as _dt
+_DEADLINE_UTC = _dt.datetime(2026, 6, 1, 4, 59, 0, tzinfo=_dt.timezone.utc)
+DEADLINE_PASSED = _dt.datetime.now(_dt.timezone.utc) >= _DEADLINE_UTC
 
 # ─── Total possible XP for Notebook 1 (sum of all max_pts) ──
 _NOTEBOOK_MAX = 136
