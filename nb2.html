@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Quest NB2 · I.E. Santa María de los Andes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      background: #080010;
+      color: #d4c5a9;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Stone texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent 0px, transparent 3px,
+          rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px, transparent 80px,
+          rgba(139,26,26,.015) 80px, rgba(139,26,26,.015) 81px
+        );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── Pixel font shorthand ── */
+    .px { font-family: 'Press Start 2P', monospace; }
+
+    /* ── Keyframes ── */
+    @keyframes glow-gold {
+      0%,100% { text-shadow: 0 0 14px rgba(255,215,0,.8), 2px 2px 0 #7a3300; }
+      50%      { text-shadow: 0 0 32px rgba(255,215,0,1), 0 0 60px rgba(204,34,0,.5), 2px 2px 0 #7a3300; }
+    }
+    @keyframes glow-red {
+      0%,100% { text-shadow: 0 0 10px rgba(204,34,0,.7), 1px 1px 0 #5a0000; }
+      50%      { text-shadow: 0 0 24px rgba(204,34,0,1), 0 0 48px rgba(255,100,0,.4), 1px 1px 0 #5a0000; }
+    }
+    @keyframes blink     { 50% { opacity: 0; } }
+    @keyframes float     { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes xp-fill   { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes slide-in  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes shimmer   { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes pulse-blood {
+      0%   { box-shadow: 0 0 0 0 rgba(204,34,0,.5); }
+      70%  { box-shadow: 0 0 0 10px rgba(204,34,0,0); }
+      100% { box-shadow: 0 0 0 0 rgba(204,34,0,0); }
+    }
+    @keyframes ticker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+    @keyframes spin-dot { to { transform: rotate(360deg); } }
+
+    /* ── Layout ── */
+    .page { max-width: 960px; margin: 0 auto; padding: 0 16px 40px; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      padding: 32px 16px 24px;
+      border-bottom: 2px solid #8b1a1a40;
+      margin-bottom: 24px;
+    }
+    .header-title {
+      font-size: clamp(14px, 3vw, 22px);
+      color: #ffd700;
+      animation: glow-gold 2.5s ease-in-out infinite;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+    .header-sub {
+      font-size: 8px;
+      color: #cc2200;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+      animation: glow-red 3s ease-in-out infinite;
+    }
+    .header-sub2 {
+      font-size: 7px;
+      color: #555544;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Live ticker ── */
+    .ticker-wrap {
+      overflow: hidden;
+      background: #060003;
+      border: 1px solid #8b1a1a30;
+      border-radius: 2px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+    }
+    .ticker-label {
+      flex-shrink: 0;
+      background: #8b1a1a;
+      color: #ffd700;
+      font-size: 7px;
+      padding: 0 10px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      letter-spacing: 1px;
+    }
+    .ticker-inner {
+      white-space: nowrap;
+      animation: ticker 30s linear infinite;
+      font-size: 8px;
+      color: #cc2200;
+      padding: 0 40px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #0a0005;
+      border: 1px solid #2a0a0a;
+      border-radius: 4px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .stat-label { font-size: 7px; color: #333322; letter-spacing: 1px; margin-bottom: 10px; }
+    .stat-value         { font-size: clamp(14px, 3vw, 22px); color: #ffd700; }
+    .stat-value.blood   { color: #cc2200; }
+    .stat-value.frost   { color: #4aa8d8; }
+
+    /* ── Podium ── */
+    .podium-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+      align-items: end;
+    }
+    .podium-card {
+      border-radius: 4px;
+      padding: 16px 12px 14px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .podium-card.rank1 {
+      background: linear-gradient(160deg, #120000, #2a0800);
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 28px rgba(255,215,0,.2), 0 8px 24px rgba(0,0,0,.7);
+      order: 2;
+      animation: pulse-blood 2.5s ease-in-out infinite;
+    }
+    .podium-card.rank2 {
+      background: linear-gradient(160deg, #0a0005, #180a0a);
+      border: 2px solid #8b1a1a;
+      box-shadow: 0 0 16px rgba(139,26,26,.2), 0 6px 18px rgba(0,0,0,.6);
+      order: 1;
+    }
+    .podium-card.rank3 {
+      background: linear-gradient(160deg, #0a0005, #140a0a);
+      border: 2px solid #4a2020;
+      box-shadow: 0 0 12px rgba(74,32,32,.15), 0 6px 18px rgba(0,0,0,.6);
+      order: 3;
+    }
+    .podium-crown { font-size: 28px; margin-bottom: 6px; animation: float 3s ease-in-out infinite; }
+    .podium-rank  { font-size: 7px; color: #333322; letter-spacing: 1px; margin-bottom: 8px; }
+    .podium-name  { font-size: clamp(7px, 1.5vw, 10px); color: #d4c5a9; margin-bottom: 10px; word-break: break-all; }
+    .podium-pct   { font-size: clamp(16px, 3.5vw, 26px); margin-bottom: 8px; }
+    .podium-card.rank1 .podium-pct { color: #ffd700; text-shadow: 0 0 14px rgba(255,215,0,.6); }
+    .podium-card.rank2 .podium-pct { color: #cc2200; }
+    .podium-card.rank3 .podium-pct { color: #7a3a3a; }
+    .podium-level { font-size: 7px; color: #666655; line-height: 1.6; }
+
+    /* ── Rank list ── */
+    .rank-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      background: #0a0005;
+      border: 1px solid #1a0a0a;
+      border-radius: 3px;
+      padding: 10px 14px;
+      animation: slide-in .35s ease both;
+      transition: border-color .2s;
+    }
+    .rank-row:hover { border-color: #8b1a1a50; }
+
+    .rank-num {
+      font-size: 10px;
+      color: #333322;
+      text-align: center;
+      width: 40px;
+    }
+
+    .rank-info { min-width: 0; }
+    .rank-name  { font-size: clamp(7px, 1.2vw, 9px); color: #d4c5a9; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-level { font-size: 7px; color: #666655; margin-bottom: 6px; }
+
+    .xp-track {
+      width: 100%;
+      height: 7px;
+      background: #141010;
+      border: 1px solid #2a1010;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      border-radius: 2px;
+      transform-origin: left;
+      animation: xp-fill .9s cubic-bezier(.4,0,.2,1) both;
+    }
+
+    .rank-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .rank-pct    { font-size: clamp(10px, 2vw, 14px); }
+    .rank-badges { display: flex; gap: 5px; }
+    .badge {
+      font-size: 7px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .badge-ach  { background: rgba(255,215,0,.08); border: 1px solid #ffd70030; color: #aa8800; }
+    .badge-str  { background: rgba(204,34,0,.08);  border: 1px solid #cc220030; color: #cc5533; }
+    .badge-note { background: rgba(74,168,216,.08); border: 1px solid #4aa8d830; color: #4aa8d8; }
+
+    /* ── God of War Level colors ── */
+    .lv1 { color: #666688; }                                          /* Simple Mortal  — stone grey */
+    .lv2 { color: #8b1a1a; }                                          /* Espartano      — dark red */
+    .lv3 { color: #cc2200; }                                          /* Comandante     — blood red */
+    .lv4 { color: #4aa8d8; }                                          /* Semidiós       — frost blue */
+    .lv5 { color: #ffd700; }                                          /* Dios de Guerra — flame gold */
+    .lv6 {
+      background: linear-gradient(90deg,#cc2200,#ffd700,#4aa8d8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 200%; animation: shimmer 3s linear infinite;   /* Fantasma        — fire+ice */
+    }
+
+    .xp-lv1 { background: linear-gradient(90deg,#333344,#666688); }
+    .xp-lv2 { background: linear-gradient(90deg,#3a0000,#8b1a1a); }
+    .xp-lv3 { background: linear-gradient(90deg,#5a0000,#cc2200); }
+    .xp-lv4 { background: linear-gradient(90deg,#0a2040,#4aa8d8); }
+    .xp-lv5 { background: linear-gradient(90deg,#3a2800,#ffd700); }
+    .xp-lv6 { background: linear-gradient(90deg,#cc2200,#ffd700,#4aa8d8); background-size:200%; animation: shimmer 3s linear infinite; }
+
+    /* ── Loading / empty states ── */
+    .loading { text-align: center; padding: 60px 20px; }
+    .spin-dot {
+      width: 14px; height: 14px;
+      border: 2px solid #2a0a0a;
+      border-top-color: #8b1a1a;
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin-dot .8s linear infinite;
+      margin-bottom: 16px;
+    }
+    .loading-text { font-size: 8px; color: #333322; letter-spacing: 1px; }
+
+    .empty { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 40px; margin-bottom: 16px; }
+    .empty-text { font-size: 8px; color: #333322; line-height: 2; }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 8px; color: #cc2200; letter-spacing: 1px; }
+
+    /* ── Refresh button ── */
+    .refresh-btn {
+      background: none;
+      border: 1px solid #8b1a1a50;
+      color: #8b1a1a80;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 5px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .refresh-btn:hover { border-color: #cc2200; color: #cc2200; }
+
+    /* ── Countdown ── */
+    .countdown { font-size: 7px; color: #333322; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #1a0a0a;
+    }
+    .footer-logo {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: #0a0005;
+      border: 2px solid #8b1a1a;
+      border-radius: 6px;
+      padding: 18px 32px;
+      box-shadow: 0 0 28px rgba(139,26,26,.2), 0 0 60px rgba(139,26,26,.06);
+    }
+    .footer-logo-img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(255,215,0,.4));
+      animation: float 4s ease-in-out infinite;
+    }
+    .footer-logo-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      background: linear-gradient(135deg,#ffd700,#cc2200,#ffd700);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200%;
+      animation: shimmer 3s linear infinite;
+      letter-spacing: 3px;
+    }
+    .footer-sub { font-size: 7px; color: #1a0a0a; margin-top: 10px; letter-spacing: 1px; }
+
+    /* ── School banner ── */
+    .school-banner {
+      width: 100%;
+      background: #050003;
+      border-bottom: 1px solid #8b1a1a28;
+      padding: 0 20px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .school-left { display: flex; align-items: center; gap: 10px; }
+    .school-emblem {
+      width: 28px; height: 28px;
+      border-radius: 50%; overflow: hidden; flex-shrink: 0;
+      filter: drop-shadow(0 0 4px rgba(255,215,0,.35));
+    }
+    .school-emblem img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .school-name-text {
+      font-family: 'Segoe UI', Georgia, serif;
+      font-size: clamp(10px, 1.8vw, 13px);
+      color: #8a8a7a;
+      letter-spacing: 0.5px;
+      font-style: italic;
+    }
+    .school-name-text strong { font-style: normal; color: #c8b89a; font-weight: 600; }
+    .school-right {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: #8b1a1a60;
+      letter-spacing: 1px;
+    }
+
+    /* ── Footer school block ── */
+    .footer-school { margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .footer-school-name {
+      font-family: 'Segoe UI', Georgia, serif;
+      font-size: 13px; color: #5a5040; font-style: italic; letter-spacing: 0.5px;
+    }
+    .footer-school-name strong { color: #7a6a50; font-style: normal; }
+
+    /* ── Grade filter bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 12px 14px;
+      background: #0a0005;
+      border: 1px solid #8b1a1a30;
+      border-radius: 4px;
+    }
+    .filter-label { font-size: 7px; color: #333322; letter-spacing: 1px; flex-shrink: 0; }
+    .filter-btn {
+      background: none;
+      border: 1px solid #2a0a0a;
+      color: #666655;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 5px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: #8b1a1a50; color: #8b1a1a80; }
+    .filter-btn.active {
+      background: #8b1a1a18;
+      border-color: #cc2200;
+      color: #cc2200;
+    }
+
+    /* ── Rune divider ── */
+    .rune-divider {
+      text-align: center;
+      font-size: 10px;
+      color: #2a0a0a;
+      letter-spacing: 12px;
+      margin: 8px 0 20px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .school-right { display: none; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stats-row .stat-card:last-child { grid-column: span 2; }
+      .podium-wrap { grid-template-columns: 1fr; }
+      .podium-card { order: unset !important; }
+      .rank-row { grid-template-columns: 32px 1fr auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── School identity banner (sticky top) ── -->
+<div class="school-banner">
+  <div class="school-left">
+    <div class="school-emblem">
+      <img src="icono%20SMA.png" alt="SMA">
+    </div>
+    <span class="school-name-text">
+      <strong>I.E. Santa María de los Andes</strong>
+    </span>
+  </div>
+  <div class="school-right">PYTHON QUEST · NB2 · 2026</div>
+</div>
+
+<div class="page">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="px header-title">⚔ PYTHON QUEST ⚔</div>
+    <div class="px header-sub">GOD OF WAR MODE</div>
+    <div class="px header-sub2">TABLA DE CLASIFICACIÓN — NOTEBOOK II</div>
+    <div class="rune-divider">ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ ᚷ ᚹ ᚺ ᚾ ᛁ ᛃ ᛇ ᛈ ᛉ ᛊ ᛏ ᛒ ᛖ ᛗ ᛚ ᛜ ᛞ ᛟ</div>
+    <div class="ticker-wrap">
+      <div class="px ticker-label">⚔</div>
+      <div class="px ticker-inner" id="ticker">Cargando datos…</div>
+    </div>
+  </div>
+
+  <!-- ── Stats row ── -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card">
+      <div class="px stat-label">GUERREROS</div>
+      <div class="px stat-value" id="stat-players">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="px stat-label">SCORE MÁXIMO</div>
+      <div class="px stat-value blood" id="stat-top">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="px stat-label">PROMEDIO CLASE</div>
+      <div class="px stat-value frost" id="stat-avg">—</div>
+    </div>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div class="loading" id="loading-state">
+    <div class="spin-dot"></div>
+    <div class="px loading-text">CARGANDO EL CAMPO DE BATALLA…</div>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="empty" id="error-state" style="display:none;">
+    <div class="empty-icon">💀</div>
+    <div class="px empty-text" id="error-msg">Error al cargar datos.</div>
+  </div>
+
+  <!-- ── Main content (hidden until data loads) ── -->
+  <div id="main-content" style="display:none;">
+
+    <!-- Grade filter -->
+    <div class="filter-bar" id="filter-bar">
+      <span class="px filter-label">GRADO:</span>
+      <button class="filter-btn active" data-grade="all" onclick="setFilter('all')">TODOS</button>
+    </div>
+
+    <!-- Podium -->
+    <div class="section-header">
+      <div class="px section-title">🪓 PODIO DE GUERRA</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="px countdown" id="countdown"></span>
+        <button class="refresh-btn" onclick="loadLeaderboard()">↺ REFRESH</button>
+      </div>
+    </div>
+    <div class="podium-wrap" id="podium"></div>
+
+    <!-- Full ranking -->
+    <div class="section-header" style="margin-top:28px;">
+      <div class="px section-title">⚔️ CLASIFICACIÓN COMPLETA</div>
+    </div>
+    <div class="rank-list" id="rank-list"></div>
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <div class="footer-logo">
+      <img class="footer-logo-img" src="icono%20SMA.png" alt="I.E. Santa María de los Andes">
+      <span class="footer-logo-label">SMA</span>
+    </div>
+    <div class="footer-school">
+      <span class="footer-school-name">
+        <strong>I.E. Santa María de los Andes</strong>
+      </span>
+    </div>
+    <div class="px footer-sub" style="margin-top:14px;">PYTHON QUEST v1 NB2 · GOD OF WAR · AUTOGRADER</div>
+  </div>
+
+</div>
+
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── Config ──────────────────────────────────────────────────
+const SUPABASE_URL      = 'https://uwykikwutjtkpffwmdiq.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── GoW Level helpers ────────────────────────────────────────
+const LV_CLASS = ['','lv1','lv2','lv3','lv4','lv5','lv6'];
+const XP_CLASS = ['','xp-lv1','xp-lv2','xp-lv3','xp-lv4','xp-lv5','xp-lv6'];
+
+function lvClass(n)  { return LV_CLASS[Math.min(n, 6)] || 'lv1'; }
+function xpClass(n)  { return XP_CLASS[Math.min(n, 6)] || 'xp-lv1'; }
+
+function playerName(player) {
+  if (player.nombre) return player.nombre;
+  return (player.email || 'anon').split('@')[0];
+}
+
+// ── Dedup: keep best score per DNI ──────────────────────────
+function dedup(rows) {
+  const best = {};
+  for (const row of rows) {
+    const key = row.dni || row.email;
+    if (!best[key] || row.pct > best[key].pct ||
+        (row.pct === best[key].pct && row.earned > best[key].earned)) {
+      best[key] = row;
+    }
+  }
+  return Object.values(best).sort((a, b) => {
+    if (b.pct    !== a.pct)   return b.pct   - a.pct;
+    if (b.earned !== a.earned) return b.earned - a.earned;
+    return new Date(a.submitted_at) - new Date(b.submitted_at);
+  });
+}
+
+// ── Render helpers ───────────────────────────────────────────
+function renderPodiumCard(player, rank) {
+  if (!player) return '<div></div>';
+  // GoW icons: 🪓 axe (1st), ⚔️ sword (2nd), 🛡️ shield (3rd)
+  const crowns   = ['', '🪓', '⚔️', '🛡️'];
+  const rankCls  = ['', 'rank1', 'rank2', 'rank3'];
+  const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
+  const name     = playerName(player);
+  return `
+    <div class="podium-card ${rankCls[rank]}">
+      <div class="podium-crown">${crowns[rank]}</div>
+      <div class="px podium-rank">#${rank}</div>
+      <div class="px podium-name">${name}</div>
+      <div class="px podium-pct">${player.pct}%</div>
+      <div class="px podium-level ${lvClass(player.level_num)}">${player.level_name || ''}</div>
+      <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+        <span class="px badge badge-ach">⚔ ${achCount}</span>
+        ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderRankRow(player, rank, delay) {
+  const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
+  const name     = playerName(player);
+  return `
+    <div class="rank-row" style="animation-delay:${delay}ms;">
+      <div class="px rank-num">${rank}</div>
+      <div class="rank-info">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <div class="px rank-name" style="margin-bottom:0;">${name}</div>
+          <span class="px badge badge-ach">⚔ ${achCount}</span>
+          ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
+        </div>
+        <div class="px rank-level ${lvClass(player.level_num)}" style="margin-bottom:6px;">
+          ${player.level_name || ''}
+        </div>
+        <div class="xp-track">
+          <div class="xp-fill ${xpClass(player.level_num)}"
+               style="width:${player.pct}%;animation-delay:${delay}ms;"></div>
+        </div>
+      </div>
+      <div class="rank-meta">
+        <div class="px rank-pct ${lvClass(player.level_num)}">${player.pct}%</div>
+      </div>
+    </div>`;
+}
+
+// ── Filter state ─────────────────────────────────────────────
+let allPlayers   = [];
+let activeFilter = 'all';
+
+function buildFilterButtons(players) {
+  const grades = [...new Set(players.map(p => p.grado).filter(Boolean).sort())];
+  const bar = document.getElementById('filter-bar');
+  bar.querySelectorAll('[data-grade]:not([data-grade="all"])').forEach(el => el.remove());
+  grades.forEach(grade => {
+    const btn = document.createElement('button');
+    btn.className      = 'filter-btn px';
+    btn.dataset.grade  = grade;
+    btn.textContent    = grade;
+    btn.onclick        = () => setFilter(grade);
+    bar.appendChild(btn);
+  });
+}
+
+function setFilter(grade) {
+  activeFilter = grade;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.grade === grade);
+  });
+  const filtered = grade === 'all'
+    ? allPlayers
+    : allPlayers.filter(p => p.grado === grade);
+  renderLeaderboard(filtered);
+}
+
+// ── Main render ──────────────────────────────────────────────
+function renderLeaderboard(players) {
+  const top3   = players.slice(0, 3);
+  const avgPct = players.length
+    ? Math.round(players.reduce((s, p) => s + p.pct, 0) / players.length)
+    : 0;
+  const topPct = players.length ? players[0].pct : 0;
+
+  document.getElementById('stat-players').textContent = players.length;
+  document.getElementById('stat-top').textContent     = topPct + '%';
+  document.getElementById('stat-avg').textContent     = avgPct + '%';
+
+  // Ticker
+  const achLeader    = [...players].sort((a,b) =>
+    (b.achievements||[]).length - (a.achievements||[]).length)[0];
+  const streakLeader = [...players].sort((a,b) => (b.streak||0) - (a.streak||0))[0];
+  const tickerParts  = [
+    `${players.length} GUERREROS EN EL CAMPO`,
+    topPct > 0 ? `LÍDER: ${playerName(top3[0])} · ${topPct}%` : '',
+    avgPct > 0 ? `PROMEDIO DE CLASE: ${avgPct}%` : '',
+    achLeader ? `MÁS LOGROS: ${playerName(achLeader)} · ${(achLeader.achievements||[]).length} ⚔` : '',
+    streakLeader?.streak >= 2 ? `RACHA MÁS ALTA: ${playerName(streakLeader)} · 🔥×${streakLeader.streak}` : '',
+  ].filter(Boolean).join('   ᚠ   ');
+  document.getElementById('ticker').textContent = tickerParts;
+
+  // Podium (visual order: 2nd · 1st · 3rd)
+  const podiumEl = document.getElementById('podium');
+  podiumEl.innerHTML = [
+    renderPodiumCard(top3[1], 2),
+    renderPodiumCard(top3[0], 1),
+    renderPodiumCard(top3[2], 3),
+  ].join('');
+
+  // Full list
+  const listEl = document.getElementById('rank-list');
+  listEl.innerHTML = players.length
+    ? players.map((p, i) => renderRankRow(p, i + 1, i * 40)).join('')
+    : '<div class="empty"><div class="empty-icon">💀</div>'
+      + '<div class="px empty-text">Sin guerreros en este grado.</div></div>';
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('error-state').style.display   = 'none';
+  document.getElementById('main-content').style.display  = 'block';
+}
+
+// ── Fetch ────────────────────────────────────────────────────
+async function loadLeaderboard() {
+  try {
+    const { data, error } = await db
+      .rpc('get_best_submissions', { nb: 'nb2' })
+      .order('pct',          { ascending: false })
+      .order('earned',       { ascending: false })
+      .order('submitted_at', { ascending: true });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display   = 'block';
+      document.getElementById('error-msg').textContent =
+        '⚔ Aún no hay guerreros. ¡Sé el primero en entrar a batalla!';
+      return;
+    }
+
+    allPlayers = data;
+    buildFilterButtons(allPlayers);
+    setFilter(activeFilter);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display   = 'block';
+    document.getElementById('error-msg').textContent =
+      'Error: ' + (err.message || 'No se pudo conectar a Supabase.');
+  }
+}
+
+// ── Auto-refresh countdown ────────────────────────────────────
+const REFRESH_SEC = 60;
+let secondsLeft = REFRESH_SEC;
+let countdownId = null;
+
+function startCountdown() {
+  clearInterval(countdownId);
+  secondsLeft = REFRESH_SEC;
+  countdownId = setInterval(() => {
+    secondsLeft--;
+    const el = document.getElementById('countdown');
+    if (el) el.textContent = `🔄 ${secondsLeft}s`;
+    if (secondsLeft <= 0) {
+      clearInterval(countdownId);
+      loadLeaderboard().then(startCountdown);
+    }
+  }, 1000);
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+loadLeaderboard().then(startCountdown);
+</script>
+</body>
+</html>
