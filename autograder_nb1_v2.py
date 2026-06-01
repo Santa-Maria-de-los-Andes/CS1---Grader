@@ -30,6 +30,10 @@ SUPABASE_ANON_KEY = "sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu"
 # Reemplaza con la URL de tu logo. Ej: "https://i.imgur.com/abc123.png"
 LOGO_URL = "https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/icono%20SMA.png"
 
+# ─── Deadline control ────────────────────────────────────────
+# Set to True to block DB submissions after the deadline
+DEADLINE_PASSED = True
+
 # ─── Total possible XP for Notebook 1 (sum of all max_pts) ──
 _NOTEBOOK_MAX = 136
 _BONUS_KEYS   = {"cohete", "reto1", "reto2", "reto3"}
@@ -637,7 +641,11 @@ async function agRegister() {{
     </div>
     {xp_bar_html}
     {ach_html}
-    {'<div style="margin-top:8px;font-family:\'Press Start 2P\',monospace;font-size:6px;color:#00bfff;letter-spacing:1px;opacity:.85;">📊 Calificación actualizada en la base de datos</div>' if self._dni else ''}
+    {'''<div style="margin-top:10px;padding:12px 16px;background:#2a0000;border:2px solid #ff0000;border-radius:3px;text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:10px;color:#ff0000;letter-spacing:2px;text-shadow:0 0 10px rgba(255,0,0,.6);">🚫 PLAZO VENCIDO</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:#ff6666;margin-top:6px;letter-spacing:1px;">TU NOTA NO SERÁ ACTUALIZADA EN LA BASE DE DATOS</div>
+      <div style="font-size:11px;color:#cc4444;margin-top:6px;">Puedes revisar tus respuestas, pero la entrega ya cerró.</div>
+    </div>''' if DEADLINE_PASSED else ('<div style="margin-top:8px;font-family:\'Press Start 2P\',monospace;font-size:6px;color:#00bfff;letter-spacing:1px;opacity:.85;">📊 Calificación actualizada en la base de datos</div>' if self._dni else '')}
   </div>
 </div>'''
         display(HTML(card_html))
@@ -1975,6 +1983,8 @@ async function agRegister() {{
 
     def _submit_to_supabase(self, earned, possible, pct, lvl_num, lvl_name, silent=False):
         """POST the final score to Supabase. Silently skips if not configured."""
+        if DEADLINE_PASSED:
+            return
         if "YOUR_PROJECT_ID" in SUPABASE_URL or not SUPABASE_URL.startswith("https://"):
             return
 
@@ -2268,4 +2278,20 @@ async function agRegister() {{
 
 </div>'''
         display(HTML(html))
-        self._submit_to_supabase(core_earned, _CORE_MAX, core_pct, lvl_num, lvl_name)
+        if DEADLINE_PASSED:
+            display(HTML('''
+<div style="max-width:920px;margin:8px 0;padding:18px 24px;background:#2a0000;
+  border:3px solid #ff0000;border-radius:4px;text-align:center;
+  box-shadow:0 0 30px rgba(255,0,0,.3);">
+  <div style="font-family:'Press Start 2P',monospace;font-size:14px;color:#ff0000;
+    letter-spacing:3px;text-shadow:0 0 16px rgba(255,0,0,.8);">🚫 PLAZO DE ENTREGA VENCIDO</div>
+  <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#ff4444;
+    margin-top:10px;letter-spacing:1px;">TU NOTA NO SERÁ ACTUALIZADA EN LA BASE DE DATOS</div>
+  <div style="font-size:13px;color:#cc4444;margin-top:10px;line-height:1.6;">
+    El plazo de entrega del Notebook 1 ya cerró.<br>
+    Puedes revisar tus respuestas, pero tu calificación<br>
+    <strong style="color:#ff6666;">no se enviará al sistema de notas.</strong>
+  </div>
+</div>'''))
+        else:
+            self._submit_to_supabase(core_earned, _CORE_MAX, core_pct, lvl_num, lvl_name)
