@@ -85,11 +85,12 @@ function drawFrame(dayIdx) {
   frame.forEach(function(z, i) {
     if (z.tasa > maxTasa) maxTasa = z.tasa;
     var isPZ = (dayIdx === 0 && i === PZ_IDX && PZ_IDX >= 0);
+    var diaLabel = ANIMADO ? (dayIdx + 1) : DIA_ACTUAL;
     L.circle(z.coords, {
       radius: z.radio, color: z.color, fillColor: z.color,
       fillOpacity: 0.38, weight: isPZ ? 3 : 1.5,
       dashArray: z.status === 'PERDIDA' ? '6,4' : null
-    }).bindPopup(buildPopup(z, dayIdx+1, isPZ)).addTo(circleLayer);
+    }).bindPopup(buildPopup(z, diaLabel, isPZ)).addTo(circleLayer);
 
     var shortName = z.nombre.split(' ')[0];
     var lbl = L.divIcon({
@@ -297,7 +298,7 @@ class MapaBrote:
         return frames, totales
 
     @classmethod
-    def _render(cls, ciudad_key, infectados_por_dia, poblaciones, patogeno, altura, animado):
+    def _render(cls, ciudad_key, infectados_por_dia, poblaciones, patogeno, altura, animado, dia_actual=1):
         ciudad  = cls.CIUDADES[ciudad_key]
         zonas   = ciudad["zonas"]
         pz_idx  = ciudad.get("patient_zero_zona", -1)
@@ -324,10 +325,12 @@ class MapaBrote:
 
         data_js = f"""
 <script>
-  var FRAMES  = {json.dumps(frames)};
-  var TOTALES = {json.dumps(totales)};
-  var PZ_IDX  = {pz_idx};
-  var N_DIAS  = {n_dias};
+  var FRAMES     = {json.dumps(frames)};
+  var TOTALES    = {json.dumps(totales)};
+  var PZ_IDX     = {pz_idx};
+  var N_DIAS     = {n_dias};
+  var DIA_ACTUAL = {dia_actual};
+  var ANIMADO    = {'true' if animado else 'false'};
 </script>"""
 
         map_js = f"""
@@ -357,6 +360,7 @@ class MapaBrote:
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <span class="mb-tag">{len(zonas)} zonas</span>
+      {'<span class="mb-tag">Día ' + str(dia_actual) + '</span>' if not animado else ''}
       <span id="mb-alert" class="mb-badge {pulse}" style="background:{al_color}">ALERTA {al}</span>
     </div>
   </div>
@@ -388,9 +392,7 @@ class MapaBrote:
             return
         n = len(cls.CIUDADES[ciudad]["zonas"])
         padded = list(infectados[:n]) + [0] * (n - len(infectados))
-        # Repetir el mismo frame 'dia' veces para que el popup muestre el día correcto
-        frames = [[0] * n] * (dia - 1) + [padded]
-        html = cls._render(ciudad, frames, poblaciones, patogeno, altura, animado=False)
+        html = cls._render(ciudad, [padded], poblaciones, patogeno, altura, animado=False, dia_actual=dia)
         display(HTML(f'<div style="height:{altura+80}px">{html}</div>'))
 
     @classmethod

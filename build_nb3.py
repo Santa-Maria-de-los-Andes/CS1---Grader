@@ -99,6 +99,20 @@ cells.append(code("nb3-setup", """\
 from autograder_nb3 import Autograder
 grader = Autograder()"""))
 
+cells.append(code("nb3-viz-setup", """\
+# ═══════════════════════════════════════════
+# MÓDULOS DE VISUALIZACIÓN — descarga una sola vez
+# ═══════════════════════════════════════════
+!wget -q https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/mapa_brote.py
+!wget -q https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/viz_epidemias.py
+!wget -q https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/dashboard_oms.py
+
+from mapa_brote    import MapaBrote    as mapa
+from viz_epidemias import VizEpidemias as viz
+from dashboard_oms import DashboardOMS as dash
+
+print("✅ Visualización lista — mapa · viz · dash")"""))
+
 # ════════════════════════════════════════════════════════════
 # SECCIÓN 3.1 — NESTED LOOPS: LA CUADRÍCULA
 # ════════════════════════════════════════════════════════════
@@ -514,6 +528,21 @@ cells.append(md("nb3-32-ej3-exp", """\
 > 💬 **Explicación:** ¿Qué zona colapsa primero? ¿Es siempre la que empieza con más infectados? ¿Por qué?
 > *(Doble-click para responder aquí)*"""))
 
+cells.append(md("nb3-32-ej3-viz-md", """\
+---
+### 🌍 Visualiza — Tu simulación en Lima, Perú
+
+Las **mismas tasas de infección** que acabas de calcular, proyectadas sobre el mapa real de Lima.
+Los distritos más grandes de la ciudad. Los mismos distritos donde vivió el brote de COVID-19 más letal del mundo.
+
+*Ejecuta la celda de abajo para ver tus resultados en el mapa.*"""))
+
+cells.append(code("nb3-32-ej3-viz", """\
+# 🗺 Tu simulación de propagación — Lima, Perú
+_zonas_nombres = ["Zona Norte", "Zona Este", "Zona Centro", "Zona Sur", "Zona Oeste"]
+viz.semaforo_ciudad(_zonas_nombres, infectados, poblaciones, dia=dias, patogeno=f"R\\u2080={r0}")
+mapa.brote_actual("lima", infectados, poblaciones, dia=dias, patogeno=f"COVID-19 simulado (R\\u2080={r0})")"""))
+
 cells.append(md("nb3-32-ej4-md", """\
 ---
 ### 🔨 Ejercicio 4 — Tres Patógenos, Diez Días ⭐⭐ (8 pts)
@@ -604,6 +633,30 @@ cells.append(code("nb3-32-ej5-check", "grader.check_ex5()"))
 cells.append(md("nb3-32-ej5-exp", """\
 > 💬 **Explicación:** ¿Por qué importa tanto el número de infectados iniciales? ¿Qué implicación tiene esto para la detección temprana?
 > *(Doble-click para responder aquí)*"""))
+
+cells.append(md("nb3-32-ej5-viz-md", """\
+---
+### 📊 Visualiza — Las dos olas de la Gripe Española
+
+Esto es exactamente la curva que los epidemiólogos analizaron en 1919 para entender por qué la segunda ola mató más que la primera.
+La diferencia no fue el virus. Fue el número de infectados con los que empezó cada ola.
+
+*Ejecuta para ver las dos curvas superpuestas.*"""))
+
+cells.append(code("nb3-32-ej5-viz", """\
+# 📊 Las dos olas — Gripe Española 1918
+_pob = 100_000
+_r0  = 2.0
+_ola1, _ola2 = [100], [5_000]
+for _ in range(9):
+    _ola1.append(min(int(_ola1[-1] * _r0), _pob))
+    _ola2.append(min(int(_ola2[-1] * _r0), _pob))
+
+viz.comparar_patogenos(
+    {"Gripe 1918 \\u2014 Ola 1 (inicio: 100)":    _ola1,
+     "Gripe 1918 \\u2014 Ola 2 (inicio: 5,000)":  _ola2},
+    titulo="Las Dos Olas \\u2014 Gripe Espa\\u00f1ola 1918"
+)"""))
 
 cells.append(code("nb3-32-mini-b", "grader.check_mini_b()   # ✅ Checkpoint 3.2"))
 
@@ -1034,6 +1087,49 @@ cells.append(code("nb3-34-ej8-check", "grader.check_ex8()"))
 cells.append(md("nb3-34-ej8-exp", """\
 > 💬 **Explicación:** ¿Hay un punto de no retorno — un día después del cual la cuarentena ya no cambia el resultado? ¿Cómo lo encontrarías?
 > *(Doble-click para responder aquí)*"""))
+
+cells.append(md("nb3-34-ej8-viz-md", """\
+---
+### 📊 Visualiza — ¿Cuántas vidas vale un día de retraso?
+
+Esta gráfica muestra el área entre las dos curvas (sin cuarentena vs con cuarentena).
+Esa área es la diferencia en casos. Multiplicada por la tasa de mortalidad = vidas salvadas.
+
+Italia esperó hasta el Día 14. Nueva Zelanda actuó en el Día 5.
+Los resultados están en los datos históricos — y en tu gráfica.
+
+*Ejecuta para ver el impacto cuantificado.*"""))
+
+cells.append(code("nb3-34-ej8-viz", """\
+# 📊 Impacto de la cuarentena — la diferencia en vidas
+_pobs = [5000, 3000, 8000, 2000, 10000]
+_inf0 = [100, 50, 200, 30, 500]
+_r0b  = r0_valores[2]   # COVID-19
+
+def _simular_q(dia_q):
+    inf = _inf0[:]
+    caidas = [False] * 5
+    totales = []
+    for dia in range(1, 22):
+        r0_hoy = _r0b * 0.4 if dia >= dia_q else _r0b
+        total = 0
+        for z in range(5):
+            if not caidas[z]:
+                tasa = inf[z] / _pobs[z]
+                if tasa > 0.6:
+                    caidas[z] = True
+                else:
+                    inf[z] = min(int(inf[z] * r0_hoy), _pobs[z])
+            total += inf[z]
+        totales.append(total)
+    return totales
+
+_sin_q = _simular_q(999)
+_q5    = _simular_q(5)
+_q14   = _simular_q(14)
+
+viz.impacto_cuarentena(_sin_q, _q5,  dia_cuarentena=5,  nombre_patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 5",  cfr=mortalidad[2])
+viz.impacto_cuarentena(_sin_q, _q14, dia_cuarentena=14, nombre_patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 14", cfr=mortalidad[2])"""))
 
 cells.append(md("nb3-34-debug4-md", """\
 ---
@@ -1591,6 +1687,29 @@ cells.append(md("nb3-intex3-exp", """\
 > 💬 **Explicación:** ¿Qué patógeno es más peligroso — el que tiene mayor R0 o el que tiene mayor mortalidad? ¿De qué factores depende?
 > *(Doble-click para responder aquí)*"""))
 
+cells.append(md("nb3-intex3-viz-md", """\
+---
+### 🌍 Visualiza — Los 7 patógenos en una sola gráfica
+
+La tabla que imprimiste muestra los números. La gráfica muestra por qué el sarampión asustó a cada epidemiólogo que la vio.
+
+*Ejecuta para ver todas las curvas superpuestas — interactivas.*"""))
+
+cells.append(code("nb3-intex3-viz", """\
+# 📊 Los 7 patógenos — comparación interactiva
+_inf0 = 50
+_pob  = 50_000
+_series = {}
+for i in range(len(nombres)):
+    inf = _inf0
+    serie = []
+    for _ in range(14):
+        inf = min(int(inf * r0_valores[i]), _pob)
+        serie.append(inf)
+    _series[nombres[i]] = serie
+
+viz.comparar_patogenos(_series, titulo="Los 7 Pat\\u00f3genos \\u2014 14 d\\u00edas desde 50 infectados iniciales")"""))
+
 # INTEX 4
 cells.append(md("nb3-intex4-md", """\
 ---
@@ -1696,6 +1815,42 @@ cells.append(code("nb3-intex4-check", "grader.check_intex4()"))
 cells.append(md("nb3-intex4-exp", """\
 > 💬 **Explicación:** ¿Cuál es el costo en vidas estimadas de retrasar la cuarentena de día 7 a día 20? ¿Hay un punto de no retorno?
 > *(Doble-click para responder aquí)*"""))
+
+cells.append(md("nb3-intex4-viz-md", """\
+---
+### 🌍 Visualiza — El mismo brote en dos ciudades del mundo
+
+**Wuhan** tuvo cuarentena en el Día 7. **Cusco** tuvo capacidad hospitalaria casi nula durante todo el brote.
+Los mapas animados de abajo muestran las mismas matemáticas que calculaste — en los lugares donde ocurrió.
+
+*Presiona ▶ Reproducir para ver la expansión día a día.*"""))
+
+cells.append(code("nb3-intex4-viz", """\
+# 🗺 Animación del brote — Wuhan y Cusco
+_zi   = [50, 20, 100, 10, 200, 30]
+_pobs = [5000, 3000, 10000, 2000, 8000, 4000]
+_r0b  = r0_valores[2]
+
+def _animar_sim(dia_q):
+    inf = _zi[:]
+    caidas = [False] * 6
+    frames = []
+    for dia in range(1, 31):
+        r0_hoy = _r0b * 0.4 if dia >= dia_q else _r0b
+        for z in range(6):
+            if not caidas[z]:
+                tasa = inf[z] / _pobs[z]
+                if tasa > 0.6:
+                    caidas[z] = True
+                else:
+                    inf[z] = min(int(inf[z] * r0_hoy), _pobs[z])
+        frames.append(inf[:])
+    return frames
+
+print("Generando mapa de Wuhan (cuarentena D\\u00eda 7)...")
+mapa.animacion_brote("wuhan", _animar_sim(7),  _pobs, patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 7")
+print("\\nGenerando mapa de Cusco (cuarentena D\\u00eda 20 \\u2014 respuesta tard\\u00eda)...")
+mapa.animacion_brote("cusco", _animar_sim(20), _pobs, patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 20")"""))
 
 # INTEX 5 — CAPSTONE
 cells.append(md("nb3-intex5-md", """\
@@ -1807,6 +1962,39 @@ cells.append(md("nb3-intex5-exp", """\
 > 💬 **Explicación:** ¿Por qué `simular_ciudad` llama a las otras funciones en vez de tener toda la lógica directamente? Si quisieras cambiar la fórmula de `r0_efectivo`, ¿cuántos lugares tendrías que editar?
 > *(Doble-click para responder aquí)*"""))
 
+cells.append(md("nb3-intex5-viz-md", """\
+---
+### 🌍 Visualiza — Motor de simulación completo
+
+Tu `simular_ciudad()` acaba de producir los mismos outputs que usan los modelos del Imperial College y la OMS.
+La gráfica compara los dos escenarios que corriste. El dashboard es lo que ve un epidemiólogo en una sala de emergencias real.
+
+*Ejecuta para ver los resultados de tu motor de simulación.*"""))
+
+cells.append(code("nb3-intex5-viz", """\
+# 📊 Resultados del motor de simulación
+viz.comparar_patogenos(
+    {"Cordyceps (R\\u2080=3.5, CFR=85%)": total_cordyceps,
+     "COVID-19  (R\\u2080=2.5, CFR=2%)":  total_covid},
+    titulo="Motor de Simulaci\\u00f3n \\u2014 30 d\\u00edas, 5 zonas"
+)
+
+# 🏥 Dashboard de situación — COVID-19
+_pobs5 = [5000, 3000, 8000, 2000, 10000]
+_zonas_dash = [{"nombre": f"Zona {i+1}", "infectados": int(total_covid[-1] * _pobs5[i] / sum(_pobs5)),
+                "poblacion": _pobs5[i]} for i in range(5)]
+dash.situacion(
+    patogeno         = "COVID-19",
+    dia              = dias,
+    zonas_data       = _zonas_dash,
+    r0               = r0_valores[2],
+    cfr              = mortalidad[2],
+    total_infectados = int(max(total_covid)),
+    total_muertos    = int(max(total_covid) * mortalidad[2]),
+    ciudad           = "Lima (simulaci\\u00f3n)",
+    autor            = "Escribe tu nombre aqu\\u00ed"
+)"""))
+
 # ════════════════════════════════════════════════════════════
 # BONUS
 # ════════════════════════════════════════════════════════════
@@ -1895,6 +2083,27 @@ def correr_sir(r0, gamma, dias, nombre):
 """))
 
 cells.append(code("nb3-reto2-check", "grader.check_reto2()   # opcional"))
+
+cells.append(md("nb3-reto2-viz-md", """\
+---
+### 📈 Visualiza — La curva SIR de Kermack y McKendrick (1927)
+
+Esta es la curva que publicaron en 1927 y que 93 años después Boris Johnson vio proyectada en Downing Street antes de ordenar el lockdown del Reino Unido.
+Tú acaba de correr el mismo modelo. Tú acabas de ver los mismos números.
+
+*Ejecuta para ver la curva SIR interactiva de tu simulación.*"""))
+
+cells.append(code("nb3-reto2-viz", """\
+# 📈 Curva SIR interactiva — COVID-19 en una ciudad de 100,000
+_gamma = 1/14   # COVID-19: 14 días promedio de infección
+_beta  = r0_a_beta(r0_valores[2], _gamma)
+_S, _I, _R = float(N - I0), float(I0), 0.0
+_Sh, _Ih, _Rh = [], [], []
+for _ in range(200):
+    _S, _I, _R = siguiente_paso_sir(_S, _I, _R, N, _beta, _gamma)
+    _Sh.append(_S); _Ih.append(_I); _Rh.append(_R)
+
+viz.curva_sir(_Sh, _Ih, _Rh, f"COVID-19 (R\\u2080={r0_valores[2]}, \\u03b3=1/14)", N=N)"""))
 
 # ════════════════════════════════════════════════════════════
 # FINAL

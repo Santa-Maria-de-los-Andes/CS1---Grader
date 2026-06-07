@@ -41,7 +41,10 @@ _DARK = dict(
 )
 
 def _color(nombre):
-    return _COLORES.get(nombre, _COLORES["default"])
+    for key in _COLORES:
+        if key in nombre:
+            return _COLORES[key]
+    return _COLORES["default"]
 
 
 class VizEpidemias:
