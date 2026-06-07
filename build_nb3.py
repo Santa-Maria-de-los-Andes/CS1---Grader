@@ -203,44 +203,69 @@ for fila in range(___, ___):
     print()"""))
 
 cells.append(md("nb3-31-obs2-md", """\
-### 👀 Observa — Cuadrícula de ciudad 5×5
+### 👀 Observa — El loop anidado COMO red de contactos
 
-Una cuadrícula 5×5 representa una ciudad. Cada celda es una zona. Observa cómo el loop anidado la construye celda por celda, fila por fila.
+Las cuadrículas no son solo visuales — modelan contactos reales. Si asignamos **fila = persona infectada** y **columna = contacto potencial**, el loop anidado visita cada combinación posible de contagio.
 
-*"Así mapeó FEDRA Boston el Día 1."*"""))
+Ejecuta y observa cuántos contactos posibles genera una población de 5 personas."""))
 
 cells.append(code("nb3-31-obs2", """\
-infectadas = {(1, 1), (1, 2), (2, 1), (2, 2), (3, 3)}
+# Red de contactos: fila = persona infectada, columna = contacto potencial
+# El loop anidado itera CADA par posible (i, j) donde i ≠ j
+poblacion = 5
+contactos = 0
 
-print("Mapa de Boston — Día 1")
-print("─" * 15)
-for fila in range(5):
-    for col in range(5):
-        if (fila, col) in infectadas:
-            print("[X]", end=" ")
-        else:
-            print("[ ]", end=" ")
-    print()"""))
+print(f"Red de contactos — {poblacion} personas")
+print("─" * 35)
+for persona_infectada in range(poblacion):
+    for contacto in range(poblacion):
+        if persona_infectada != contacto:   # nadie contagia a sí mismo
+            print(f"P{persona_infectada}→P{contacto}", end="  ")
+            contactos += 1
+    print()
+
+print(f"\\nContactos posibles totales: {contactos}")
+print(f"Fórmula exacta: N × (N-1) = {poblacion} × {poblacion-1} = {poblacion*(poblacion-1)}")"""))
 
 cells.append(md("nb3-31-mod2-md", """\
-### ✏️ Modifica — Zonas infectadas
+### ✏️ Modifica — ¿Por qué Lima explota más rápido que Cusco?
 
-Cambia las coordenadas en `infectadas` para mover la infección a otras zonas del mapa. Observa cómo el mapa se actualiza sin tocar el código del loop.
+Cambia `poblacion = 5` a `10`, luego `50`. Observa cómo crecen los contactos posibles.
 
-*"Este es el sistema que FEDRA usó para rastrear la expansión en Boston."*"""))
+```
+Población  5  →  ___ contactos
+Población 10  →  ___ contactos  (¿el doble? ¿más?)
+Población 50  →  ___ contactos
+```
+
+Luego calcula **sin ejecutar el loop** (usa la fórmula `N × (N-1)`):
+
+- Lima (10 millones): ¿cuántos contactos posibles?
+- Cusco (400 mil): ¿cuántos contactos posibles?
+- ¿Cuántas veces más contactos tiene Lima?
+
+*Esto explica matemáticamente por qué el mismo patógeno necesita intervenciones más agresivas en ciudades grandes.*"""))
 
 cells.append(code("nb3-31-mod2", """\
-infectadas = {(1, 1), (1, 2), (2, 1), (2, 2), (3, 3)}  # ← cambia las coordenadas
+poblacion = 10   # ← prueba 10, 50, 100
 
-print("Mapa de Boston — Editable")
-print("─" * 15)
-for fila in range(5):
-    for col in range(5):
-        if (fila, col) in infectadas:
-            print("[X]", end=" ")
-        else:
-            print("[ ]", end=" ")
-    print()"""))
+contactos = 0
+for persona_infectada in range(poblacion):
+    for contacto in range(poblacion):
+        if persona_infectada != contacto:
+            contactos += 1
+
+print(f"Población {poblacion:>4} → {contactos:>6} contactos posibles")
+
+# Cálculo Lima vs Cusco (sin correr el loop — usa la fórmula)
+lima   = 10_000_000
+cusco  =    400_000
+c_lima  = lima  * (lima  - 1)
+c_cusco = cusco * (cusco - 1)
+razon   = c_lima / c_cusco
+print(f"\\nLima  ({lima/1e6:.0f}M): {c_lima:.2e} contactos posibles")
+print(f"Cusco ({cusco/1e3:.0f}K): {c_cusco:.2e} contactos posibles")
+print(f"Lima tiene {razon:.0f}× más contactos que Cusco — misma cuarentena, impacto distinto.")"""))
 
 cells.append(md("nb3-31-pred2-md", """\
 ### 🔮 Predice — Patrón diagonal
@@ -410,6 +435,18 @@ Conseguir R0 < 1 fue el objetivo de cada cuarentena en la historia.
 
 El sarampión tiene el R0 más alto de todos los patógenos conocidos. Una habitación con un infectado puede contagiar a todas las personas no vacunadas presentes."""))
 
+cells.append(md("nb3-32-r0-viz-md", """\
+---
+### 📊 Visualiza — R₀ en escala real
+
+> *"— Marlene. Diario de campo, semana 3 post-Colapso. Los números de R₀ en la tabla no significan nada hasta que los ves en escala. El sarampión es 6× más contagioso que COVID. En una ciudad sin vacunar, eso es una sentencia de extinción."*
+
+*Ejecuta para ver la transmisibilidad comparada de todos los patógenos.*"""))
+
+cells.append(code("nb3-32-r0-viz", """\
+# 📊 Transmisibilidad comparada — R₀ por patógeno
+viz.grafico_r0(nombres, r0_valores)"""))
+
 cells.append(md("nb3-32-obs1-md", """\
 ### 👀 Observa — 5 días, 4 zonas
 
@@ -543,6 +580,29 @@ _zonas_nombres = ["Zona Norte", "Zona Este", "Zona Centro", "Zona Sur", "Zona Oe
 viz.semaforo_ciudad(_zonas_nombres, infectados, poblaciones, dia=dias, patogeno=f"R\\u2080={r0}")
 mapa.brote_actual("lima", infectados, poblaciones, dia=dias, patogeno=f"COVID-19 simulado (R\\u2080={r0})")"""))
 
+cells.append(md("nb3-32-prop-viz-md", """\
+---
+### 📈 [ AN\\u00c1LISIS TEMPORAL \\u2014 PROPAGACI\\u00d3N POR ZONA ]
+
+El sem\\u00e1foro muestra el estado en **un d\\u00eda**. Este gr\\u00e1fico muestra **c\\u00f3mo lleg\\u00f3 cada zona hasta ese punto** \\u2014 la trayectoria completa de la simulaci\\u00f3n.
+
+> **[ LECTURA DE DATOS ]** Cada l\\u00ednea es una zona. La l\\u00ednea punteada blanca es el total ciudad.
+> **[ CONCLUSI\\u00d3N ]** **Las zonas con m\\u00e1s infectados iniciales colapsan primero, pero con R\\u2080 > 1 todas las zonas colapsan eventualmente.**
+> **[ MISI\\u00d3N ]** Cambia `r0 = 1.8` a `r0 = 0.7` en el ejercicio. \\u00bfQu\\u00e9 le pasa a la curva total?"""))
+
+cells.append(code("nb3-32-prop-viz", """\
+# 📈 Propagación por zona — reconstruye el historial completo
+_pob_ini = [5, 12, 3, 20, 8]
+_pobs_ej3 = [500, 1200, 300, 2000, 800]
+_z_names = ["Zona Norte", "Zona Este", "Zona Centro", "Zona Sur", "Zona Oeste"]
+_sim = _pob_ini[:]
+_hist = []
+for _d in range(7):
+    for _i in range(len(_sim)):
+        _sim[_i] = min(int(_sim[_i] * 1.8), _pobs_ej3[_i])
+    _hist.append(_sim[:])
+viz.curva_propagacion(_hist, labels=_z_names, r0=1.8, patogeno="Propagaci\\u00f3n Urbana (R\\u2080=1.8)")"""))
+
 cells.append(md("nb3-32-ej4-md", """\
 ---
 ### 🔨 Ejercicio 4 — Tres Patógenos, Diez Días ⭐⭐ (8 pts)
@@ -599,6 +659,40 @@ for dia in range(1, dias + 1):
     print(f"Día {dia}: Total ciudad = {total_ciudad}")"""))
 
 cells.append(code("nb3-32-debug2-check", "grader.check_debug2()"))
+
+cells.append(md("nb3-32-debug2b-md", """\
+---
+### 🔧 Debug 2B — El Error que Mató a 50 Millones
+
+> *"Los epidemiólogos de 1918 creyeron que la primera ola de la Gripe Española había terminado en el verano. Sus modelos decían que sí. Pero sus modelos tenían un error fundamental."*
+
+El código de abajo simula dos olas de un brote. Corre sin error Python — pero el resultado es **epidemiológicamente incorrecto**. La segunda ola ignora cuántas personas quedaron susceptibles después de la primera.
+
+1. Ejecuta y observa: ¿por qué la Ola 2 empieza igual que la Ola 1?
+2. Identifica la línea que borra la "memoria" del sistema entre olas
+3. Corrígela para que la segunda ola comience con la población que **no se infectó** en la primera
+
+**Pista:** ¿Cuántos susceptibles quedan después de la Ola 1? Eso es el punto de inicio de la Ola 2, no `infectados_0`.
+
+**Resultado esperado:** la Ola 2 debe empezar con **menos** infectados iniciales que la Ola 1 porque parte de la población ya es inmune."""))
+
+cells.append(code("nb3-32-debug2b", """\
+poblacion    = 100_000
+infectados_0 = 100
+r0           = 2.0
+dias_por_ola = 10
+
+for ola in range(1, 3):
+    infectados = infectados_0   # ← BUG: ¿debería ser siempre infectados_0?
+    print(f"\\n=== OLA {ola} ===")
+    for dia in range(1, dias_por_ola + 1):
+        infectados = min(int(infectados * r0), poblacion)
+        print(f"  Día {dia}: {infectados:>7} infectados")
+    print(f"  Fin Ola {ola}: {infectados:>7} infectados acumulados")
+    # Bug: la siguiente ola debería empezar desde 'infectados' (quienes quedan)
+    # no desde infectados_0 (como si la Ola 1 nunca ocurrió)"""))
+
+cells.append(code("nb3-32-debug2b-check", "grader.check_debug2b()"))
 
 cells.append(md("nb3-32-ej5-context", """\
 ---
@@ -658,6 +752,11 @@ viz.comparar_patogenos(
     titulo="Las Dos Olas \\u2014 Gripe Espa\\u00f1ola 1918"
 )"""))
 
+cells.append(md("nb3-32-ej5-interp", """\
+> **[ LECTURA DE DATOS ]** Misma Gripe Espa\\u00f1ola 1918, mismo R\\u2080 = 2.0 \\u2014 dos puntos de partida distintos. La l\\u00ednea s\\u00f3lida es Ola 1 (inicio: 100), la discontinua es Ola 2 (inicio: 5,000).
+> **[ CONCLUSI\\u00d3N ]** **El R\\u2080 no cambia. El punto de inicio s\\u00ed. Con 5,000 infectados el D\\u00eda 1, la ventana de intervenci\\u00f3n ya cerr\\u00f3 antes de que la detecci\\u00f3n fuera posible.**
+> **[ MISI\\u00d3N ]** Cambia `_ola2 = [5_000]` a `_ola2 = [500]`. \\u00bfEn cu\\u00e1ntos d\\u00edas m\\u00e1s aparece el pico?"""))
+
 cells.append(code("nb3-32-mini-b", "grader.check_mini_b()   # ✅ Checkpoint 3.2"))
 
 # ════════════════════════════════════════════════════════════
@@ -699,6 +798,20 @@ Un **if anidado** es una decisión que depende de una decisión anterior. La est
 | Walker | 100% |
 
 Con Ébola, una zona puede declararse perdida con mucho menos infectados que con COVID-19."""))
+
+cells.append(md("nb3-33-cfr-viz-md", """\
+---
+### 📊 Visualiza — CFR en perspectiva real
+
+> *"\\u2014 Ellie: '\\u00bfPor qu\\u00e9 \\u00c9bola necesita m\\u00e1s recursos que COVID si infecta menos gente?' \\u2014 Joel: 'Porque mata al 65% de los que toca. Un infectado de \\u00c9bola vale veinte de COVID en el triage. Eso es el CFR.'"*
+
+El CFR determina cu\\u00e1n agresivo debe ser el protocolo. Compara los 7 pat\\u00f3genos antes de escribir el clasificador.
+
+*Ejecuta para ver la tasa de mortalidad comparada.*"""))
+
+cells.append(code("nb3-33-cfr-viz", """\
+# 📊 Tasa de mortalidad por caso — CFR por patógeno
+viz.grafico_cfr(nombres, mortalidad)"""))
 
 cells.append(md("nb3-33-obs1-md", """\
 ### 👀 Observa — Árbol de triage completo
@@ -1131,6 +1244,100 @@ _q14   = _simular_q(14)
 viz.impacto_cuarentena(_sin_q, _q5,  dia_cuarentena=5,  nombre_patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 5",  cfr=mortalidad[2])
 viz.impacto_cuarentena(_sin_q, _q14, dia_cuarentena=14, nombre_patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 14", cfr=mortalidad[2])"""))
 
+cells.append(md("nb3-34-ej8-viz-interp", """\
+> **[ LECTURA DE DATOS ]** Mismo COVID-19, misma ciudad \\u2014 cuarentena el D\\u00eda 5 vs. el D\\u00eda 14. El \\u00e1rea roja sombreada = casos evitados. Las vidas salvadas se calculan con CFR = 2%.
+> **[ CONCLUSI\\u00d3N ]** **Cada d\\u00eda de retraso en la cuarentena se convierte en cientos de muertes adicionales. El modelo de Ferguson et al. (Imperial College, 2020) us\\u00f3 exactamente esta l\\u00f3gica para convencer a los gobiernos de actuar.**
+> **[ MISI\\u00d3N ]** Cambia `cfr=mortalidad[2]` (COVID, 2%) por `cfr=mortalidad[3]` (\\u00c9bola, 65%). \\u00bfCu\\u00e1ntas vidas salva el mismo retraso con un pat\\u00f3geno m\\u00e1s letal?"""))
+
+cells.append(md("nb3-34-diseno-md", """\
+---
+### 🧠 Actividad de Diseño — Tú Decides la Intervención
+
+Hasta ahora, la cuarentena siempre reduce R0 a `r0 × 0.4`. Pero en la realidad los gobiernos eligieron entre **tres tipos de intervención** con lógicas diferentes:
+
+| Opción | Intervención | Efecto epidemiológico | Implementación |
+|--------|---|---|---|
+| **A** | Cuarentena estricta | Reduce contactos más agresivamente: R0 × 0.3 | Cambia el factor de reducción |
+| **B** | Rastreo de contactos | Detecta y aísla más temprano: activa en Día 5 | Cambia el día de activación |
+| **C** | Vacunación parcial | Reduce susceptibles en 30% desde el inicio | Reduce infectados iniciales × 0.7 |
+
+Las tres funciones ya están implementadas abajo. Tu trabajo es:
+1. Correr las tres simulaciones (ya está el código)
+2. Comparar los resultados con `viz.comparar_patogenos`
+3. Escribir una oración explicando cuál salvó más vidas Y POR QUÉ desde el punto de vista epidemiológico
+
+> *"En 2020, epidemiólogos del Imperial College discutieron exactamente estas tres opciones para el UK. Eligieron una combinación. Tu simulación recrea esa lógica."*"""))
+
+cells.append(code("nb3-34-diseno", """\
+# ══════════════════════════════════════════════
+# TRES INTERVENCIONES — misma ciudad, mismos 21 días
+# COVID-19, 5 zonas
+# ══════════════════════════════════════════════
+_pobs = [5000, 3000, 8000, 2000, 10000]
+_inf0 = [100, 50, 200, 30, 500]
+_r0b  = r0_valores[2]   # COVID-19
+_dias = 21
+
+def _simular(inf_inicio, factor, dia_activa):
+    \"\"\"Simula una intervención. Devuelve lista de totales ciudad por día.\"\"\"
+    inf      = inf_inicio[:]
+    caidas   = [False] * 5
+    totales  = []
+    for dia in range(1, _dias + 1):
+        r0_hoy = _r0b * factor if dia >= dia_activa else _r0b
+        total  = 0
+        for z in range(5):
+            if not caidas[z]:
+                tasa = inf[z] / _pobs[z]
+                if tasa > 0.6:
+                    caidas[z] = True
+                else:
+                    inf[z] = min(int(inf[z] * r0_hoy), _pobs[z])
+            total += inf[z]
+        totales.append(total)
+    return totales
+
+# OPCIÓN A: Cuarentena estricta (R0 × 0.3, activa Día 10)
+curva_A = _simular(_inf0, factor=0.3, dia_activa=10)
+
+# OPCIÓN B: Rastreo de contactos (R0 × 0.4, activa Día 5 — más temprano)
+curva_B = _simular(_inf0, factor=0.4, dia_activa=5)
+
+# OPCIÓN C: Vacunación parcial (30% menos susceptibles desde inicio, R0 sin cambio)
+_inf_vacunados = [int(v * 0.7) for v in _inf0]   # 30% ya inmunes
+curva_C = _simular(_inf_vacunados, factor=1.0, dia_activa=999)
+
+# Sin intervención — línea base
+curva_base = _simular(_inf0, factor=1.0, dia_activa=999)
+
+# Resultados en día 21
+print(f"Sin intervención:        {curva_base[-1]:>6} infectados al Día {_dias}")
+print(f"A — Cuarentena estricta: {curva_A[-1]:>6} infectados al Día {_dias}")
+print(f"B — Rastreo temprano:    {curva_B[-1]:>6} infectados al Día {_dias}")
+print(f"C — Vacunación parcial:  {curva_C[-1]:>6} infectados al Día {_dias}")
+
+# Vidas salvadas estimadas (CFR = 2%)
+cfr = mortalidad[2]
+for nombre, curva in [("A", curva_A), ("B", curva_B), ("C", curva_C)]:
+    casos_evitados = sum(max(b - c, 0) for b, c in zip(curva_base, curva))
+    print(f"  Intervención {nombre}: ~{int(casos_evitados * cfr)} vidas salvadas estimadas")
+
+# Mi conclusión — ¿cuál es más efectiva y por qué?
+# (Pista: piensa en la RAZÓN epidemiológica, no solo en el número)
+# Mi respuesta: ___"""))
+
+cells.append(md("nb3-34-diseno-viz-md", """\
+### 📊 Visualiza — Las tres intervenciones en una gráfica"""))
+
+cells.append(code("nb3-34-diseno-viz", """\
+viz.comparar_patogenos(
+    {"Sin intervenci\\u00f3n":             curva_base,
+     "A \\u2014 Cuarentena estricta":     curva_A,
+     "B \\u2014 Rastreo temprano D\\u00eda 5": curva_B,
+     "C \\u2014 Vacunaci\\u00f3n parcial": curva_C},
+    titulo="Dise\\u00f1o de Intervenci\\u00f3n \\u2014 COVID-19, 21 d\\u00edas"
+)"""))
+
 cells.append(md("nb3-34-debug4-md", """\
 ---
 ### 🔧 Debug 4 — Dos Errores
@@ -1272,6 +1479,52 @@ infectados_zona = 800
 poblacion_zona  = 5000
 tasa = tasa_infeccion(___, ___)   # ← completa el llamado
 print(f"Tasa de infección: {tasa:.1%}")"""))
+
+cells.append(md("nb3-35-gamma-md", """\
+---
+### 🔬 Conecta — De `duracion` a `gamma`: activando el campo que tenías desde el Día 1
+
+Los datos del notebook tienen un campo `duracion` que hasta ahora no usamos:
+
+```python
+duracion = [2, 999, 14, 21, 7, 14, 37]  # días de infección activa
+```
+
+En el modelo SIR, `gamma` es la **tasa de recuperación por día**. La relación es directa:
+
+> **gamma = 1 / duracion**
+
+Si un paciente de Ébola tarda 21 días en resolverse, cada día el `1/21 ≈ 4.8%` de infectados se recupera (o muere). Si el Cordyceps solo dura 2 días, el `1/2 = 50%` se resuelve por día.
+
+Un `gamma` más alto **no significa menos mortal** — significa que el brote se resuelve más rápido, para bien o para mal. El Cordyceps no da tiempo a responder.
+
+---
+### 🧩 Completa — Función `dias_a_gamma`"""))
+
+cells.append(code("nb3-35-gamma-fn", """\
+def dias_a_gamma(duracion_infecciosa):
+    \"\"\"Convierte días de infección activa a tasa de recuperación diaria (gamma).\"\"\"
+    return ___ / ___   # ← gamma = 1 / duracion
+
+# Verifica con los 7 patógenos:
+print(f"{'Patógeno':<16} {'Duración':>9} {'Gamma':>8}  {'Interpreta'}")
+print("─" * 65)
+for i in range(len(nombres)):
+    if duracion[i] < 999:   # excluye Walker (∞)
+        g = dias_a_gamma(duracion[i])
+        velocidad = "muy rápido" if g > 0.3 else ("rápido" if g > 0.1 else "lento")
+        print(f"{nombres[i]:<16} {duracion[i]:>6} días  {g:>6.3f}   se resuelve {velocidad}")
+
+# 🔮 PREDICE antes de ejecutar:
+# ¿Quién tiene gamma más ALTO — Ébola (21 días) o Gripe 1918 (7 días)?
+# ¿Un gamma más alto es mejor o peor para la ciudad? Escribe tu razonamiento:
+# Mi respuesta: ___"""))
+
+cells.append(md("nb3-35-gamma-sir-md", """\
+> 💡 **Conexión SIR:** Ahora que puedes calcular `gamma` desde `duracion`, el Reto 2 tiene más sentido:
+> `beta = r0 * gamma = r0 / duracion`. Cordyceps (R0=3.5, duracion=2) transmite rápido Y se resuelve rápido.
+> Ébola (R0=1.8, duracion=21) se propaga despacio pero permanece en el sistema 10× más tiempo.
+> La curva SIR los captura de forma diferente — y eso es exactamente lo que verás en el Reto 2."""))
 
 cells.append(md("nb3-35-ej9-md", """\
 ---
@@ -1710,6 +1963,11 @@ for i in range(len(nombres)):
 
 viz.comparar_patogenos(_series, titulo="Los 7 Pat\\u00f3genos \\u2014 14 d\\u00edas desde 50 infectados iniciales")"""))
 
+cells.append(md("nb3-intex3-viz-interp", """\
+> **[ LECTURA DE DATOS ]** Siete pat\\u00f3genos, misma poblaci\\u00f3n inicial de 50 infectados, 14 d\\u00edas. Cada l\\u00ednea tiene estilo diferente para distinguirlas.
+> **[ CONCLUSI\\u00d3N ]** **Las curvas no siguen el mismo orden que el CFR. Saram pi\\u00f3n (R\\u2080=15) explota antes que \\u00c9bola (R\\u2080=1.8), aunque \\u00c9bola mata m\\u00e1s. Transmisibilidad y mortalidad son dimensiones independientes.**
+> **[ MISI\\u00d3N ]** Modifica el c\\u00f3digo para solo simular los pat\\u00f3genos con R\\u2080 > 2. \\u00bfCu\\u00e1ntos quedan? \\u00bfCu\\u00e1l lidera en el D\\u00eda 14?"""))
+
 # INTEX 4
 cells.append(md("nb3-intex4-md", """\
 ---
@@ -1852,6 +2110,11 @@ mapa.animacion_brote("wuhan", _animar_sim(7),  _pobs, patogeno="COVID-19 \\u2014
 print("\\nGenerando mapa de Cusco (cuarentena D\\u00eda 20 \\u2014 respuesta tard\\u00eda)...")
 mapa.animacion_brote("cusco", _animar_sim(20), _pobs, patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 20")"""))
 
+cells.append(md("nb3-intex4-viz-interp", """\
+> **[ LECTURA DE DATOS ]** Dos ciudades, mismo virus. Wuhan con cuarentena el D\\u00eda 7 y Cusco con respuesta tard\\u00eda el D\\u00eda 20. Los c\\u00edrculos crecen donde el virus llega primero y se propagan radialmente.
+> **[ CONCLUSI\\u00d3N ]** **La geograf\\u00eda importa. Las zonas contiguas al Paciente Cero alcanzan el umbral cr\\u00edtico d\\u00edas antes que las perif\\u00e9ricas. Cusco, con respuesta tard\\u00eda, muestra m\\u00e1s zonas en estado PERDIDA.**
+> **[ MISI\\u00d3N ]** \\u00bfQu\\u00e9 pasar\\u00eda si el Paciente Cero estuviera en una zona fronteriza de Cusco en vez del centro? Discute c\\u00f3mo cambiar\\u00eda el patr\\u00f3n de propagaci\\u00f3n."""))
+
 # INTEX 5 — CAPSTONE
 cells.append(md("nb3-intex5-md", """\
 ---
@@ -1962,6 +2225,69 @@ cells.append(md("nb3-intex5-exp", """\
 > 💬 **Explicación:** ¿Por qué `simular_ciudad` llama a las otras funciones en vez de tener toda la lógica directamente? Si quisieras cambiar la fórmula de `r0_efectivo`, ¿cuántos lugares tendrías que editar?
 > *(Doble-click para responder aquí)*"""))
 
+cells.append(md("nb3-intex5-walker-md", """\
+---
+### 🔬 Análisis — Los Límites del Modelo: El Walker No Encaja
+
+El Walker virus tiene `R0 = 1.2` y `mortalidad = 1.0`. Cuando ejecutas `simular_ciudad` con esos parámetros, parece menos peligroso que el Cordyceps. Pero algo está fundamentalmente roto.
+
+**El problema:** el modelo SIR asume que Recuperados = Inmunes → salen del sistema. El Walker no sigue esa regla: los muertos **regresan como infectados**. El compartimiento R acumula personas que deberían volver a I.
+
+Completa la función `paso_walker` que captura esta dinámica. No usa `gamma` — los "recuperados" son reanimados:
+
+```python
+# Modelo SIR estándar:   S → I → R (R es final)
+# Modelo Walker:         S → I → Muerto → I (ciclo sin salida)
+```
+
+*"El SIR predice extinción del Walker en semanas. La realidad de la ficción muestra el mundo colapsado en días. Esa brecha entre modelo y realidad es exactamente lo que un epidemiólogo real debe detectar."*"""))
+
+cells.append(code("nb3-intex5-walker", """\
+def paso_walker(S, I, R_muertos, N, beta):
+    \"\"\"
+    Modelo SIR modificado para el Walker:
+    - Los 'recuperados' son reanimados que vuelven al pool de infectados
+    - No existe inmunidad — nadie sale del ciclo S → I → Reanimado → I
+    S         = susceptibles (sanos)
+    I         = infectados activos (incluyendo reanimados)
+    R_muertos = acumulado de muertes (referencia histórica, ya reanimados)
+    \"\"\"
+    nuevos_infectados = beta * S * I / N        # contagios normales
+    nuevos_reanimados = mortalidad[1] * I       # el 100% de infectados reanima
+    # Los reanimados regresan a I — no a R
+    S_nuevo        = S - ___                    # ← susceptibles que se infectan
+    I_nuevo        = I + ___ + ___              # ← nuevos infectados + reanimados
+    R_muertos_nuevo = R_muertos + nuevos_reanimados
+    return S_nuevo, I_nuevo, R_muertos_nuevo
+
+# Prueba: 100 infectados iniciales, ciudad de 10,000
+N_w   = 10_000
+I_w   = 100
+S_w   = N_w - I_w
+R_w   = 0
+beta_w = r0_a_beta(r0_valores[1], gamma=1/2)   # Walker gamma ≈ Cordyceps
+
+print("WALKER VIRUS — Modelo SIR modificado")
+print(f"{'Día':<5} {'S':>8} {'I':>8} {'Muertos':>10}")
+print("─" * 35)
+for dia in range(1, 16):
+    S_w, I_w, R_w = paso_walker(S_w, I_w, R_w, N_w, beta_w)
+    print(f"{dia:<5} {int(S_w):>8} {int(I_w):>8} {int(R_w):>10}")
+    if I_w >= N_w:
+        print("  ⚠ POBLACIÓN COLAPSADA — todos infectados o reanimados")
+        break
+
+print("\\n¿Qué le pasa a S con el tiempo? ¿Por qué I no converge a 0?")
+print("Escribe tu respuesta aquí:")
+# Mi análisis: ___"""))
+
+cells.append(md("nb3-intex5-walker-reflexion", """\
+> 💬 **Reflexión:** Ejecuta `simular_ciudad` con los parámetros del Walker (`r0=1.2, cfr=1.0`).
+> Luego ejecuta `paso_walker`. ¿Por qué dan resultados radicalmente distintos?
+> La respuesta explica por qué los modelos matemáticos tienen **supuestos** que los hacen válidos
+> para algunos patógenos y completamente erróneos para otros.
+> *(Doble-click para responder aquí)*"""))
+
 cells.append(md("nb3-intex5-viz-md", """\
 ---
 ### 🌍 Visualiza — Motor de simulación completo
@@ -1998,6 +2324,49 @@ dash.situacion(
 # ════════════════════════════════════════════════════════════
 # BONUS
 # ════════════════════════════════════════════════════════════
+
+cells.append(md("nb3-memo-md", """\
+---
+### 📋 Memo de Política — Del Código a la Decisión Real
+
+Tu motor de simulación acaba de producir los mismos outputs que usan los modelos del Imperial College y la OMS.
+
+**Tu rol:** Eres el Director de Salud del Perú. Es el **Día 1** de un nuevo brote desconocido con R0 estimado entre 2.0 y 3.5. Los datos iniciales son escasos. Tu simulación es la mejor información disponible.
+
+Escribe **3 recomendaciones de política** basadas en tus resultados. Cada una debe:
+- Ser específica (no "actuar rápido" — ¿qué acción, en qué día?)
+- Citar un resultado concreto de tu simulación como justificación
+- Reconocer la incertidumbre del modelo (¿qué no sabe el modelo?)
+
+*(No hay respuesta única correcta — la calidad del razonamiento es lo que cuenta.)*"""))
+
+cells.append(code("nb3-memo", """\
+# === MEMO DE POLÍTICA — DIRECTOR DE SALUD, PERÚ ===
+# Basado en simulación: [escribe el patógeno y parámetros que usaste]
+# Fecha: Día 1 del brote
+
+recomendacion_1 = \"\"\"
+ACCIÓN: ___
+JUSTIFICACIÓN (resultado de mi simulación): ___
+INCERTIDUMBRE DEL MODELO: ___
+\"\"\"
+
+recomendacion_2 = \"\"\"
+ACCIÓN: ___
+JUSTIFICACIÓN: ___
+INCERTIDUMBRE: ___
+\"\"\"
+
+recomendacion_3 = \"\"\"
+ACCIÓN: ___
+JUSTIFICACIÓN: ___
+INCERTIDUMBRE: ___
+\"\"\"
+
+print("=== MEMO DE POLÍTICA — MINISTERIO DE SALUD, PERÚ ===")
+print(recomendacion_1)
+print(recomendacion_2)
+print(recomendacion_3)"""))
 
 cells.append(md("nb3-bonus-header", """\
 ---
@@ -2103,7 +2472,12 @@ for _ in range(200):
     _S, _I, _R = siguiente_paso_sir(_S, _I, _R, N, _beta, _gamma)
     _Sh.append(_S); _Ih.append(_I); _Rh.append(_R)
 
-viz.curva_sir(_Sh, _Ih, _Rh, f"COVID-19 (R\\u2080={r0_valores[2]}, \\u03b3=1/14)", N=N)"""))
+viz.curva_sir(_Sh, _Ih, _Rh, f"COVID-19 (R\\u2080={r0_valores[2]}, \\u03b3=1/14)", N=N, r0=r0_valores[2])"""))
+
+cells.append(md("nb3-reto2-viz-interp", """\
+> **[ LECTURA DE DATOS ]** Susceptibles (gris), Infectados activos (\\u00e1mbar Cordyceps), Recuperados/Inmunes (verde Firefly) a lo largo de 200 d\\u00edas. COVID-19, R\\u2080 = 2.5. La l\\u00ednea punteada bioluminiscente marca el umbral de inmunidad de reba\\u00f1o.
+> **[ CONCLUSI\\u00d3N ]** **Cuando Recuperados cruza el umbral del 60%, los nuevos infectados caen en cascada porque no hay suficientes susceptibles. Ese 60% = 1 \\u2212 1/R\\u2080 = 1 \\u2212 1/2.5. Es la f\\u00f3rmula que define cu\\u00e1nta poblaci\\u00f3n debe ser inmune para detener la epidemia.**
+> **[ MISI\\u00d3N ]** Cambia `r0 = r0_valores[2]` (COVID, 2.5) a `r0 = r0_valores[5]` (Saram pi\\u00f3n, 15.0). \\u00bfA cu\\u00e1nto sube el umbral de reba\\u00f1o? \\u00bfQu\\u00e9 implica eso para la vacunaci\\u00f3n?"""))
 
 # ════════════════════════════════════════════════════════════
 # FINAL

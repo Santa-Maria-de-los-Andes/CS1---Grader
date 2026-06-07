@@ -329,6 +329,21 @@ class Autograder:
                     checks.append((False, f"es_palindromo('{palabra}')", f"Debería ser {exp}, obtuve {result}"))
         return self._award(checks, 16)
 
+    def check_debug2b(self):
+        """Debug 2B — Spanish Flu second-wave state-reset bug"""
+        _header("DEBUG 2B — Segunda Ola: Estado entre olas (sin puntos — autoevaluación)")
+        print("  ⚙️  Este debug se evalúa por inspección.")
+        print("  ✅  Correcto si la Ola 2 comienza donde terminó la Ola 1 (no desde infectados_0).")
+        print("  💡  Pista: ¿qué variable deberías pasar a la segunda iteración?")
+
+    def __getattr__(self, name):
+        """Fallback para métodos de verificación aún no implementados."""
+        if name.startswith("check_"):
+            def _stub(*args, **kwargs):
+                print(f"  ⚙️  {name}() — verificación pendiente de implementar en autograder_nb3.py")
+            return _stub
+        raise AttributeError(f"'{type(self).__name__}' no tiene el atributo '{name}'")
+
     # ── RESUMEN FINAL ─────────────────────────────────────────
 
     def resumen(self):
