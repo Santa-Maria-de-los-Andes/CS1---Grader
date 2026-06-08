@@ -4,6 +4,7 @@
 
 import json
 import math
+import uuid as _uuid
 from IPython.display import display, HTML
 
 
@@ -52,102 +53,121 @@ _CSS = """
 </style>
 """
 
-# ─────────────────────────────────────────────────────────────
-# PLANTILLA JAVASCRIPT — funciones del mapa (sin datos)
-# ─────────────────────────────────────────────────────────────
-_JS_FUNCS = """
-function fmtN(n) { return Math.round(n).toString().replace(/\\B(?=(\\d{3})+(?!\\d))/g,","); }
+def _build_map_js(uid, frames_json, totales_json, pz_idx, n_dias, dia_actual,
+                  animado, centro, zoom):
+    """Genera un bloque <script> IIFE completamente autocontenido y sin colisiones."""
+    animado_js = "true" if animado else "false"
+    return f"""<script>
+(function() {{
+  var UID      = '{uid}';
+  var FRAMES   = {frames_json};
+  var TOTALES  = {totales_json};
+  var PZ_IDX   = {pz_idx};
+  var N_DIAS   = {n_dias};
+  var DIA_ACT  = {dia_actual};
+  var ANIMADO  = {animado_js};
+  var cLayer, lLayer;
+  var playing=false, timer=null, curDay=0;
 
-function buildPopup(z, dia, isPZ) {
-  var sc = {CONTROLADA:'#27AE60',ALERTA:'#F39C12','CRÍTICA':'#E67E22',PERDIDA:'#E74C3C'};
-  var c  = sc[z.status] || '#999';
-  var icuMsg = z.icu_beds > 0
-    ? (z.icu_ratio > 10 ? '⛔ COLAPSADO ('+z.icu_ratio.toFixed(1)+'×)' : z.icu_ratio.toFixed(1)+'× cap.')
-    : '❌ Sin UCI registrada';
-  return '<div class="mb-popup">'
-    +'<div class="mb-popup-title">'+(isPZ?'☣️ ':'')+z.nombre+'</div>'
-    +'<div class="mb-popup-row"><span class="mb-popup-label">Día</span><span class="mb-popup-val">'+dia+'</span></div>'
-    +'<div class="mb-popup-row"><span class="mb-popup-label">Infectados</span><span class="mb-popup-val">'+fmtN(z.infectados)+'</span></div>'
-    +'<div class="mb-popup-row"><span class="mb-popup-label">Tasa</span><span class="mb-popup-val">'+z.tasa+'%</span></div>'
-    +'<div class="mb-popup-row"><span class="mb-popup-label">Población</span><span class="mb-popup-val">'+fmtN(z.poblacion)+'</span></div>'
-    +'<div class="mb-popup-row"><span class="mb-popup-label">UCI</span>'
-    +'<span class="mb-popup-val" style="color:'+(z.icu_ratio>10?'#E74C3C':'#27AE60')+'">'+icuMsg+'</span></div>'
-    +'<span class="mb-popup-status" style="background:'+c+'">'+z.status+'</span>'
-    +'</div>';
-}
+  function fmtN(n) {{
+    return Math.round(n).toString().replace(/\\B(?=(\\d{{3}})+(?!\\d))/g,',');
+  }}
 
-function drawFrame(dayIdx) {
-  circleLayer.clearLayers();
-  labelLayer.clearLayers();
-  var frame = FRAMES[dayIdx];
-  var total = TOTALES[dayIdx];
-  var maxTasa = 0;
-  frame.forEach(function(z, i) {
-    if (z.tasa > maxTasa) maxTasa = z.tasa;
-    var isPZ = (dayIdx === 0 && i === PZ_IDX && PZ_IDX >= 0);
-    var diaLabel = ANIMADO ? (dayIdx + 1) : DIA_ACTUAL;
-    L.circle(z.coords, {
-      radius: z.radio, color: z.color, fillColor: z.color,
-      fillOpacity: 0.38, weight: isPZ ? 3 : 1.5,
-      dashArray: z.status === 'PERDIDA' ? '6,4' : null
-    }).bindPopup(buildPopup(z, diaLabel, isPZ)).addTo(circleLayer);
+  function buildPopup(z, dia, isPZ) {{
+    var sc={{'CONTROLADA':'#27AE60','ALERTA':'#F39C12','CRÍTICA':'#E67E22','PERDIDA':'#E74C3C'}};
+    var c=sc[z.status]||'#999';
+    var icuMsg=z.icu_beds>0
+      ?(z.icu_ratio>10?'⛔ COLAPSADO ('+z.icu_ratio.toFixed(1)+'×)':z.icu_ratio.toFixed(1)+'× cap.')
+      :'❌ Sin UCI registrada';
+    return '<div class="mb-popup">'
+      +'<div class="mb-popup-title">'+(isPZ?'☣️ ':'')+z.nombre+'</div>'
+      +'<div class="mb-popup-row"><span class="mb-popup-label">Día</span><span class="mb-popup-val">'+dia+'</span></div>'
+      +'<div class="mb-popup-row"><span class="mb-popup-label">Infectados</span><span class="mb-popup-val">'+fmtN(z.infectados)+'</span></div>'
+      +'<div class="mb-popup-row"><span class="mb-popup-label">Tasa</span><span class="mb-popup-val">'+z.tasa+'%</span></div>'
+      +'<div class="mb-popup-row"><span class="mb-popup-label">Población</span><span class="mb-popup-val">'+fmtN(z.poblacion)+'</span></div>'
+      +'<div class="mb-popup-row"><span class="mb-popup-label">UCI</span>'
+      +'<span class="mb-popup-val" style="color:'+(z.icu_ratio>10?'#E74C3C':'#27AE60')+'">'+icuMsg+'</span></div>'
+      +'<span class="mb-popup-status" style="background:'+c+'">'+z.status+'</span>'
+      +'</div>';
+  }}
 
-    var shortName = z.nombre.split(' ')[0];
-    var lbl = L.divIcon({
-      html: '<div style="background:rgba(13,17,23,.88);color:#ECF0F1;padding:3px 7px;'
-           +'border-radius:4px;font-size:10px;font-weight:bold;white-space:nowrap;'
-           +'border:1px solid '+z.color+'">'
-           +shortName+'<br><span style="color:'+z.color+'">'+z.tasa+'%</span></div>',
-      className:'', iconAnchor:[0,0]
-    });
-    L.marker(z.coords, {icon:lbl}).addTo(labelLayer);
+  function shortLabel(nombre) {{
+    var w=nombre.split(' ');
+    if(w.length<=2) return nombre;
+    var s=w[0]+' '+w[1];
+    return s.length>14?s.substring(0,13)+'…':s;
+  }}
 
-    if (isPZ) {
-      var pzIcon = L.divIcon({
-        html:'<div style="font-size:24px;filter:drop-shadow(0 0 6px #C0392B)">☣️</div>',
-        className:'', iconAnchor:[12,12]
-      });
-      L.marker(z.coords, {icon:pzIcon})
-       .bindPopup('<div class="mb-popup"><div class="mb-popup-title">⚠️ PACIENTE ZERO</div>'
-                 +'<p style="color:#E74C3C;font-size:12px;">Origen documentado del brote</p></div>')
-       .addTo(labelLayer);
-    }
-  });
+  function drawFrame(dayIdx) {{
+    if(!cLayer||!lLayer) return;
+    cLayer.clearLayers(); lLayer.clearLayers();
+    var frame=FRAMES[dayIdx], total=TOTALES[dayIdx], maxTasa=0;
+    frame.forEach(function(z,i) {{
+      if(z.tasa>maxTasa) maxTasa=z.tasa;
+      var isPZ=(dayIdx===0&&i===PZ_IDX&&PZ_IDX>=0);
+      var diaLbl=ANIMADO?(dayIdx+1):DIA_ACT;
+      L.circle(z.coords,{{radius:z.radio,color:z.color,fillColor:z.color,
+        fillOpacity:0.38,weight:isPZ?3:1.5,
+        dashArray:z.status==='PERDIDA'?'6,4':null
+      }}).bindPopup(buildPopup(z,diaLbl,isPZ)).addTo(cLayer);
+      var sn=shortLabel(z.nombre);
+      var lbl=L.divIcon({{
+        html:'<div style="background:rgba(13,17,23,.92);color:#ECF0F1;'
+            +'padding:4px 8px;border-radius:4px;font-size:11px;font-weight:bold;'
+            +'white-space:nowrap;border:1px solid '+z.color+';line-height:1.4">'
+            +sn+'<br><span style="color:'+z.color+';font-size:12px">'+z.tasa+'%</span></div>',
+        className:'',iconAnchor:[0,0]
+      }});
+      L.marker(z.coords,{{icon:lbl}}).addTo(lLayer);
+      if(isPZ) {{
+        var pzI=L.divIcon({{html:'<div style="font-size:24px;filter:drop-shadow(0 0 6px #C0392B)">☣️</div>',className:'',iconAnchor:[12,12]}});
+        L.marker(z.coords,{{icon:pzI}}).bindPopup('<div class="mb-popup"><div class="mb-popup-title">⚠️ PACIENTE ZERO</div><p style="color:#E74C3C;font-size:12px">Origen documentado del brote</p></div>').addTo(lLayer);
+      }}
+    }});
+    var AC={{VERDE:'#27AE60',AMARILLO:'#F1C40F',NARANJA:'#E67E22',ROJO:'#E74C3C'}};
+    var al=maxTasa>=60?'ROJO':maxTasa>=30?'NARANJA':maxTasa>=10?'AMARILLO':'VERDE';
+    var badge=document.getElementById('mb-alert-'+UID);
+    if(badge){{badge.textContent='ALERTA '+al;badge.style.background=AC[al];badge.className='mb-badge'+(al==='ROJO'||al==='NARANJA'?' pulse':'');}}
+    var dl=document.getElementById('mb-day-'+UID);if(dl) dl.textContent='Día '+(dayIdx+1);
+    var tl=document.getElementById('mb-total-'+UID);if(tl) tl.textContent='🦠 '+fmtN(total)+' infectados';
+    var hdr=document.getElementById('mb-hdr-'+UID);if(hdr) hdr.style.borderBottomColor=AC[al];
+  }}
 
-  var AC = {VERDE:'#27AE60',AMARILLO:'#F1C40F',NARANJA:'#E67E22',ROJO:'#E74C3C'};
-  var al = maxTasa>=60?'ROJO':maxTasa>=30?'NARANJA':maxTasa>=10?'AMARILLO':'VERDE';
-  var badge = document.getElementById('mb-alert');
-  if (badge) { badge.textContent='ALERTA '+al; badge.style.background=AC[al];
-               badge.className='mb-badge'+(al==='ROJO'||al==='NARANJA'?' pulse':''); }
-  var dl = document.getElementById('mb-day');   if(dl) dl.textContent='Día '+(dayIdx+1);
-  var tl = document.getElementById('mb-total'); if(tl) tl.textContent='🦠 '+fmtN(total)+' infectados';
-  var hdr= document.getElementById('mb-hdr-border');
-  if(hdr) hdr.style.borderBottomColor=AC[al];
-}
+  function setDay(d) {{
+    curDay=d; drawFrame(d);
+    var sl=document.getElementById('mb-slider-'+UID);if(sl) sl.value=d;
+  }}
+  function togglePlay() {{
+    var btn=document.getElementById('mb-play-'+UID);if(!btn) return;
+    if(playing) {{
+      clearInterval(timer);playing=false;
+      btn.textContent='▶ Reproducir';btn.style.background='#3498DB';
+    }} else {{
+      playing=true;btn.textContent='⏸ Pausar';btn.style.background='#E74C3C';
+      timer=setInterval(function(){{
+        curDay=(curDay+1)%N_DIAS;setDay(curDay);
+        if(curDay===N_DIAS-1){{clearInterval(timer);playing=false;btn.textContent='▶ Reproducir';btn.style.background='#3498DB';}}
+      }},850);
+    }}
+  }}
 
-var playing=false, playInterval=null, currentDay=0;
-function setDay(d) {
-  currentDay=d; drawFrame(d);
-  var sl=document.getElementById('mb-slider'); if(sl) sl.value=d;
-}
-function togglePlay() {
-  var btn=document.getElementById('mb-play');
-  if (!btn) return;
-  if (playing) {
-    clearInterval(playInterval); playing=false;
-    btn.textContent='▶ Reproducir'; btn.style.background='#3498DB';
-  } else {
-    playing=true; btn.textContent='⏸ Pausar'; btn.style.background='#E74C3C';
-    playInterval=setInterval(function(){
-      currentDay=(currentDay+1)%N_DIAS; setDay(currentDay);
-      if(currentDay===N_DIAS-1){
-        clearInterval(playInterval); playing=false;
-        btn.textContent='▶ Reproducir'; btn.style.background='#3498DB';
-      }
-    }, 850);
-  }
-}
-"""
+  setTimeout(function() {{
+    var map=L.map('mb-map-'+UID,{{zoomControl:true,scrollWheelZoom:true}})
+             .setView({centro},{zoom});
+    L.tileLayer('https://{{s}}.basemaps.cartocdn.com/dark_all/{{z}}/{{x}}/{{y}}.png',{{
+      attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
+    }}).addTo(map);
+    cLayer=L.layerGroup().addTo(map);
+    lLayer=L.layerGroup().addTo(map);
+    map.invalidateSize();
+    drawFrame(ANIMADO?0:Math.max(0,DIA_ACT-1));
+    var sl=document.getElementById('mb-slider-'+UID);
+    if(sl) sl.addEventListener('input',function(){{setDay(parseInt(this.value));}});
+    var pb=document.getElementById('mb-play-'+UID);
+    if(pb) pb.addEventListener('click',togglePlay);
+  }},200);
+}})();
+</script>"""
 
 
 class MapaBrote:
@@ -305,6 +325,8 @@ class MapaBrote:
         frames, totales = cls._build_frames(zonas, infectados_por_dia, poblaciones)
         n_dias  = len(frames)
 
+        uid = f"{ciudad_key}_{_uuid.uuid4().hex[:8]}"
+
         # Nivel de alerta final
         last = frames[-1]
         max_tasa = max(z["tasa"] for z in last) if last else 0
@@ -316,36 +338,23 @@ class MapaBrote:
         if animado and n_dias > 1:
             controls = f"""
 <div class="mb-controls">
-  <button id="mb-play" class="mb-play" onclick="togglePlay()">▶ Reproducir</button>
-  <input  id="mb-slider" class="mb-slider" type="range" min="0" max="{n_dias-1}" value="0"
-          oninput="setDay(parseInt(this.value))">
-  <div id="mb-day"   class="mb-daylabel">Día 1</div>
-  <div id="mb-total" class="mb-total">🦠 calculando...</div>
+  <button id="mb-play-{uid}" class="mb-play">▶ Reproducir</button>
+  <input  id="mb-slider-{uid}" class="mb-slider" type="range" min="0" max="{n_dias-1}" value="0">
+  <div id="mb-day-{uid}"   class="mb-daylabel">Día 1</div>
+  <div id="mb-total-{uid}" class="mb-total">🦠 calculando...</div>
 </div>"""
 
-        data_js = f"""
-<script>
-  var FRAMES     = {json.dumps(frames)};
-  var TOTALES    = {json.dumps(totales)};
-  var PZ_IDX     = {pz_idx};
-  var N_DIAS     = {n_dias};
-  var DIA_ACTUAL = {dia_actual};
-  var ANIMADO    = {'true' if animado else 'false'};
-</script>"""
-
-        map_js = f"""
-<script>
-  var map = L.map('mb-map-{ciudad_key}', {{zoomControl:true, scrollWheelZoom:true}})
-             .setView({ciudad['centro']}, {ciudad['zoom']});
-  L.tileLayer('https://{{s}}.basemaps.cartocdn.com/dark_all/{{z}}/{{x}}/{{y}}{{r}}.png',{{
-    attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19
-  }}).addTo(map);
-  var circleLayer = L.layerGroup().addTo(map);
-  var labelLayer  = L.layerGroup().addTo(map);
-  {_JS_FUNCS}
-  drawFrame(0);
-  if({str(n_dias)}>1) {{ var tl=document.getElementById('mb-total'); if(tl) tl.textContent='🦠 '+Math.round({totales[0]})+' infectados'; }}
-</script>"""
+        iife_js = _build_map_js(
+            uid        = uid,
+            frames_json  = json.dumps(frames),
+            totales_json = json.dumps(totales),
+            pz_idx     = pz_idx,
+            n_dias     = n_dias,
+            dia_actual = dia_actual,
+            animado    = animado,
+            centro     = ciudad["centro"],
+            zoom       = ciudad["zoom"],
+        )
 
         return f"""<!DOCTYPE html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -353,7 +362,7 @@ class MapaBrote:
 {_CSS}
 </head><body>
 <div class="mb-wrapper">
-  <div class="mb-header" id="mb-hdr-border" style="border-bottom:3px solid {al_color}">
+  <div class="mb-header" id="mb-hdr-{uid}" style="border-bottom:3px solid {al_color}">
     <div>
       <h2>🗺 {ciudad['nombre']} &nbsp;—&nbsp; {patogeno}</h2>
       <p>{ciudad['subtitulo']}</p>
@@ -361,15 +370,14 @@ class MapaBrote:
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
       <span class="mb-tag">{len(zonas)} zonas</span>
       {'<span class="mb-tag">Día ' + str(dia_actual) + '</span>' if not animado else ''}
-      <span id="mb-alert" class="mb-badge {pulse}" style="background:{al_color}">ALERTA {al}</span>
+      <span id="mb-alert-{uid}" class="mb-badge {pulse}" style="background:{al_color}">ALERTA {al}</span>
     </div>
   </div>
   {controls}
-  <div id="mb-map-{ciudad_key}" style="height:{altura}px;width:100%"></div>
+  <div id="mb-map-{uid}" style="height:{altura}px;width:100%"></div>
   <div class="mb-nota">📌 {ciudad['nota']}</div>
 </div>
-{data_js}
-{map_js}
+{iife_js}
 </body></html>"""
 
     # ─────────────────────────────────────────────────────────────

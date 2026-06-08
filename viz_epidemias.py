@@ -504,9 +504,6 @@ class VizEpidemias:
             orientation="h",
             marker=dict(color=bar_colors, line=dict(width=0)),
             hovertemplate="%{y}<br>R₀ = %{x}<extra></extra>",
-            text=[f"R₀ = {r}" for r in r0s],
-            textposition="outside",
-            textfont=dict(color="#B8FF9A", size=10, family="Courier New"),
         ))
 
         # Línea umbral de extinción en R0 = 1
@@ -517,27 +514,30 @@ class VizEpidemias:
             annotation_font=dict(color="#4CA66B", size=10, family="Courier New"),
         )
 
-        # Anotación especial para Sarampión (R0 extremo)
-        for i, (r, n) in enumerate(zip(r0s, noms)):
-            if r >= 10:
-                fig.add_annotation(
-                    x=r, y=n.upper(),
-                    text=f"  ▶ R₀={r} — UNA AULA SIN VACUNAR",
-                    showarrow=False,
-                    font=dict(size=9, color="#C0392B", family="Courier New"),
-                    xanchor="left",
-                )
+        # Una sola anotación por barra — combina R₀ + nota especial
+        max_r = max(r0s)
+        for r, n in zip(r0s, noms):
+            is_walker   = "Walker" in n or "walker" in n
+            is_extreme  = r >= 10
 
-        # Anotación Walker — modelo no aplica
-        for i, (r, n) in enumerate(zip(r0s, noms)):
-            if "Walker" in n or "walker" in n:
-                fig.add_annotation(
-                    x=r, y=n.upper(),
-                    text="  ⚠ REANIMACIÓN — SIR NO APLICA",
-                    showarrow=False,
-                    font=dict(size=9, color="#D4870A", family="Courier New"),
-                    xanchor="left",
-                )
+            if is_walker:
+                label = f"  R₀ = {r}  ⚠ REANIMACIÓN"
+                col   = "#D4870A"
+            elif is_extreme:
+                label = f"  R₀ = {r}  — UNA AULA SIN VACUNAR"
+                col   = "#C0392B"
+            else:
+                label = f"  R₀ = {r}"
+                col   = "#B8FF9A"
+
+            fig.add_annotation(
+                x=r, y=n.upper(),
+                text=label,
+                showarrow=False,
+                font=dict(size=10, color=col, family="Courier New"),
+                xanchor="left",
+                yanchor="middle",
+            )
 
         fig.update_layout(
             title=dict(
@@ -550,9 +550,8 @@ class VizEpidemias:
             height=320 + len(noms) * 28,
         )
         _apply_theme(fig)
-        fig.update_xaxes(range=[0, max(r0s) * 1.25])
+        fig.update_xaxes(range=[0, max_r * 1.35])
         fig.show()
-        return fig
 
     # ─────────────────────────────────────────────────────────────
     # 7. GRÁFICO CFR — tasa de mortalidad por caso
@@ -599,9 +598,6 @@ class VizEpidemias:
             orientation="h",
             marker=dict(color=bar_colors, line=dict(width=0)),
             hovertemplate="%{y}<br>CFR = %{x:.1f}%<extra></extra>",
-            text=[f"{c:.0f}%" for c in cfrs],
-            textposition="outside",
-            textfont=dict(color="#B8FF9A", size=10, family="Courier New"),
         ))
 
         # Línea de referencia COVID-19
@@ -613,16 +609,29 @@ class VizEpidemias:
                 annotation_font=dict(color="#39E5B6", size=10, family="Courier New"),
             )
 
-        # Anotación Walker — 100%
+        # Una sola anotación por barra — combina CFR% + nota especial
+        max_c = max(cfrs)
         for c, n in zip(cfrs, noms):
-            if "Walker" in n and c >= 99:
-                fig.add_annotation(
-                    x=c, y=n.upper(),
-                    text="  EL HONGO REANIMA. EL CORDYCEPS NO PERDONA.",
-                    showarrow=False,
-                    font=dict(size=9, color="#D4870A", family="Courier New"),
-                    xanchor="left",
-                )
+            is_walker = "Walker" in n
+
+            if is_walker:
+                label = f"  {c:.0f}%  — EL CORDYCEPS NO PERDONA"
+                col   = "#D4870A"
+            elif c >= 50:
+                label = f"  {c:.0f}%"
+                col   = "#C0392B"
+            else:
+                label = f"  {c:.1f}%"
+                col   = "#B8FF9A"
+
+            fig.add_annotation(
+                x=c, y=n.upper(),
+                text=label,
+                showarrow=False,
+                font=dict(size=10, color=col, family="Courier New"),
+                xanchor="left",
+                yanchor="middle",
+            )
 
         fig.update_layout(
             title=dict(
@@ -635,6 +644,115 @@ class VizEpidemias:
             height=320 + len(noms) * 28,
         )
         _apply_theme(fig)
-        fig.update_xaxes(range=[0, max(cfrs) * 1.25])
+        fig.update_xaxes(range=[0, max_c * 1.35])
         fig.show()
-        return fig
+
+    # ─────────────────────────────────────────────────────────────
+    # 7. SLIDER INTERACTIVO R₀
+    # ─────────────────────────────────────────────────────────────
+    @staticmethod
+    def curva_r0_interactiva(N=10_000, dias=180, gamma=1/14):
+        """
+        Slider R₀ interactivo: arrastra de 0.5 a 5.0 y observa cómo evoluciona
+        la epidemia (S, I, R) y el umbral de inmunidad de rebaño.
+
+        N     : tamaño de la población simulada
+        dias  : duración de la simulación en días
+        gamma : tasa de recuperación diaria (default 1/14 — período infeccioso de 14 días)
+        """
+        if not _PLOTLY:
+            print("plotly no disponible"); return
+
+        r0_vals = [round(v * 0.5, 1) for v in range(1, 11)]   # 0.5 → 5.0
+        dias_x  = list(range(1, dias + 1))
+
+        def _sim(r0):
+            beta = r0 * gamma
+            S, I, R = float(N - 1), 1.0, 0.0
+            Sl, Il, Rl = [], [], []
+            for _ in range(dias):
+                dS = beta * S * I / N
+                dR = gamma * I
+                S  = max(0.0, S - dS)
+                I  = max(0.0, I + dS - dR)
+                R  = min(float(N), R + dR)
+                Sl.append(S / N * 100)
+                Il.append(I / N * 100)
+                Rl.append(R / N * 100)
+            return Sl, Il, Rl
+
+        def _herd(r0):
+            return max(0.0, (1 - 1 / r0) * 100) if r0 > 1 else 0.0
+
+        def _title(r0):
+            h = _herd(r0)
+            suffix = f"UMBRAL REBAÑO: {h:.0f}%" if r0 > 1 else "R₀ ≤ 1 — EPIDEMIA EN EXTINCIÓN"
+            return f"[ SIMULACIÓN SIR — R₀ = {r0:.1f} | {suffix} ]"
+
+        init_idx   = r0_vals.index(2.5)
+        S0, I0, R0 = _sim(r0_vals[init_idx])
+        h0         = _herd(r0_vals[init_idx])
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=dias_x, y=S0, name="SUSCEPTIBLES",
+            mode="lines", line=dict(color=_SIR_S, width=2.5)))
+        fig.add_trace(go.Scatter(x=dias_x, y=I0, name="INFECTADOS ACTIVOS",
+            mode="lines", line=dict(color=_SIR_I, width=2.5)))
+        fig.add_trace(go.Scatter(x=dias_x, y=R0, name="RECUPERADOS",
+            mode="lines", line=dict(color=_SIR_R, width=2.5)))
+        fig.add_trace(go.Scatter(
+            x=[1, dias], y=[h0, h0],
+            name="UMBRAL INMUNIDAD DE REBAÑO",
+            mode="lines",
+            line=dict(color="#39E5B6", width=1.5, dash="dot"),
+        ))
+
+        frames = []
+        for r0 in r0_vals:
+            Sl, Il, Rl = _sim(r0)
+            h = _herd(r0)
+            frames.append(go.Frame(
+                data=[
+                    go.Scatter(y=Sl),
+                    go.Scatter(y=Il),
+                    go.Scatter(y=Rl),
+                    go.Scatter(y=[h, h]),
+                ],
+                layout=go.Layout(title=dict(
+                    text=_title(r0),
+                    font=dict(size=14, color="#B8FF9A", family="Courier New"),
+                )),
+                name=str(r0),
+            ))
+        fig.frames = frames
+
+        steps = [dict(
+            method="animate",
+            args=[[str(r0)], dict(mode="immediate",
+                frame=dict(duration=0, redraw=True),
+                transition=dict(duration=0))],
+            label=f"{r0:.1f}",
+        ) for r0 in r0_vals]
+
+        fig.update_layout(
+            title=dict(text=_title(r0_vals[init_idx]),
+                       font=dict(size=14, color="#B8FF9A", family="Courier New")),
+            xaxis_title="DÍA DE SIMULACIÓN",
+            yaxis_title="% POBLACIÓN",
+            height=520,
+            sliders=[dict(
+                active=init_idx,
+                currentvalue=dict(prefix="R₀ = ",
+                    font=dict(color="#B8FF9A", family="Courier New", size=14)),
+                steps=steps,
+                bgcolor="#111111",
+                bordercolor="#39E5B6",
+                font=dict(color="#8FA3A8", family="Courier New"),
+                pad=dict(t=12, b=10),
+                x=0, len=1,
+            )],
+            updatemenus=[],
+        )
+        _apply_theme(fig)
+        fig.update_yaxes(range=[0, 105])
+        fig.show()

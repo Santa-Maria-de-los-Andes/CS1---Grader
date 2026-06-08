@@ -577,18 +577,22 @@ Los distritos más grandes de la ciudad. Los mismos distritos donde vivió el br
 cells.append(code("nb3-32-ej3-viz", """\
 # 🗺 Tu simulación de propagación — Lima, Perú
 _zonas_nombres = ["Zona Norte", "Zona Este", "Zona Centro", "Zona Sur", "Zona Oeste"]
-viz.semaforo_ciudad(_zonas_nombres, infectados, poblaciones, dia=dias, patogeno=f"R\\u2080={r0}")
-mapa.brote_actual("lima", infectados, poblaciones, dia=dias, patogeno=f"COVID-19 simulado (R\\u2080={r0})")"""))
+viz.semaforo_ciudad(_zonas_nombres, infectados, poblaciones, dia=dias, patogeno=f"R₀={r0}")
+mapa.brote_actual("lima", infectados, poblaciones, dia=dias, patogeno=f"COVID-19 simulado (R₀={r0})")"""))
 
 cells.append(md("nb3-32-prop-viz-md", """\
 ---
-### 📈 [ AN\\u00c1LISIS TEMPORAL \\u2014 PROPAGACI\\u00d3N POR ZONA ]
+### 📈 [ ANÁLISIS TEMPORAL — PROPAGACIÓN POR ZONA ]
 
-El sem\\u00e1foro muestra el estado en **un d\\u00eda**. Este gr\\u00e1fico muestra **c\\u00f3mo lleg\\u00f3 cada zona hasta ese punto** \\u2014 la trayectoria completa de la simulaci\\u00f3n.
+El semáforo muestra el estado en **un día**. Este gráfico muestra **cómo llegó cada zona hasta ese punto** — la trayectoria completa de la simulación.
 
-> **[ LECTURA DE DATOS ]** Cada l\\u00ednea es una zona. La l\\u00ednea punteada blanca es el total ciudad.
-> **[ CONCLUSI\\u00d3N ]** **Las zonas con m\\u00e1s infectados iniciales colapsan primero, pero con R\\u2080 > 1 todas las zonas colapsan eventualmente.**
-> **[ MISI\\u00d3N ]** Cambia `r0 = 1.8` a `r0 = 0.7` en el ejercicio. \\u00bfQu\\u00e9 le pasa a la curva total?"""))
+---
+
+**[ LECTURA ]** Cada línea es una zona. La línea punteada blanca es el total ciudad. Las zonas con más casos iniciales saturan primero.
+
+**[ CONCLUSIÓN ]** Con R₀ > 1, todas las zonas colapsan eventualmente — la diferencia es el tiempo. La zona que empieza con más infectados llega al límite días antes que las demás.
+
+**[ MISIÓN ]** Cambia `r0 = 1.8` a `r0 = 0.7` en el ejercicio. ¿Qué le pasa a la curva total? ¿Por qué?"""))
 
 cells.append(code("nb3-32-prop-viz", """\
 # 📈 Propagación por zona — reconstruye el historial completo
@@ -601,7 +605,7 @@ for _d in range(7):
     for _i in range(len(_sim)):
         _sim[_i] = min(int(_sim[_i] * 1.8), _pobs_ej3[_i])
     _hist.append(_sim[:])
-viz.curva_propagacion(_hist, labels=_z_names, r0=1.8, patogeno="Propagaci\\u00f3n Urbana (R\\u2080=1.8)")"""))
+viz.curva_propagacion(_hist, labels=_z_names, r0=1.8, patogeno="Propagación Urbana (R₀=1.8)")"""))
 
 cells.append(md("nb3-32-ej4-md", """\
 ---
@@ -747,15 +751,19 @@ for _ in range(9):
     _ola2.append(min(int(_ola2[-1] * _r0), _pob))
 
 viz.comparar_patogenos(
-    {"Gripe 1918 \\u2014 Ola 1 (inicio: 100)":    _ola1,
-     "Gripe 1918 \\u2014 Ola 2 (inicio: 5,000)":  _ola2},
-    titulo="Las Dos Olas \\u2014 Gripe Espa\\u00f1ola 1918"
+    {"Gripe 1918 — Ola 1 (inicio: 100)":    _ola1,
+     "Gripe 1918 — Ola 2 (inicio: 5,000)":  _ola2},
+    titulo="Las Dos Olas — Gripe Española 1918"
 )"""))
 
 cells.append(md("nb3-32-ej5-interp", """\
-> **[ LECTURA DE DATOS ]** Misma Gripe Espa\\u00f1ola 1918, mismo R\\u2080 = 2.0 \\u2014 dos puntos de partida distintos. La l\\u00ednea s\\u00f3lida es Ola 1 (inicio: 100), la discontinua es Ola 2 (inicio: 5,000).
-> **[ CONCLUSI\\u00d3N ]** **El R\\u2080 no cambia. El punto de inicio s\\u00ed. Con 5,000 infectados el D\\u00eda 1, la ventana de intervenci\\u00f3n ya cerr\\u00f3 antes de que la detecci\\u00f3n fuera posible.**
-> **[ MISI\\u00d3N ]** Cambia `_ola2 = [5_000]` a `_ola2 = [500]`. \\u00bfEn cu\\u00e1ntos d\\u00edas m\\u00e1s aparece el pico?"""))
+---
+
+**[ LECTURA ]** Misma Gripe Española 1918, mismo R₀ = 2.0. Dos puntos de partida: Ola 1 empieza con 100 infectados (sólida), Ola 2 con 5,000 (discontinua). La forma de la curva es idéntica — solo el tiempo cambia.
+
+**[ CONCLUSIÓN ]** El R₀ determina la *forma*; el punto de inicio determina el *momento*. Con 5,000 infectados el Día 1, la epidemia ya lleva ventaja cuando los sistemas de detección la detectan.
+
+**[ MISIÓN ]** Cambia `_ola2 = [5_000]` a `_ola2 = [500]`. ¿En cuántos días más aparece el pico? ¿Hay un umbral de inicio que haría a las dos olas prácticamente iguales?"""))
 
 cells.append(code("nb3-32-mini-b", "grader.check_mini_b()   # ✅ Checkpoint 3.2"))
 
@@ -803,9 +811,9 @@ cells.append(md("nb3-33-cfr-viz-md", """\
 ---
 ### 📊 Visualiza — CFR en perspectiva real
 
-> *"\\u2014 Ellie: '\\u00bfPor qu\\u00e9 \\u00c9bola necesita m\\u00e1s recursos que COVID si infecta menos gente?' \\u2014 Joel: 'Porque mata al 65% de los que toca. Un infectado de \\u00c9bola vale veinte de COVID en el triage. Eso es el CFR.'"*
+> *"— Ellie: '¿Por qué Ébola necesita más recursos que COVID si infecta menos gente?' — Joel: 'Porque mata al 65% de los que toca. Un infectado de Ébola vale veinte de COVID en el triage. Eso es el CFR.'"*
 
-El CFR determina cu\\u00e1n agresivo debe ser el protocolo. Compara los 7 pat\\u00f3genos antes de escribir el clasificador.
+El CFR determina cuán agresivo debe ser el protocolo. Compara los 7 patógenos antes de escribir el clasificador.
 
 *Ejecuta para ver la tasa de mortalidad comparada.*"""))
 
@@ -1241,13 +1249,17 @@ _sin_q = _simular_q(999)
 _q5    = _simular_q(5)
 _q14   = _simular_q(14)
 
-viz.impacto_cuarentena(_sin_q, _q5,  dia_cuarentena=5,  nombre_patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 5",  cfr=mortalidad[2])
-viz.impacto_cuarentena(_sin_q, _q14, dia_cuarentena=14, nombre_patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 14", cfr=mortalidad[2])"""))
+viz.impacto_cuarentena(_sin_q, _q5,  dia_cuarentena=5,  nombre_patogeno="COVID-19 — Cuarentena Día 5",  cfr=mortalidad[2])
+viz.impacto_cuarentena(_sin_q, _q14, dia_cuarentena=14, nombre_patogeno="COVID-19 — Cuarentena Día 14", cfr=mortalidad[2])"""))
 
 cells.append(md("nb3-34-ej8-viz-interp", """\
-> **[ LECTURA DE DATOS ]** Mismo COVID-19, misma ciudad \\u2014 cuarentena el D\\u00eda 5 vs. el D\\u00eda 14. El \\u00e1rea roja sombreada = casos evitados. Las vidas salvadas se calculan con CFR = 2%.
-> **[ CONCLUSI\\u00d3N ]** **Cada d\\u00eda de retraso en la cuarentena se convierte en cientos de muertes adicionales. El modelo de Ferguson et al. (Imperial College, 2020) us\\u00f3 exactamente esta l\\u00f3gica para convencer a los gobiernos de actuar.**
-> **[ MISI\\u00d3N ]** Cambia `cfr=mortalidad[2]` (COVID, 2%) por `cfr=mortalidad[3]` (\\u00c9bola, 65%). \\u00bfCu\\u00e1ntas vidas salva el mismo retraso con un pat\\u00f3geno m\\u00e1s letal?"""))
+---
+
+**[ LECTURA ]** Mismo COVID-19, misma ciudad, misma cuarentena — pero el Día 5 vs. el Día 14. El área sombreada es la diferencia: casos que no ocurrieron porque se actuó antes.
+
+**[ CONCLUSIÓN ]** La curva sin intervención es idéntica en ambos gráficos. Lo que cambia es cuándo se dobla. Ferguson et al. (Imperial College, 2020) usó exactamente este modelo para estimar que cada semana de retraso duplicaba las muertes proyectadas en UK.
+
+**[ MISIÓN ]** Cambia `cfr=mortalidad[2]` (COVID, 2%) por `cfr=mortalidad[3]` (Ébola, 65%). ¿Cuántas vidas adicionales salva actuar el Día 5 vs. el Día 14 con Ébola? ¿Es la diferencia proporcional?"""))
 
 cells.append(md("nb3-34-diseno-md", """\
 ---
@@ -1331,11 +1343,11 @@ cells.append(md("nb3-34-diseno-viz-md", """\
 
 cells.append(code("nb3-34-diseno-viz", """\
 viz.comparar_patogenos(
-    {"Sin intervenci\\u00f3n":             curva_base,
-     "A \\u2014 Cuarentena estricta":     curva_A,
-     "B \\u2014 Rastreo temprano D\\u00eda 5": curva_B,
-     "C \\u2014 Vacunaci\\u00f3n parcial": curva_C},
-    titulo="Dise\\u00f1o de Intervenci\\u00f3n \\u2014 COVID-19, 21 d\\u00edas"
+    {"Sin intervención":             curva_base,
+     "A — Cuarentena estricta":     curva_A,
+     "B — Rastreo temprano Día 5": curva_B,
+     "C — Vacunación parcial": curva_C},
+    titulo="Diseño de Intervención — COVID-19, 21 días"
 )"""))
 
 cells.append(md("nb3-34-debug4-md", """\
@@ -1961,12 +1973,16 @@ for i in range(len(nombres)):
         serie.append(inf)
     _series[nombres[i]] = serie
 
-viz.comparar_patogenos(_series, titulo="Los 7 Pat\\u00f3genos \\u2014 14 d\\u00edas desde 50 infectados iniciales")"""))
+viz.comparar_patogenos(_series, titulo="Los 7 Patógenos — 14 días desde 50 infectados iniciales")"""))
 
 cells.append(md("nb3-intex3-viz-interp", """\
-> **[ LECTURA DE DATOS ]** Siete pat\\u00f3genos, misma poblaci\\u00f3n inicial de 50 infectados, 14 d\\u00edas. Cada l\\u00ednea tiene estilo diferente para distinguirlas.
-> **[ CONCLUSI\\u00d3N ]** **Las curvas no siguen el mismo orden que el CFR. Saram pi\\u00f3n (R\\u2080=15) explota antes que \\u00c9bola (R\\u2080=1.8), aunque \\u00c9bola mata m\\u00e1s. Transmisibilidad y mortalidad son dimensiones independientes.**
-> **[ MISI\\u00d3N ]** Modifica el c\\u00f3digo para solo simular los pat\\u00f3genos con R\\u2080 > 2. \\u00bfCu\\u00e1ntos quedan? \\u00bfCu\\u00e1l lidera en el D\\u00eda 14?"""))
+---
+
+**[ LECTURA ]** Siete patógenos, mismo punto de partida: 50 infectados, 14 días. El Sarampión (R₀=15) domina en velocidad. Ébola (R₀=1.8) apenas se mueve en escala. La Peste Bubónica sigue entre ellos.
+
+**[ CONCLUSIÓN ]** Transmisibilidad y mortalidad son dimensiones independientes. Sarampión mata menos del 0.1% pero infecta a casi todos. Ébola mata al 65% pero no se propaga tan rápido. Las dos variables juntas determinan el impacto real.
+
+**[ MISIÓN ]** Modifica el código para simular solo los patógenos con R₀ > 2. ¿Cuántos quedan? ¿Cuál lidera en el Día 14? ¿Cambia el ranking si filtras por mortalidad en vez de R₀?"""))
 
 # INTEX 4
 cells.append(md("nb3-intex4-md", """\
@@ -2083,8 +2099,8 @@ Los mapas animados de abajo muestran las mismas matemáticas que calculaste — 
 
 *Presiona ▶ Reproducir para ver la expansión día a día.*"""))
 
-cells.append(code("nb3-intex4-viz", """\
-# 🗺 Animación del brote — Wuhan y Cusco
+cells.append(code("nb3-intex4-viz-wuhan", """\
+# 🗺 Mapa animado — Wuhan (cuarentena temprana: Día 7)
 _zi   = [50, 20, 100, 10, 200, 30]
 _pobs = [5000, 3000, 10000, 2000, 8000, 4000]
 _r0b  = r0_valores[2]
@@ -2105,15 +2121,29 @@ def _animar_sim(dia_q):
         frames.append(inf[:])
     return frames
 
-print("Generando mapa de Wuhan (cuarentena D\\u00eda 7)...")
-mapa.animacion_brote("wuhan", _animar_sim(7),  _pobs, patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 7")
-print("\\nGenerando mapa de Cusco (cuarentena D\\u00eda 20 \\u2014 respuesta tard\\u00eda)...")
-mapa.animacion_brote("cusco", _animar_sim(20), _pobs, patogeno="COVID-19 \\u2014 Cuarentena D\\u00eda 20")"""))
+mapa.animacion_brote("wuhan", _animar_sim(7), _pobs, patogeno="COVID-19 — Cuarentena Día 7")"""))
+
+cells.append(md("nb3-intex4-viz-sep", """\
+---
+### 🗺 Mapa 2 — Cusco: respuesta tardía (Día 20)
+
+El mismo modelo, la misma ciudad inicial — pero la cuarentena llegó 13 días después.
+Observa cuántas zonas llegan a estado **PERDIDA** en comparación con Wuhan.
+
+*Presiona ▶ Reproducir para comparar la expansión día a día.*"""))
+
+cells.append(code("nb3-intex4-viz-cusco", """\
+# 🗺 Mapa animado — Cusco (cuarentena tardía: Día 20)
+mapa.animacion_brote("cusco", _animar_sim(20), _pobs, patogeno="COVID-19 — Cuarentena Día 20")"""))
 
 cells.append(md("nb3-intex4-viz-interp", """\
-> **[ LECTURA DE DATOS ]** Dos ciudades, mismo virus. Wuhan con cuarentena el D\\u00eda 7 y Cusco con respuesta tard\\u00eda el D\\u00eda 20. Los c\\u00edrculos crecen donde el virus llega primero y se propagan radialmente.
-> **[ CONCLUSI\\u00d3N ]** **La geograf\\u00eda importa. Las zonas contiguas al Paciente Cero alcanzan el umbral cr\\u00edtico d\\u00edas antes que las perif\\u00e9ricas. Cusco, con respuesta tard\\u00eda, muestra m\\u00e1s zonas en estado PERDIDA.**
-> **[ MISI\\u00d3N ]** \\u00bfQu\\u00e9 pasar\\u00eda si el Paciente Cero estuviera en una zona fronteriza de Cusco en vez del centro? Discute c\\u00f3mo cambiar\\u00eda el patr\\u00f3n de propagaci\\u00f3n."""))
+---
+
+**[ LECTURA ]** Mismo virus, misma simulación matemática — dos ciudades, dos decisiones de política. Los círculos rojos grandes en Cusco aparecen más rápido y en más zonas que en Wuhan.
+
+**[ CONCLUSIÓN ]** Los números del modelo son idénticos. Lo que cambia es el momento de la intervención. 13 días de diferencia separan una ciudad contenida de una en estado PERDIDA.
+
+**[ MISIÓN ]** Observa qué zonas de Cusco llegan a PERDIDA primero. ¿Son las más pobladas, las más cercanas al centro, o las que empezaron con más infectados? Discute cómo cambiaría el patrón si el Paciente Cero estuviera en una zona periférica."""))
 
 # INTEX 5 — CAPSTONE
 cells.append(md("nb3-intex5-md", """\
@@ -2300,9 +2330,9 @@ La gráfica compara los dos escenarios que corriste. El dashboard es lo que ve u
 cells.append(code("nb3-intex5-viz", """\
 # 📊 Resultados del motor de simulación
 viz.comparar_patogenos(
-    {"Cordyceps (R\\u2080=3.5, CFR=85%)": total_cordyceps,
-     "COVID-19  (R\\u2080=2.5, CFR=2%)":  total_covid},
-    titulo="Motor de Simulaci\\u00f3n \\u2014 30 d\\u00edas, 5 zonas"
+    {"Cordyceps (R₀=3.5, CFR=85%)": total_cordyceps,
+     "COVID-19  (R₀=2.5, CFR=2%)":  total_covid},
+    titulo="Motor de Simulación — 30 días, 5 zonas"
 )
 
 # 🏥 Dashboard de situación — COVID-19
@@ -2317,8 +2347,8 @@ dash.situacion(
     cfr              = mortalidad[2],
     total_infectados = int(max(total_covid)),
     total_muertos    = int(max(total_covid) * mortalidad[2]),
-    ciudad           = "Lima (simulaci\\u00f3n)",
-    autor            = "Escribe tu nombre aqu\\u00ed"
+    ciudad           = "Lima (simulación)",
+    autor            = "Escribe tu nombre aquí"
 )"""))
 
 # ════════════════════════════════════════════════════════════
@@ -2472,12 +2502,203 @@ for _ in range(200):
     _S, _I, _R = siguiente_paso_sir(_S, _I, _R, N, _beta, _gamma)
     _Sh.append(_S); _Ih.append(_I); _Rh.append(_R)
 
-viz.curva_sir(_Sh, _Ih, _Rh, f"COVID-19 (R\\u2080={r0_valores[2]}, \\u03b3=1/14)", N=N, r0=r0_valores[2])"""))
+viz.curva_sir(_Sh, _Ih, _Rh, f"COVID-19 (R₀={r0_valores[2]}, γ=1/14)", N=N, r0=r0_valores[2])"""))
 
 cells.append(md("nb3-reto2-viz-interp", """\
-> **[ LECTURA DE DATOS ]** Susceptibles (gris), Infectados activos (\\u00e1mbar Cordyceps), Recuperados/Inmunes (verde Firefly) a lo largo de 200 d\\u00edas. COVID-19, R\\u2080 = 2.5. La l\\u00ednea punteada bioluminiscente marca el umbral de inmunidad de reba\\u00f1o.
-> **[ CONCLUSI\\u00d3N ]** **Cuando Recuperados cruza el umbral del 60%, los nuevos infectados caen en cascada porque no hay suficientes susceptibles. Ese 60% = 1 \\u2212 1/R\\u2080 = 1 \\u2212 1/2.5. Es la f\\u00f3rmula que define cu\\u00e1nta poblaci\\u00f3n debe ser inmune para detener la epidemia.**
-> **[ MISI\\u00d3N ]** Cambia `r0 = r0_valores[2]` (COVID, 2.5) a `r0 = r0_valores[5]` (Saram pi\\u00f3n, 15.0). \\u00bfA cu\\u00e1nto sube el umbral de reba\\u00f1o? \\u00bfQu\\u00e9 implica eso para la vacunaci\\u00f3n?"""))
+---
+
+**[ LECTURA ]** Tres compartimentos en el tiempo: Susceptibles (gris, bajando), Infectados activos (ámbar, pico y caída), Recuperados/Inmunes (verde, subiendo). La línea punteada bioluminiscente es el umbral de inmunidad de rebaño al 60%.
+
+**[ CONCLUSIÓN ]** El momento en que la línea verde cruza el 60% es exactamente cuando la epidemia empieza a colapsar. Eso es 1 − 1/R₀ = 1 − 1/2.5 = 0.60. La fórmula te dice cuánta población debe ser inmune (por infección o vacuna) para que cada infectado contagie a menos de 1 persona.
+
+**[ MISIÓN ]** Cambia `r0 = r0_valores[2]` (COVID, 2.5) a `r0 = r0_valores[5]` (Sarampión, 15.0). ¿A cuánto sube el umbral de rebaño? Verifica: ¿coincide con 1 − 1/15? ¿Qué porcentaje de cobertura vacunal necesitaría Perú para estar protegido?"""))
+
+cells.append(md("nb3-r0-slider-md", """\
+---
+### 🎛️ Explora — Slider interactivo de R₀
+
+> *“Marcos Castañeda, biólogo de campo, Firefly. Campo, día 31. No entendía por qué el Cordyceps EL-1 mataba ciudades enteras mientras el EL-4 se extinguió solo. Entonces vi el R₀. Si está por debajo de 1, el virus muere solo. Por encima de 1, necesita ayuda para morir.”*
+
+Arrastra el slider para cambiar el R₀ entre 0.5 y 5.0.
+Observa cómo cambian:
+- La **curva de infectados** (ámbar) — ¿más alta? ¿más temprana?
+- El **umbral de inmunidad de rebaño** (línea punteada) — ¿cuánta vacunación se necesita?
+- El **ritmo de caída** de susceptibles (gris)
+
+*Punto de quiebre clave: ¿qué pasa cuando R₀ cruza exactamente 1.0?*"""))
+
+cells.append(code("nb3-r0-slider", """\
+# 🎛️ Slider interactivo R₀ → curva SIR
+# Arrastra el control deslizante para cambiar R₀ y ver la epidemia evolucionar
+viz.curva_r0_interactiva(N=10_000, dias=180)"""))
+
+# ════════════════════════════════════════════════════════════
+# LABORATORIO DE ANÁLISIS — ejercicios combinados
+# ════════════════════════════════════════════════════════════
+
+cells.append(md("nb3-lab-header", """\
+---
+## 🔬 Laboratorio de Análisis — Ejercicios Combinados
+
+> *"El modelo SIR no es una predicción. Es una linterna. Tú decides hacia dónde apuntarla."*
+> — *Diario de campo, Firefly Research Node 7*
+
+Los siguientes ejercicios combinan **dos o más funciones** que ya escribiste. No hay respuesta única — el objetivo es explorar cómo interactúan los parámetros del modelo."""))
+
+# LAB 1
+cells.append(md("nb3-lab1-md", """\
+### 🏁 Lab 1 — Carrera de Patógenos: ¿Cuál llega primero al 10%?
+
+Usa `r0_a_beta` + `siguiente_paso_sir` + `tasa_infeccion` para correr dos epidemias en paralelo
+y encontrar qué día cada una supera el 10% de la población infectada.
+
+**Funciones que necesitas combinar:**
+- `r0_a_beta(r0, gamma)` → convierte R₀ en beta
+- `siguiente_paso_sir(S, I, R, N, beta, gamma)` → avanza un día
+- `tasa_infeccion(infectados, poblacion)` → porcentaje de infectados
+
+Completa la función `carrera_patogenos` y úsala para comparar **COVID-19 vs. Sarampión**."""))
+
+cells.append(code("nb3-lab1-code", """\
+def carrera_patogenos(r0_a, r0_b, nombre_a, nombre_b, N=10_000, gamma=1/14, umbral=10.0):
+    \"\"\"
+    Simula dos patógenos desde el mismo punto de partida.
+    Devuelve el día en que cada uno supera el umbral% de la población.
+    \"\"\"
+    # 1. Calcula beta para cada patógeno usando r0_a_beta
+    beta_a = r0_a_beta(r0_a, gamma)
+    beta_b = r0_a_beta(r0_b, gamma)
+
+    # 2. Estado inicial: 1 infectado, resto susceptibles
+    Sa, Ia, Ra = float(N - 1), 1.0, 0.0
+    Sb, Ib, Rb = float(N - 1), 1.0, 0.0
+    dia_a, dia_b = None, None
+
+    for dia in range(1, 120):
+        # 3. Avanza un día cada simulación usando siguiente_paso_sir
+        Sa, Ia, Ra = siguiente_paso_sir(Sa, Ia, Ra, N, beta_a, gamma)
+        Sb, Ib, Rb = siguiente_paso_sir(Sb, Ib, Rb, N, beta_b, gamma)
+
+        # 4. Verifica si cada uno cruzó el umbral usando tasa_infeccion
+        if dia_a is None and tasa_infeccion(Ia, N) >= umbral:
+            dia_a = dia
+        if dia_b is None and tasa_infeccion(Ib, N) >= umbral:
+            dia_b = dia
+
+        if dia_a and dia_b:
+            break
+
+    print(f"Carrera al {umbral:.0f}% de infectados (N={N:,}):")
+    print(f"  {nombre_a} (R₀={r0_a}): {'Día ' + str(dia_a) if dia_a else 'No llegó en 120 días'}")
+    print(f"  {nombre_b} (R₀={r0_b}): {'Día ' + str(dia_b) if dia_b else 'No llegó en 120 días'}")
+    if dia_a and dia_b:
+        dif = abs(dia_a - dia_b)
+        ganador = nombre_b if dia_b < dia_a else nombre_a
+        print(f"  → {ganador} llega {dif} día(s) antes.")
+    return dia_a, dia_b
+
+# Compara COVID-19 vs Sarampión
+carrera_patogenos(r0_valores[2], r0_valores[5], nombres[2], nombres[5])
+
+# Opcional: compara Ébola vs Gripe 1918
+# carrera_patogenos(r0_valores[3], r0_valores[1], nombres[3], nombres[1])"""))
+
+# LAB 2
+cells.append(md("nb3-lab2-md", """\
+---
+### 📉 Lab 2 — El Costo del Retraso: ¿Existe un punto de no retorno?
+
+Cada día de retraso en la cuarentena tiene un costo. Pero ¿hay un día a partir del cual
+la cuarentena ya no hace diferencia?
+
+Usa `r0_a_beta` + `siguiente_paso_sir` en un loop sobre días de cuarentena (1 al 30)
+para calcular el total de infectados al final del brote para cada día de inicio.
+
+**Pregunta clave:** ¿La relación es lineal (cada día cuesta lo mismo) o exponencial (los primeros días son los más importantes)?"""))
+
+cells.append(code("nb3-lab2-code", """\
+def costo_del_retraso(r0=r0_valores[2], N=50_000, gamma=1/14, dias_sim=90, reduccion_r0=0.3):
+    \"\"\"
+    Para cada día de inicio de cuarentena (1-30), calcula el total de infectados.
+    reduccion_r0: a qué fracción del R₀ original baja en cuarentena (0.3 = 70% de reducción)
+    \"\"\"
+    beta_normal = r0_a_beta(r0, gamma)
+    beta_cuarentena = r0_a_beta(r0 * reduccion_r0, gamma)
+
+    resultados = []
+    for dia_q in range(1, 31):
+        S, I, R = float(N - 1), 1.0, 0.0
+        for dia in range(1, dias_sim + 1):
+            beta_hoy = beta_cuarentena if dia >= dia_q else beta_normal
+            S, I, R = siguiente_paso_sir(S, I, R, N, beta_hoy, gamma)
+        total_infectados = N - int(S)
+        resultados.append((dia_q, total_infectados))
+
+    # Muestra tabla resumen
+    print(f"Cuarentena con R₀ reducido al {reduccion_r0*100:.0f}% (N={N:,}, {dias_sim} días):")
+    print(f"{'Día cuarentena':>15} | {'Total infectados':>16} | {'% población':>11}")
+    print("-" * 48)
+    for dia_q, total in resultados[::5]:   # muestra cada 5 días
+        pct = total / N * 100
+        bar = "█" * int(pct / 2)
+        print(f"  Día {dia_q:>2}          |  {total:>14,}   | {pct:>9.1f}%  {bar}")
+
+    # Costo marginal: ¿cuántos infectados extra por cada día de retraso?
+    costos = [resultados[i+1][1] - resultados[i][1] for i in range(len(resultados)-1)]
+    promedio = sum(costos) / len(costos)
+    print(f"\nCosto promedio por día de retraso: +{promedio:,.0f} infectados")
+    print(f"Mayor costo marginal: +{max(costos):,.0f} infectados (entre días {costos.index(max(costos))+1} y {costos.index(max(costos))+2})")
+    return resultados
+
+resultados_retraso = costo_del_retraso()"""))
+
+# LAB 3
+cells.append(md("nb3-lab3-md", """\
+---
+### 🧬 Lab 3 — El Umbral Real: ¿Cuánta gente necesita Perú vacunar?
+
+Combina `r0_a_beta` + `siguiente_paso_sir` con la fórmula del umbral de inmunidad de rebaño
+para calcular, para cada patógeno, cuántas personas deben estar inmunes en Lima (10 millones)
+y cuántos muertos estimados sin vacunación.
+
+Este es un ejercicio de política pública, no solo de código."""))
+
+cells.append(code("nb3-lab3-code", """\
+def analisis_umbral_vacunacion(nombres, r0_valores, mortalidad, N_ciudad=10_000_000):
+    \"\"\"
+    Para cada patógeno calcula:
+    - Umbral de inmunidad de rebaño (1 - 1/R₀)
+    - Personas a vacunar en la ciudad
+    - Muertes estimadas si el 60% de la ciudad no vacunada se infecta (peor caso)
+    \"\"\"
+    print(f"Análisis de vacunación para ciudad de {N_ciudad:,} personas")
+    print(f"{'Patógeno':>18} | {'R₀':>4} | {'Umbral':>7} | {'Vacunas necesarias':>18} | {'Muertes est. sin vac':>20}")
+    print("-" * 80)
+
+    for i in range(len(nombres)):
+        r0 = r0_valores[i]
+        cfr = mortalidad[i]    # ya está en % (e.g., 2.0 para 2%)
+
+        # Calcula umbral de rebaño
+        if r0 > 1:
+            umbral = 1 - 1 / r0
+        else:
+            umbral = 0.0   # virus en extinción, no necesita umbral
+
+        vacunas = int(umbral * N_ciudad)
+
+        # Estimación de muertes: asume que sin vacunación, ~60% se infecta en epidemia típica
+        infectados_estimados = int(0.60 * N_ciudad)
+        muertes_estimadas = int(infectados_estimados * cfr / 100)
+
+        barra = "█" * int(umbral * 10) + "░" * (10 - int(umbral * 10))
+        print(f"  {nombres[i]:>16} | {r0:>4.1f} | {umbral*100:>5.0f}%  | {vacunas:>18,} | {muertes_estimadas:>20,}")
+
+    print()
+    print("Nota: muertes estimadas asumen 60% de infección sin intervención y CFR histórico.")
+    print("No son proyecciones oficiales — son estimaciones del modelo.")
+
+analisis_umbral_vacunacion(nombres, r0_valores, mortalidad)"""))
 
 # ════════════════════════════════════════════════════════════
 # FINAL
