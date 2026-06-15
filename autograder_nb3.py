@@ -1,12 +1,71 @@
 """
-Autograder — Notebook 3: Funciones
-def, parámetros, return
-100 puntos: 15 teoría + 85 ejercicios
+Autograder v1 — Notebook 3: Loops Anidados, Ifs Anidados, Funciones
+🍄  THE LAST OF US — Firefly Research Terminal
 """
 
-# ─────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────
+import sys
+import datetime as _dt
+from IPython.display import HTML, display
+
+# ─── Supabase Config ──────────────────────────────────────────
+SUPABASE_URL      = "https://uwykikwutjtkpffwmdiq.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu"
+LOGO_URL          = "https://raw.githubusercontent.com/Santa-Maria-de-los-Andes/CS1---Grader/main/icono%20SMA.png"
+
+# ─── Deadline: set when course date is confirmed ──────────────
+_DEADLINE_UTC   = _dt.datetime(2026, 12, 31, 23, 59, 0, tzinfo=_dt.timezone.utc)
+DEADLINE_PASSED = _dt.datetime.now(_dt.timezone.utc) >= _DEADLINE_UTC
+
+# ─── Scoring ─────────────────────────────────────────────────
+#   Exercises:  ex1(6)+ex2(6)+ex3(8)+ex4(8)+ex5(8)+ex6(8)+ex7(8)+ex8(10)+ex9(6)+ex10(8)+ex11(10) = 86
+#   Debugs:     debug1-5 (3 ea.) + debug2b (3) = 18
+#   Teoría:     t1+t2+t3 (4 ea.) = 12
+#   Integración: intex1(6)+intex2(8)+intex3(8)+intex4(10)+intex5(12) = 44
+_CORE_MAX   = 160
+_BONUS_KEYS = {"reto1", "reto2"}
+_BONUS_MAX  = 12
+
+# ─── TLOU Levels (by % of core score) ────────────────────────
+_LEVELS = [
+    (96, 6, "⚡ Proyecto Ellie"),
+    (81, 5, "🌿 Agente Marlene"),
+    (61, 4, "🔦 Explorador Firefly"),
+    (41, 3, "👁️ Acechador"),
+    (21, 2, "🍄 Corredor"),
+    (0,  1, "☠️ Paciente 0"),
+]
+
+_XP_GRAD = {
+    1: "linear-gradient(90deg,#1a1a1a,#2d2d2d)",
+    2: "linear-gradient(90deg,#2d1200,#5c2800)",
+    3: "linear-gradient(90deg,#3d1800,#8b4500)",
+    4: "linear-gradient(90deg,#0a2010,#1a5030)",
+    5: "linear-gradient(90deg,#0d3020,#2a7050)",
+    6: "linear-gradient(90deg,#0d2d20,#4ca66b,#d4870a)",
+}
+
+_LV_CSS_COLOR = {
+    1: "#444444",
+    2: "#7a3000",
+    3: "#cc5500",
+    4: "#2d7a45",
+    5: "#4ca66b",
+    6: "#4ca66b",
+}
+
+
+def _level_info(pct):
+    for thresh, num, name in _LEVELS:
+        if pct >= thresh:
+            return num, name
+    return 1, "☠️ Paciente 0"
+
+
+def _lv_color(n):
+    return _LV_CSS_COLOR.get(n, "#444444")
+
+
+# ─── Helpers ─────────────────────────────────────────────────
 
 def _get(name):
     try:
@@ -23,344 +82,1210 @@ def _approx(a, b, tol=1e-6):
         return False
 
 
-def _header(title):
-    print(f"\n{'═' * 60}")
-    print(f"  {title}")
-    print(f"{'═' * 60}")
-
-
-def _row(ok, label, msg):
-    print(f"  {'✅' if ok else '❌'} {label}: {msg}")
-
-
-def _footer(passed, total, pts, max_pts):
-    bar = "█" * passed + "░" * (total - passed)
-    print(f"\n  Checks: {passed}/{total}  [{bar}]")
-    print(f"  Puntos: {pts}/{max_pts}")
-    if pts == max_pts:
-        print("  ⭐ ¡Perfecto!")
-    elif pts > 0:
-        print("  👍 Revisa los ❌ para subir tu puntaje.")
-    else:
-        print("  💪 ¡Sigue intentando! Relee las instrucciones.")
-    print(f"{'═' * 60}\n")
-
-
-def _call(fn, *args):
-    """Call a student function safely, return (ok, result, error_msg)."""
-    try:
-        result = fn(*args)
-        return True, result, ""
-    except Exception as e:
-        return False, None, str(e)
-
-
-# ─────────────────────────────────────────────────────────────
-# Autograder
-# ─────────────────────────────────────────────────────────────
+# ─── Main Class ──────────────────────────────────────────────
 
 class Autograder:
 
     def __init__(self):
-        self._earned   = 0
-        self._possible = 0
-        print("✅ Autograder NB3 cargado. ¡Listo para revisar tus funciones!")
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except AttributeError:
+            pass
+        self._scores       = {}
+        self._achievements = set()
+        self._streak       = 0
+        self._prev_level   = 0
+        self._email        = None
+        self._nombre_real  = None
+        self._grado        = None
+        self._dni          = None
+        self._checkpoints  = set()
+        self._show_registration_form()
 
-    def _award(self, checks, max_pts):
+    # ── Registration form ────────────────────────────────────
+
+    def _show_registration_form(self):
+        logo_tag = (f'<img src="{LOGO_URL}" style="height:48px;object-fit:contain;" '
+                    f'onerror="this.style.display=\'none\'">'
+                    if LOGO_URL else
+                    '<span style="font-family:monospace;font-size:13px;'
+                    'color:#4ca66b;letter-spacing:2px;">SMA</span>')
+
+        try:
+            from google.colab import output as _out
+
+            def _on_register(nombre, grado, dni):
+                nombre = (nombre or "").strip()
+                grado  = (grado  or "").strip()
+                dni    = (dni    or "").strip()
+                if not nombre or not grado or not dni:
+                    return
+                self._nombre_real = nombre
+                self._grado       = grado
+                self._dni         = dni
+
+                _best = None
+                try:
+                    import urllib.request as _ur2, json as _json2, urllib.parse as _up2
+                    _qurl = (
+                        f"{SUPABASE_URL}/rest/v1/submissions"
+                        f"?select=earned,possible,pct,level_name,streak"
+                        f"&dni=eq.{_up2.quote(str(dni), safe='')}"
+                        f"&notebook=eq.nb3"
+                        f"&order=pct.desc,submitted_at.desc&limit=1"
+                    )
+                    _req2 = _ur2.Request(_qurl, headers={
+                        "apikey": SUPABASE_ANON_KEY,
+                        "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+                    })
+                    with _ur2.urlopen(_req2, timeout=8) as _resp2:
+                        _rows = _json2.loads(_resp2.read())
+                    if _rows:
+                        _best = _rows[0]
+                except Exception:
+                    pass
+
+                if _best:
+                    _score_html = f'''
+  <div style="background:#020d02;border:1px solid #2d5a1b;border-radius:3px;
+    padding:12px 20px;margin-top:6px;font-family:monospace;animation:ag-fadein .4s ease .1s both;">
+    <div style="font-size:6px;color:#2d5a1b;letter-spacing:2px;margin-bottom:10px;">
+      ✦ TU MEJOR MARCA — NOTEBOOK 3</div>
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div style="font-size:28px;color:#4ca66b;
+        text-shadow:0 0 16px rgba(76,166,107,.8),2px 2px 0 #0d2d10;">
+        {_best['pct']}%</div>
+      <div>
+        <div style="font-size:8px;color:#d4870a;letter-spacing:1px;">{_best['level_name']}</div>
+        <div style="font-size:6px;color:#8888bb;margin-top:6px;letter-spacing:1px;">
+          {_best['earned']} / {_best['possible']} XP</div>
+      </div>
+    </div>
+  </div>'''
+                else:
+                    _score_html = (
+                        '<div style="background:#020d02;border:1px solid #1a2a1a;border-radius:3px;'
+                        'padding:10px 20px;margin-top:6px;'
+                        'font-family:monospace;font-size:6px;color:#2a3a2a;'
+                        'letter-spacing:1px;animation:ag-fadein .4s ease .1s both;">'
+                        '✦ Primera misión — aún no tienes marca registrada</div>'
+                    )
+
+                display(HTML(f'''
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  @keyframes ag-fadein {{from{{opacity:0;transform:translateY(8px)}}to{{opacity:1;transform:translateY(0)}}}}
+  @keyframes ag-dot    {{0%,80%,100%{{transform:scale(.6);opacity:.3}}40%{{transform:scale(1);opacity:1}}}}
+  @keyframes ag-start  {{0%{{opacity:0;transform:scale(.7)}}60%{{transform:scale(1.12)}}100%{{opacity:1;transform:scale(1)}}}}
+</style>
+<div style="max-width:840px;margin:10px 0;box-sizing:border-box;">
+  <div style="background:#010801;border:1px solid #4ca66b;border-radius:3px;padding:12px 18px;
+    font-family:'Share Tech Mono',monospace;font-size:8px;
+    color:#4ca66b;letter-spacing:1px;animation:ag-fadein .4s ease;">
+    ✦ &nbsp;¡ACCESO CONCEDIDO, {nombre.upper()}! &nbsp;·&nbsp; FIREFLY NODE 7 &nbsp;·&nbsp; {grado}
+  </div>
+  {_score_html}
+  <div id="ag-loading" style="background:#020d02;border:1px solid #1a2a1a;border-radius:3px;
+    padding:22px 18px;margin-top:6px;text-align:center;animation:ag-fadein .5s ease .2s both;">
+    <div style="display:flex;justify-content:center;gap:6px;margin-bottom:12px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:#2d5a1b;
+        animation:ag-dot 1.2s ease-in-out 0s infinite;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#2d5a1b;
+        animation:ag-dot 1.2s ease-in-out .2s infinite;"></div>
+      <div style="width:8px;height:8px;border-radius:50%;background:#2d5a1b;
+        animation:ag-dot 1.2s ease-in-out .4s infinite;"></div>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#2a3a2a;letter-spacing:2px;">
+      INICIALIZANDO TERMINAL DE ANÁLISIS…
+    </div>
+  </div>
+  <div id="ag-start" style="display:none;background:linear-gradient(160deg,#010801,#011206);
+    border:2px solid #4ca66b;border-radius:4px;padding:36px 24px;margin-top:6px;text-align:center;
+    box-shadow:0 0 40px rgba(76,166,107,.2),0 6px 24px rgba(0,0,0,.9);">
+    <div style="font-size:44px;margin-bottom:14px;animation:ag-start .55s cubic-bezier(.34,1.56,.64,1);">🍄</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(18px,4vw,28px);color:#4ca66b;
+      letter-spacing:6px;text-shadow:0 0 24px rgba(76,166,107,.8),2px 2px 0 #0d2d10;
+      animation:ag-start .6s ease;margin-bottom:14px;">¡SOBREVIVE!</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#d4870a;
+      letter-spacing:2px;margin-bottom:16px;">EJECUTA LA PRIMERA CELDA PARA COMENZAR LA MISIÓN</div>
+    <div style="font-size:11px;color:#2d5a1b;opacity:.5;letter-spacing:8px;">✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧</div>
+  </div>
+</div>
+<script>
+setTimeout(function(){{
+  var l = document.getElementById('ag-loading');
+  var s = document.getElementById('ag-start');
+  if(l) l.style.display = 'none';
+  if(s){{ s.style.display = 'block'; }}
+}}, 1800);
+</script>
+'''))
+
+            _out.register_callback('_ag_register', _on_register)
+
+            display(HTML(f'''
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  .ag-input,.ag-select {{
+    width:100%;box-sizing:border-box;background:#010801;border:1px solid #1a2a1a;
+    border-radius:3px;padding:0 12px;color:#b8ff9a;font-size:13px;height:42px;
+    font-family:'Share Tech Mono',monospace;outline:none;transition:border .2s;
+  }}
+  .ag-input:focus,.ag-select:focus {{ border-color:#4ca66b; }}
+  .ag-select option {{ background:#020d02; }}
+  .ag-btn {{
+    width:100%;padding:13px;background:linear-gradient(90deg,#0d3020,#1a5030);
+    border:1px solid #4ca66b;border-radius:3px;color:#b8ff9a;
+    font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;
+    cursor:pointer;transition:opacity .2s;margin-top:6px;
+  }}
+  .ag-btn:hover {{ opacity:.85; }}
+  .ag-err {{ color:#c0392b;font-size:11px;margin-top:6px;display:none; }}
+  .ag-label {{ font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1px;
+    margin-bottom:8px;display:flex;align-items:center;gap:5px; }}
+  .ag-field {{ display:flex;flex-direction:column; }}
+</style>
+<div style="background:#020d02;border:2px solid #4ca66b;border-radius:4px;max-width:840px;
+  margin:10px 0;overflow:hidden;box-shadow:0 0 40px rgba(76,166,107,.15),0 10px 30px rgba(0,0,0,.8);">
+
+  <div style="background:linear-gradient(90deg,#010801,#011a06,#010801);border-bottom:2px solid #d4870a;
+    padding:18px 24px;position:relative;display:flex;align-items:center;justify-content:center;min-height:80px;">
+    <div style="position:absolute;left:20px;top:50%;transform:translateY(-50%);">{logo_tag}</div>
+    <div style="text-align:center;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:16px;color:#4ca66b;letter-spacing:3px;
+        text-shadow:0 0 14px rgba(76,166,107,.7),2px 2px 0 #0d2d10;">✦ FIREFLY RESEARCH NODE 7 ✦</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#d4870a;
+        letter-spacing:2px;margin-top:8px;">TERMINAL DE ANÁLISIS — NOTEBOOK III</div>
+    </div>
+    <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);">{logo_tag}</div>
+  </div>
+
+  <div style="padding:24px;">
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;align-items:end;">
+      <div class="ag-field">
+        <div class="ag-label" style="color:#4ca66b;">✦ NOMBRE COMPLETO</div>
+        <input id="ag-nombre" class="ag-input" placeholder="Tu nombre y apellido" />
+      </div>
+      <div class="ag-field">
+        <div class="ag-label" style="color:#4ca66b;">🏫 GRADO</div>
+        <select id="ag-grado" class="ag-select">
+          <option value="">— Selecciona —</option>
+          <option value="3ro">3ro</option>
+          <option value="4to">4to</option>
+          <option value="5to">5to</option>
+        </select>
+      </div>
+    </div>
+    <div class="ag-field" style="margin-bottom:14px;">
+      <div class="ag-label" style="color:#d4870a;">🪪 CÓDIGO DE ESTUDIANTE (DNI, Pasaporte, Carnet)</div>
+      <input id="ag-dni" class="ag-input" placeholder="Ingresa tu código" />
+    </div>
+    <div id="ag-err" class="ag-err">⚠ Por favor completa todos los campos.</div>
+    <button class="ag-btn" onclick="agRegister()">✦ &nbsp; ACCEDER AL TERMINAL &nbsp; ✦</button>
+  </div>
+</div>
+<script>
+async function agRegister() {{
+  const nombre = document.getElementById('ag-nombre').value.trim();
+  const grado  = document.getElementById('ag-grado').value.trim();
+  const dni    = document.getElementById('ag-dni').value.trim();
+  const err    = document.getElementById('ag-err');
+  if (!nombre || !grado || !dni) {{ err.style.display = 'block'; return; }}
+  err.style.display = 'none';
+  await google.colab.kernel.invokeFunction('_ag_register', [nombre, grado, dni], {{}});
+}}
+</script>
+'''))
+
+        except ImportError:
+            try:
+                display(HTML('<div style="font-family:monospace;padding:10px;background:#020d02;'
+                             'color:#4ca66b;border:1px solid #4ca66b;border-radius:3px;max-width:840px;">'
+                             '✦ FIREFLY NODE 7 — Registro</div>'))
+                self._nombre_real = input("Nombre completo: ").strip()
+                grado_opts = {"1": "3ro", "2": "4to", "3": "5to"}
+                print("Grado: 1) 3ro  2) 4to  3) 5to")
+                self._grado = grado_opts.get(input("Elige (1/2/3): ").strip(), "3ro")
+                self._dni   = input("Código de estudiante (DNI/Pasaporte/Carnet): ").strip()
+            except Exception:
+                pass
+
+    # ── Internal helpers ─────────────────────────────────────
+
+    @property
+    def _logo_tag(self):
+        if LOGO_URL:
+            return (f'<img src="{LOGO_URL}" style="height:40px;object-fit:contain;" '
+                    f'onerror="this.style.display:\'none\'">')
+        return '<span style="font-family:monospace;font-size:11px;color:#4ca66b;">SMA</span>'
+
+    @property
+    def _logo_tag_sm(self):
+        if LOGO_URL:
+            return (f'<img src="{LOGO_URL}" style="height:24px;object-fit:contain;" '
+                    f'onerror="this.style.display:\'none\'">')
+        return '<span style="font-family:monospace;font-size:8px;color:#4ca66b;">SMA</span>'
+
+    def _nombre(self):
+        if self._nombre_real:
+            return self._nombre_real
+        n = _get("nombre")
+        if isinstance(n, str) and n.strip() and n.strip() not in ("?", ""):
+            return n.strip()
+        return "explorador"
+
+    def _totals(self):
+        earned      = sum(e for e, _ in self._scores.values())
+        possible    = sum(p for _, p in self._scores.values())
+        core_earned = sum(e for k, (e, _) in self._scores.items() if k not in _BONUS_KEYS)
+        pct         = min(round(core_earned / _CORE_MAX * 100), 100)
+        return earned, possible, pct
+
+    def _unlock(self, key):
+        if key not in self._achievements:
+            self._achievements.add(key)
+            return True
+        return False
+
+    def _header(self, title, icon="🍄", pts=None):
+        self._curr_title = title
+        self._curr_icon  = icon
+        self._curr_pts   = pts
+
+    def _check_achievements(self, key):
+        unlocked = []
+        earned, possible, pct = self._totals()
+
+        # Primer Contagio — first XP earned
+        if any(e > 0 for e, _ in self._scores.values()) and self._unlock("primer_contagio"):
+            unlocked.append(("🍄 Primer Contagio — Primera Exposición", "#8b5e00", "Común"))
+
+        # Ojo Clínico — all debug perfect
+        debug_keys = ["debug1", "debug2", "debug2b", "debug3", "debug4", "debug5"]
+        if (all(k in self._scores and self._scores[k][0] == self._scores[k][1]
+                for k in debug_keys)
+                and self._unlock("ojo_clinico")):
+            unlocked.append(("🩺 Ojo Clínico — Cero Errores de Lógica", "#8fa3a8", "Raro"))
+
+        # Superviviente de Zona — all 5 checkpoints reached
+        if len(self._checkpoints) >= 5 and self._unlock("superviviente_zona"):
+            unlocked.append(("🚧 Superviviente de Zona — Todos los QZ", "#d4870a", "Épico"))
+
+        # Esporas — streak >= 5
+        if self._streak >= 5 and self._unlock("esporas"):
+            unlocked.append(("💨 Esporas — Racha x5", "#8fa3a8", "Raro"))
+
+        # Modelo SIR — all intex perfect
+        sir_keys = ["intex1", "intex2", "intex3", "intex4", "intex5"]
+        if (all(k in self._scores and self._scores[k][0] == self._scores[k][1]
+                for k in sir_keys)
+                and self._unlock("modelo_sir")):
+            unlocked.append(("📈 Modelo SIR — Propagación Dominada", "#d4870a", "Épico"))
+
+        # Inmunidad Adaptativa — 100% core
+        if pct >= 100 and self._unlock("inmunidad_adaptativa"):
+            unlocked.append(("🧬 Inmunidad Adaptativa — 100% del Notebook", "#c0392b", "Legendario"))
+
+        # Esperanza de la Humanidad — both retos perfect
+        if (all(k in self._scores and self._scores[k][0] == self._scores[k][1]
+                for k in ["reto1", "reto2"])
+                and self._unlock("esperanza_humanidad")):
+            unlocked.append(("✦ Esperanza de la Humanidad", "#c0392b", "Legendario"))
+
+        # Level-up
+        lvl_num, lvl_name = _level_info(pct)
+        if lvl_num > self._prev_level and self._prev_level > 0:
+            unlocked.append((f"⬆️ ¡NIVEL! — {lvl_name}", "#39e5b6", "Nivel"))
+        if lvl_num > self._prev_level:
+            self._prev_level = lvl_num
+
+        return unlocked
+
+    def _award(self, key, checks, max_pts):
         passed = sum(1 for ok, _, _ in checks if ok)
         pts    = round(max_pts * passed / len(checks)) if checks else 0
-        self._earned   += pts
-        self._possible += max_pts
-        for row in checks:
-            _row(*row)
-        _footer(passed, len(checks), pts, max_pts)
+        self._scores[key] = (pts, max_pts)
+
+        if pts == max_pts:
+            self._streak += 1
+        else:
+            self._streak = 0
+
+        earned, possible, pct = self._totals()
+        lvl_num, lvl_name     = _level_info(pct)
+        core_earned  = sum(e for k, (e, _) in self._scores.items() if k not in _BONUS_KEYS)
+        bonus_earned = sum(e for k, (e, _) in self._scores.items() if k in _BONUS_KEYS)
+        _is_bonus    = key in _BONUS_KEYS
+
+        import threading as _thr
+        _thr.Thread(
+            target=self._submit_to_supabase,
+            args=(earned, possible, pct, lvl_num, lvl_name, True),
+            daemon=True,
+        ).start()
+
+        rows_html = ""
+        for ok, label, msg in checks:
+            bdr = "#4ca66b" if ok else "#c0392b"
+            bg  = "rgba(76,166,107,.04)" if ok else "rgba(192,57,43,.06)"
+            sym = "✔" if ok else "✖"
+            lbl_c = "#4ca66b" if ok else "#c0392b"
+            msg_c = "#8888bb" if ok else "#cc7766"
+            rows_html += (
+                f'<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 10px;'
+                f'margin-bottom:3px;background:{bg};border-left:3px solid {bdr};border-radius:0 3px 3px 0;">'
+                f'<span style="color:{bdr};font-size:13px;flex-shrink:0;line-height:1.5;">{sym}</span>'
+                f'<div style="font-size:11px;line-height:1.5;">'
+                f'<span style="color:{lbl_c};font-weight:bold;">{label}:</span> '
+                f'<span style="color:{msg_c};">{msg}</span></div></div>'
+            )
+
+        star_r = pts / max_pts if max_pts > 0 else 0
+        gold, dark = "#d4870a", "#2a1400"
+        if star_r == 1.0:
+            stars_html = f'<span style="color:{gold};font-size:15px;letter-spacing:3px;">★★★</span>'
+        elif star_r >= 0.67:
+            stars_html = (f'<span style="color:{gold};font-size:15px;letter-spacing:3px;">★★</span>'
+                          f'<span style="color:{dark};font-size:15px;">★</span>')
+        elif star_r > 0:
+            stars_html = (f'<span style="color:{gold};font-size:15px;">★</span>'
+                          f'<span style="color:{dark};font-size:15px;letter-spacing:3px;">★★</span>')
+        else:
+            stars_html = f'<span style="color:{dark};font-size:15px;letter-spacing:3px;">★★★</span>'
+
+        combo_html = ""
+        if self._streak >= 2:
+            c_color = "#c0392b" if self._streak >= 5 else "#d4870a"
+            combo_html = (
+                f'<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;'
+                f'background:rgba(212,135,10,.12);border:1px solid {c_color};border-radius:2px;'
+                f'margin-left:8px;">'
+                f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;'
+                f'color:{c_color};">✦ RACHA x{self._streak}</span></div>'
+            )
+
+        if pts == max_pts:
+            s_icon, s_text, s_color = "✦", f"¡PERFECTO! +{pts} XP", "#4ca66b"
+            border_color, glow = "#4ca66b", "0 0 22px rgba(76,166,107,.15)"
+        elif pts > 0:
+            s_icon, s_text, s_color = "🔦", f"+{pts} XP  ·  {max_pts - pts} por ganar", "#d4870a"
+            border_color, glow = "#d4870a", "0 0 22px rgba(212,135,10,.12)"
+        else:
+            s_icon, s_text, s_color = "🍄", "¡INTENTA DE NUEVO! — Corrige los ✖", "#c0392b"
+            border_color, glow = "#c0392b", "0 0 22px rgba(192,57,43,.15)"
+
+        xp_grad = _XP_GRAD.get(lvl_num, _XP_GRAD[1])
+
+        dots = "".join(
+            f'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;'
+            f'background:{"#4ca66b" if ok else "#c0392b"};margin:0 2px;'
+            f'box-shadow:0 0 4px {"#4ca66b" if ok else "#c0392b"};"></span>'
+            for ok, _, _ in checks
+        )
+
+        new_ach     = self._check_achievements(key)
+        reg_ach     = [(n, c, r) for n, c, r in new_ach if r != "Nivel"]
+        levelup_ach = [(n, c, r) for n, c, r in new_ach if r == "Nivel"]
+
+        _RC = {
+            "Común":     ("#8b5e00", "rgba(139,94,0,.12)",   "🍄"),
+            "Raro":      ("#4a6fa5", "rgba(74,111,165,.12)", "🛡️"),
+            "Épico":     ("#d4870a", "rgba(212,135,10,.10)", "✦"),
+            "Legendario":("#c0392b", "rgba(192,57,43,.15)",  "🧬"),
+        }
+        ach_html = ""
+        for ach_name, _, ach_rarity in reg_ach:
+            bc, bg_a, ach_icon = _RC.get(ach_rarity, _RC["Común"])
+            ach_html += (
+                f'<div style="display:flex;align-items:center;gap:10px;margin-top:8px;'
+                f'padding:10px 12px;background:{bg_a};border:1px solid {bc};border-radius:3px;">'
+                f'<span style="font-size:18px;">{ach_icon}</span>'
+                f'<div style="flex:1;">'
+                f'<div style="margin-bottom:3px;">'
+                f'<span style="background:{bc};color:#020d02;font-size:7px;font-weight:bold;'
+                f'padding:1px 5px;border-radius:2px;font-family:\'Share Tech Mono\',monospace;">'
+                f'{ach_rarity.upper()}</span>'
+                f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;'
+                f'color:{bc};margin-left:6px;">LOGRO DESBLOQUEADO</span>'
+                f'</div>'
+                f'<div style="color:#b8ff9a;font-size:12px;font-weight:bold;">{ach_name}</div>'
+                f'</div></div>'
+            )
+
+        curr_icon  = getattr(self, '_curr_icon', '🍄')
+        curr_title = getattr(self, '_curr_title', 'MISIÓN').upper()
+        _logo_sm   = self._logo_tag_sm
+
+        _core_pct_bar = min(round(core_earned / _CORE_MAX * 100), 100)
+        if _is_bonus:
+            _bpct = round(bonus_earned / _BONUS_MAX * 100) if bonus_earned else 0
+            xp_bar_html = (
+                f'<div style="display:flex;justify-content:space-between;margin-bottom:4px;">'
+                f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:#39e5b6;">'
+                f'Bonus XP: {bonus_earned}/{_BONUS_MAX}</span>'
+                f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:#39e5b6;">'
+                f'✧ RETO</span></div>'
+                f'<div style="width:100%;height:10px;background:#0a1a0a;border:1px solid #1a2a1a;'
+                f'border-radius:2px;overflow:hidden;">'
+                f'<div style="width:{_bpct}%;height:100%;'
+                f'background:linear-gradient(90deg,#0a2010,#39e5b6);border-radius:2px;'
+                f'transform-origin:left;animation:pg-xpscale 1.1s cubic-bezier(.4,0,.2,1) forwards;'
+                f'box-shadow:0 0 6px rgba(57,229,182,.3);"></div></div>'
+            )
+        else:
+            xp_bar_html = (
+                f'<div style="display:flex;justify-content:space-between;margin-bottom:4px;">'
+                f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:#2a3a2a;">'
+                f'XP: {core_earned}/{_CORE_MAX}</span>'
+                f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;'
+                f'color:{_lv_color(lvl_num)};">{lvl_name}</span></div>'
+                f'<div style="width:100%;height:10px;background:#0a1a0a;border:1px solid #1a2a1a;'
+                f'border-radius:2px;overflow:hidden;">'
+                f'<div style="width:{_core_pct_bar}%;height:100%;background:{xp_grad};'
+                f'border-radius:2px;transform-origin:left;'
+                f'animation:pg-xpscale 1.1s cubic-bezier(.4,0,.2,1) forwards;'
+                f'box-shadow:0 0 6px rgba(76,166,107,.25);"></div></div>'
+            )
+
+        deadline_html = ""
+        if DEADLINE_PASSED:
+            deadline_html = '''<div style="margin-top:10px;padding:12px 16px;background:#1a0000;
+  border:2px solid #c0392b;border-radius:3px;text-align:center;">
+  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#c0392b;
+    letter-spacing:2px;">🚫 PLAZO VENCIDO</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#ff6666;
+    margin-top:6px;">TU NOTA NO SERÁ ACTUALIZADA</div></div>'''
+        elif self._dni:
+            deadline_html = ('<div style="margin-top:8px;font-family:\'Share Tech Mono\',monospace;'
+                             'font-size:6px;color:#39e5b6;letter-spacing:1px;opacity:.85;">'
+                             '📊 Calificación actualizada en la base de datos</div>')
+
+        card_html = f'''<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  @keyframes pg-xpscale{{from{{transform:scaleX(0)}}to{{transform:scaleX(1)}}}}
+</style>
+<div style="background:#020d02;border:2px solid {border_color};border-radius:4px;max-width:840px;
+  margin-bottom:14px;overflow:hidden;box-shadow:{glow},0 6px 24px rgba(0,0,0,.7);
+  font-family:'Segoe UI',Roboto,sans-serif;">
+  <div style="background:{border_color}18;border-bottom:1px solid {border_color}40;
+    padding:9px 16px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      {_logo_sm}
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;
+        color:{border_color};letter-spacing:1px;">{curr_icon} {curr_title}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      {stars_html}
+      <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#d4870a;
+        background:rgba(212,135,10,.1);border:1px solid rgba(212,135,10,.4);
+        padding:3px 8px;border-radius:2px;">MAX {max_pts} XP</div>
+    </div>
+  </div>
+  <div style="padding:10px 14px 6px;">{rows_html}</div>
+  <div style="background:#010801;border-top:1px solid #0a1a0a;padding:11px 14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">{s_icon}</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:8px;
+          color:{s_color};">{s_text}</span>
+        {combo_html}
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;color:#2a3a2a;font-size:10px;">
+        {dots}<span style="margin-left:3px;">{passed}/{len(checks)}</span>
+      </div>
+    </div>
+    {xp_bar_html}
+    {ach_html}
+    {deadline_html}
+  </div>
+</div>'''
+        display(HTML(card_html))
+
+        for _ in levelup_ach:
+            display(HTML(self._render_levelup(lvl_num, lvl_name)))
+
         return pts
 
-    def _check_fn(self, checks, fn_name):
-        """Validate that a function exists and is callable. Returns the function or None."""
-        fn = _get(fn_name)
-        if fn is None:
-            checks.append((False, fn_name, f"No definida — escribe: def {fn_name}(...):"))
-            return None
-        if not callable(fn):
-            checks.append((False, fn_name, "No es una función"))
-            return None
-        return fn
+    # ── Level-up banner (TLOU style) ─────────────────────────
 
-    # ── TEORÍA ───────────────────────────────────────────────
+    def _render_levelup(self, lvl_num, lvl_name):
+        import random as _r
+        _r.seed(lvl_num * 97 + 31)
+        uid = f"lu{_r.randint(10000, 99999)}"
 
-    def check_t1(self):
-        """T1 — Palabra para definir función (5 pts)"""
-        _header("TEORÍA 1 — Definir funciones (5 pts)")
-        r = _get("respuesta_t1")
-        checks = []
-        if r is None:
-            checks.append((False, "respuesta_t1", "No definida — escribe: respuesta_t1 = 'letra'"))
-        elif not isinstance(r, str):
-            checks.append((False, "respuesta_t1", "Debe ser string"))
-        elif r.strip().lower() == "a":
-            checks.append((True, "respuesta_t1", "¡Correcto! def es la palabra clave para definir funciones"))
-        else:
-            checks.append((False, "respuesta_t1", f"Incorrecto (recibí '{r}'). Pista: son 3 letras."))
-        return self._award(checks, 5)
+        _cfg = {
+            2: dict(bg="linear-gradient(160deg,#0d0a00,#1e1000)",
+                    c="#7a3000", sc="#cc5500", rc="#7a3000",
+                    sub="CORREDOR — EL HONGO TE TIENE, PERO AÚN PIENSAS", icon="🍄"),
+            3: dict(bg="linear-gradient(160deg,#150800,#2e1400)",
+                    c="#cc5500", sc="#ff7722", rc="#cc5500",
+                    sub="ACECHADOR — VES EN LA OSCURIDAD", icon="👁️"),
+            4: dict(bg="linear-gradient(160deg,#001208,#002818)",
+                    c="#2d7a45", sc="#4ca66b", rc="#2d7a45",
+                    sub="FIREFLY — CUANDO YA NO QUEDEN LUCIÉRNAGAS...", icon="🔦"),
+            5: dict(bg="linear-gradient(160deg,#001a0a,#003020)",
+                    c="#4ca66b", sc="#39e5b6", rc="#4ca66b",
+                    sub="AGENTE MARLENE — LA HUMANIDAD TE NECESITA", icon="🌿"),
+            6: dict(bg="linear-gradient(160deg,#001208,#002010,#1a0800)",
+                    c="#4ca66b", sc="#d4870a", rc="#39e5b6",
+                    sub="PROYECTO ELLIE — INMUNE. AL ERROR. AL CAOS. A LA ENTROPÍA.", icon="⚡"),
+        }
+        cfg = _cfg.get(lvl_num, _cfg[2])
+        c, sc, rc = cfg["c"], cfg["sc"], cfg["rc"]
 
-    def check_t2(self):
-        """T2 — Instrucción para devolver valor (5 pts)"""
-        _header("TEORÍA 2 — Instrucción return (5 pts)")
-        r = _get("respuesta_t2")
-        checks = []
-        if r is None:
-            checks.append((False, "respuesta_t2", "No definida — escribe: respuesta_t2 = 'letra'"))
-        elif not isinstance(r, str):
-            checks.append((False, "respuesta_t2", "Debe ser string"))
-        elif r.strip().lower() == "c":
-            checks.append((True, "respuesta_t2", "¡Correcto! return devuelve un valor desde la función"))
-        else:
-            checks.append((False, "respuesta_t2", f"Incorrecto (recibí '{r}'). Pista: se traduce como 'devolver'."))
-        return self._award(checks, 5)
+        _sd = [(-50,-88),(0,-100),(50,-88),(92,-35),(78,55),(0,92),(-78,55),(-92,-35)]
+        _bd = [(-4,-115),(115,0),(4,115),(-115,0)]
+        spark_css, spark_html = "", ""
+        for i, (dx, dy) in enumerate(_sd):
+            d = 0.12 + i * 0.035
+            sz = 4 if i % 2 == 0 else 3
+            spark_css  += (f"@keyframes {uid}-s{i}{{0%{{transform:translate(0,0);opacity:1}}"
+                           f"100%{{transform:translate({dx}px,{dy}px);opacity:0}}}}")
+            spark_html += (f'<div style="position:absolute;top:50%;left:50%;width:{sz}px;height:{sz}px;'
+                           f'border-radius:50%;background:{sc};margin:-{sz//2}px;opacity:0;'
+                           f'animation:{uid}-s{i} .85s ease-out {d:.2f}s forwards;'
+                           f'pointer-events:none;z-index:6;"></div>')
+        for i, (dx, dy) in enumerate(_bd):
+            d = 0.08 + i * 0.08
+            spark_css  += (f"@keyframes {uid}-b{i}{{0%{{transform:translate(0,0);opacity:.9}}"
+                           f"100%{{transform:translate({dx}px,{dy}px);opacity:0}}}}")
+            spark_html += (f'<div style="position:absolute;top:50%;left:50%;width:6px;height:6px;'
+                           f'border-radius:50%;background:{c};margin:-3px;opacity:0;'
+                           f'animation:{uid}-b{i} 1.1s ease-out {d:.2f}s forwards;'
+                           f'pointer-events:none;z-index:6;"></div>')
 
-    def check_t3(self):
-        """T3 — Cuándo retorna None (5 pts)"""
-        _header("TEORÍA 3 — Valor None (5 pts)")
-        r = _get("respuesta_t3")
-        checks = []
-        if r is None:
-            checks.append((False, "respuesta_t3", "No definida — escribe: respuesta_t3 = 'letra'"))
-        elif not isinstance(r, str):
-            checks.append((False, "respuesta_t3", "Debe ser string"))
-        elif r.strip().lower() == "c":
-            checks.append((True, "respuesta_t3", "¡Correcto! una función sin return devuelve None automáticamente"))
-        else:
-            checks.append((False, "respuesta_t3", f"Incorrecto (recibí '{r}'). Pista: si no hay return, ¿qué pasa?"))
-        return self._award(checks, 5)
+        extra_ring = ""
+        if lvl_num == 6:
+            extra_ring = (f'<div style="position:absolute;top:50%;left:50%;width:100px;height:100px;'
+                          f'margin:-50px;border-radius:50%;border:2px solid #39e5b6;opacity:0;'
+                          f'animation:{uid}-ring 1.6s ease-out .5s forwards;'
+                          f'pointer-events:none;z-index:5;"></div>')
 
-    # ── EJERCICIOS ───────────────────────────────────────────
+        return f'''<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  @keyframes {uid}-flash{{0%{{opacity:.6}}35%{{opacity:.15}}100%{{opacity:0}}}}
+  @keyframes {uid}-ring {{0%{{transform:scale(.08);opacity:.95}}100%{{transform:scale(4.5);opacity:0}}}}
+  @keyframes {uid}-icon {{
+    0%  {{transform:scale(0) rotate(-25deg);opacity:0}}
+    55% {{transform:scale(1.22) rotate(6deg);opacity:1}}
+    72% {{transform:scale(0.91) rotate(-3deg)}}
+    86% {{transform:scale(1.06) rotate(2deg)}}
+    100%{{transform:scale(1) rotate(0deg)}}}}
+  @keyframes {uid}-slam {{
+    0%  {{transform:scaleX(3) scaleY(0.05);opacity:0;letter-spacing:16px}}
+    55% {{transform:scaleX(1.04) scaleY(1.04);opacity:1}}
+    100%{{transform:scale(1);letter-spacing:4px}}}}
+  @keyframes {uid}-rise {{
+    0%  {{transform:translateY(32px);opacity:0;filter:blur(6px)}}
+    100%{{transform:translateY(0);opacity:1;filter:blur(0)}}}}
+  @keyframes {uid}-sub  {{from{{opacity:0;letter-spacing:6px}}to{{opacity:1;letter-spacing:2px}}}}
+  @keyframes {uid}-cl   {{from{{transform:translateX(-115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
+  @keyframes {uid}-cr   {{from{{transform:translateX(115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
+  @keyframes {uid}-rl   {{from{{opacity:0;transform:translateY(-50%) translateX(-36px)}}
+                          to{{opacity:.16;transform:translateY(-50%) translateX(0)}}}}
+  @keyframes {uid}-rr   {{from{{opacity:0;transform:translateY(-50%) translateX(36px)}}
+                          to{{opacity:.16;transform:translateY(-50%) translateX(0)}}}}
+  @keyframes {uid}-pulse{{0%,100%{{text-shadow:0 0 10px {c}88,2px 2px 0 #000}}
+                          50%{{text-shadow:0 0 32px {c},0 0 64px {c}55,2px 2px 0 #000}}}}
+  {spark_css}
+</style>
+<div style="position:relative;overflow:hidden;background:{cfg['bg']};
+  border:2px solid {c};border-radius:6px;max-width:840px;margin:14px 0;
+  box-shadow:0 0 55px {c}44,0 0 110px {c}11,0 12px 50px rgba(0,0,0,.97);">
+
+  <div style="position:absolute;inset:0;background:{c};border-radius:4px;
+    animation:{uid}-flash .55s ease-out forwards;pointer-events:none;z-index:20;"></div>
+
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:3px solid {rc};opacity:0;
+    animation:{uid}-ring 1.05s ease-out .04s forwards;pointer-events:none;z-index:8;"></div>
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:2px solid {sc}cc;opacity:0;
+    animation:{uid}-ring 1.35s ease-out .26s forwards;pointer-events:none;z-index:8;"></div>
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:1px solid {c}55;opacity:0;
+    animation:{uid}-ring 1.65s ease-out .48s forwards;pointer-events:none;z-index:8;"></div>
+  {extra_ring}
+
+  {spark_html}
+
+  <div style="position:absolute;left:14px;top:50%;
+    font-size:14px;color:{c};letter-spacing:5px;opacity:.4;
+    animation:{uid}-rl .9s ease-out .6s both;pointer-events:none;z-index:7;">
+    ✦ ✧ ✦ ✧ ✦</div>
+  <div style="position:absolute;right:14px;top:50%;
+    font-size:14px;color:{c};letter-spacing:5px;opacity:.4;
+    animation:{uid}-rr .9s ease-out .6s both;pointer-events:none;z-index:7;">
+    ✧ ✦ ✧ ✦ ✧</div>
+
+  <div style="position:relative;z-index:15;padding:42px 60px 32px;text-align:center;">
+    <div style="font-size:54px;margin-bottom:16px;display:block;
+      animation:{uid}-icon .68s cubic-bezier(.34,1.56,.64,1) .15s both;">
+      {cfg['icon']}</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:{c};
+      letter-spacing:4px;margin-bottom:20px;
+      animation:{uid}-slam .52s cubic-bezier(.22,.61,.36,1) .38s both;">
+      ¡ASCENDISTE!</div>
+    <div style="font-family:'Share Tech Mono',monospace;
+      font-size:clamp(13px,2.8vw,20px);color:{c};letter-spacing:4px;margin-bottom:18px;
+      text-shadow:0 0 20px {c}88,2px 2px 0 #000;
+      animation:{uid}-rise .55s ease-out .72s both,
+                {uid}-pulse 2.8s ease-in-out 1.3s infinite;">
+      {lvl_name}</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:7px;
+      color:#2a3a2a;letter-spacing:2px;
+      animation:{uid}-sub .5s ease-out 1.0s both;">{cfg['sub']}</div>
+    <div style="display:flex;align-items:center;margin-top:26px;overflow:hidden;">
+      <div style="font-size:12px;color:{c};opacity:.3;letter-spacing:4px;flex-shrink:0;
+        animation:{uid}-cl .6s ease-out .92s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,{c}60,{c}10);margin:0 8px;"></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:{c};opacity:.65;
+        animation:{uid}-rise .4s ease-out 1.1s both;">LV {lvl_num}</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,{c}10,{c}60);margin:0 8px;"></div>
+      <div style="font-size:12px;color:{c};opacity:.3;letter-spacing:4px;flex-shrink:0;
+        animation:{uid}-cr .6s ease-out .92s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
+    </div>
+  </div>
+</div>'''
+
+    # ── Supabase submit ───────────────────────────────────────
+
+    def _submit_to_supabase(self, earned, possible, pct, lvl_num, lvl_name, silent=False):
+        if DEADLINE_PASSED:
+            return
+        if not self._dni:
+            return
+        try:
+            import json as _json, urllib.request as _ur
+            payload = _json.dumps({
+                "email":           self._dni,
+                "dni":             self._dni,
+                "nombre":          self._nombre_real or "explorador",
+                "grado":           self._grado or "",
+                "notebook":        "nb3",
+                "earned":          earned,
+                "possible":        possible,
+                "pct":             pct,
+                "level_num":       lvl_num,
+                "level_name":      lvl_name,
+                "achievements":    list(self._achievements),
+                "streak":          self._streak,
+                "score_breakdown": {k: {"e": e, "p": p}
+                                    for k, (e, p) in self._scores.items()},
+            }).encode("utf-8")
+            req = _ur.Request(
+                f"{SUPABASE_URL}/rest/v1/submissions",
+                data=payload,
+                headers={
+                    "apikey":        SUPABASE_ANON_KEY,
+                    "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+                    "Content-Type":  "application/json",
+                    "Prefer":        "return=minimal",
+                },
+                method="POST",
+            )
+            with _ur.urlopen(req, timeout=12):
+                pass
+        except Exception:
+            pass
+
+    # ── Helper: render checkpoint summary ────────────────────
+
+    def _render_checkpoint(self, title, sección, color):
+        rows = ""
+        total_e = total_p = 0
+        for key, (label, max_p) in sección.items():
+            e, p = self._scores.get(key, (0, max_p))
+            total_e += e; total_p += p
+            ok = e == p
+            bar_pct = round(e / p * 100) if p else 0
+            rows += (
+                f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
+                f'<span style="font-size:12px;">{"✅" if ok else "⬜"}</span>'
+                f'<div style="flex:1;">'
+                f'<div style="font-size:11px;color:#b8ff9a;margin-bottom:3px;">{label}</div>'
+                f'<div style="height:5px;background:#0a1a0a;border-radius:2px;overflow:hidden;">'
+                f'<div style="width:{bar_pct}%;height:100%;'
+                f'background:{color};opacity:.8;border-radius:2px;"></div></div>'
+                f'</div>'
+                f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;'
+                f'color:{color if ok else "#2a3a2a"};">{e}/{p}</span>'
+                f'</div>'
+            )
+        pct_sec = round(total_e / total_p * 100) if total_p else 0
+        display(HTML(
+            f'<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">'
+            f'<div style="background:#020d02;border:2px solid {color};border-radius:4px;'
+            f'max-width:840px;margin:10px 0;padding:18px 20px;'
+            f'box-shadow:0 0 20px {color}22,0 4px 16px rgba(0,0,0,.6);">'
+            f'<div style="font-family:\'Share Tech Mono\',monospace;font-size:9px;'
+            f'color:{color};letter-spacing:2px;margin-bottom:16px;">✅ {title}</div>'
+            f'{rows}'
+            f'<div style="margin-top:14px;padding-top:10px;border-top:1px solid {color}30;'
+            f'display:flex;justify-content:space-between;align-items:center;">'
+            f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:7px;color:#2a3a2a;">'
+            f'ZONA: {total_e}/{total_p} XP</span>'
+            f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:9px;color:{color};">'
+            f'{pct_sec}%</span>'
+            f'</div></div>'
+        ))
+
+    # ═══════════════════════════════════════════════════════════
+    # SECCIÓN 3.1 — Loops Anidados: Grids
+    # ═══════════════════════════════════════════════════════════
 
     def check_ex1(self):
-        """Ex1 — saludar() sin parámetros (6 pts)"""
-        _header("EJERCICIO 1 — Función saludar() (6 pts)")
-        checks = []
-        fn = self._check_fn(checks, "saludar")
-        if fn:
-            ok, result, err = _call(fn)
-            if not ok:
-                checks.append((False, "saludar()", f"Error al llamar: {err}"))
-            elif result == "¡Hola, mundo!":
-                checks.append((True, "saludar()", f"✓ → '{result}'"))
-            else:
-                checks.append((False, "saludar()", f"Debe retornar '¡Hola, mundo!', obtuve '{result}'"))
-        return self._award(checks, 6)
+        """Ex1 — Expansión Radial del Cordyceps (6 pts)"""
+        self._header("EJERCICIO 1 — Expansión Radial del Cordyceps", icon="🍄", pts=6)
+        # TODO: fill in Section 3.1
+        return self._award("ex1", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 6)
 
     def check_ex2(self):
-        """Ex2 — saludar_persona(nombre) (6 pts)"""
-        _header("EJERCICIO 2 — Función saludar_persona(nombre) (6 pts)")
-        checks = []
-        fn = self._check_fn(checks, "saludar_persona")
-        if fn:
-            CASOS = [("Ana", "¡Hola, Ana!"), ("Carlos", "¡Hola, Carlos!"), ("Sofía", "¡Hola, Sofía!")]
-            for nombre, esperado in CASOS:
-                ok, result, err = _call(fn, nombre)
-                if not ok:
-                    checks.append((False, f"saludar_persona('{nombre}')", f"Error: {err}"))
-                elif isinstance(result, str) and nombre in result:
-                    checks.append((True, f"saludar_persona('{nombre}')", f"✓ → '{result}'"))
-                else:
-                    checks.append((False, f"saludar_persona('{nombre}')", f"Debe incluir '{nombre}', obtuve '{result}'"))
-        return self._award(checks, 6)
+        """Ex2 — Dos Patógenos, Mismo Mapa (6 pts)"""
+        self._header("EJERCICIO 2 — Dos Patógenos, Mismo Mapa", icon="🍄", pts=6)
+        # TODO: fill in Section 3.1
+        return self._award("ex2", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 6)
+
+    def check_debug1(self):
+        """Debug1 — Error de Indentación (3 pts)"""
+        self._header("🔧 DEBUG 1 — Error de Indentación", icon="🔧", pts=3)
+        # TODO: fill in Section 3.1
+        return self._award("debug1", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 3)
+
+    def check_t1(self):
+        """T1 — Teoría Sección 3.1 (4 pts)"""
+        self._header("❓ TEORÍA T1", icon="🧠", pts=4)
+        # TODO: fill in Section 3.1
+        return self._award("t1", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 4)
+
+    def check_mini_a(self):
+        """Checkpoint 3.1 — Loops Anidados: Grids"""
+        self._checkpoints.add("mini_a")
+        sección = {
+            "ex1":    ("Expansión Radial del Cordyceps", 6),
+            "ex2":    ("Dos Patógenos, Mismo Mapa",       6),
+            "debug1": ("Debug 1 – Indentación",            3),
+            "t1":     ("T1 – Teoría 3.1",                  4),
+        }
+        self._render_checkpoint("CHECKPOINT 3.1 — LOOPS ANIDADOS: GRIDS", sección, "#4ca66b")
+
+    # ═══════════════════════════════════════════════════════════
+    # SECCIÓN 3.2 — Loops Anidados: Tiempo
+    # ═══════════════════════════════════════════════════════════
 
     def check_ex3(self):
-        """Ex3 — calcular_area(largo, ancho) (6 pts)"""
-        _header("EJERCICIO 3 — Función calcular_area(largo, ancho) (6 pts)")
-        checks = []
-        fn = self._check_fn(checks, "calcular_area")
-        if fn:
-            CASOS = [(5, 3, 15), (10, 4, 40), (7, 7, 49)]
-            for largo, ancho, exp in CASOS:
-                ok, result, err = _call(fn, largo, ancho)
-                if not ok:
-                    checks.append((False, f"calcular_area({largo}, {ancho})", f"Error: {err}"))
-                elif result is not None and _approx(result, exp, tol=0.01):
-                    checks.append((True, f"calcular_area({largo}, {ancho})", f"✓ → {result}"))
-                else:
-                    checks.append((False, f"calcular_area({largo}, {ancho})", f"Debería ser {exp}, obtuve {result}"))
-        return self._award(checks, 6)
+        """Ex3 — Propagación en 5 Zonas (8 pts)"""
+        self._header("EJERCICIO 3 — Propagación en 5 Zonas", icon="🍄", pts=8)
+        # TODO: fill in Section 3.2
+        return self._award("ex3", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
 
     def check_ex4(self):
-        """Ex4 — celsius_a_fahrenheit(celsius) (8 pts)"""
-        _header("EJERCICIO 4 — Función celsius_a_fahrenheit(celsius) (8 pts)")
-        checks = []
-        fn = self._check_fn(checks, "celsius_a_fahrenheit")
-        if fn:
-            CASOS = [(0, 32.0), (100, 212.0), (25, 77.0), (-40, -40.0)]
-            for celsius, exp in CASOS:
-                ok, result, err = _call(fn, celsius)
-                if not ok:
-                    checks.append((False, f"celsius_a_fahrenheit({celsius})", f"Error: {err}"))
-                elif result is not None and _approx(result, exp, tol=0.01):
-                    checks.append((True, f"celsius_a_fahrenheit({celsius})", f"✓ → {result}°F"))
-                else:
-                    checks.append((False, f"celsius_a_fahrenheit({celsius})", f"Debería ser {exp}°F, obtuve {result}"))
-        return self._award(checks, 8)
+        """Ex4 — Tres Patógenos, Diez Días (8 pts)"""
+        self._header("EJERCICIO 4 — Tres Patógenos, Diez Días", icon="🍄", pts=8)
+        # TODO: fill in Section 3.2
+        return self._award("ex4", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
 
-    def check_ex5(self):
-        """Ex5 — calcular_promedio(n1, n2, n3) (8 pts)"""
-        _header("EJERCICIO 5 — Función calcular_promedio(n1, n2, n3) (8 pts)")
-        checks = []
-        fn = self._check_fn(checks, "calcular_promedio")
-        if fn:
-            CASOS = [(10, 15, 20, 15.0), (0, 0, 0, 0.0), (18, 16, 14, 16.0), (7, 11, 15, 11.0)]
-            for n1, n2, n3, exp in CASOS:
-                ok, result, err = _call(fn, n1, n2, n3)
-                if not ok:
-                    checks.append((False, f"calcular_promedio({n1},{n2},{n3})", f"Error: {err}"))
-                elif result is not None and _approx(result, exp, tol=0.01):
-                    checks.append((True, f"calcular_promedio({n1},{n2},{n3})", f"✓ → {result}"))
-                else:
-                    checks.append((False, f"calcular_promedio({n1},{n2},{n3})", f"Debería ser {exp}, obtuve {result}"))
-        return self._award(checks, 8)
-
-    def check_ex6(self):
-        """Ex6 — es_par(numero) (8 pts)"""
-        _header("EJERCICIO 6 — Función es_par(numero) (8 pts)")
-        checks = []
-        fn = self._check_fn(checks, "es_par")
-        if fn:
-            CASOS = [(4, True), (7, False), (0, True), (13, False), (100, True)]
-            for num, exp in CASOS:
-                ok, result, err = _call(fn, num)
-                if not ok:
-                    checks.append((False, f"es_par({num})", f"Error: {err}"))
-                elif result is exp or result == exp:
-                    checks.append((True, f"es_par({num})", f"✓ → {result}"))
-                else:
-                    checks.append((False, f"es_par({num})", f"Debería ser {exp}, obtuve {result}"))
-        return self._award(checks, 8)
-
-    def check_ex7(self):
-        """Ex7 — contar_vocales(texto) (9 pts)"""
-        _header("EJERCICIO 7 — Función contar_vocales(texto) (9 pts)")
-        checks = []
-        fn = self._check_fn(checks, "contar_vocales")
-        VOCALES = set("aeiouáéíóúAEIOUÁÉÍÓÚ")
-        if fn:
-            CASOS = [
-                ("hola",    2),
-                ("Python",  1),
-                ("murciélago", 5),
-                ("bcdfg",   0),
-                ("AEIOU",   5),
-            ]
-            for texto, exp in CASOS:
-                ok, result, err = _call(fn, texto)
-                if not ok:
-                    checks.append((False, f"contar_vocales('{texto}')", f"Error: {err}"))
-                elif result == exp:
-                    checks.append((True, f"contar_vocales('{texto}')", f"✓ → {result}"))
-                else:
-                    checks.append((False, f"contar_vocales('{texto}')", f"Debería ser {exp}, obtuve {result}"))
-        return self._award(checks, 9)
-
-    def check_ex8(self):
-        """Ex8 — clasificar_nota(nota) (9 pts)"""
-        _header("EJERCICIO 8 — Función clasificar_nota(nota) (9 pts)")
-        checks = []
-        fn = self._check_fn(checks, "clasificar_nota")
-        if fn:
-            CASOS = [
-                (20, "sobresaliente"),
-                (18, "sobresaliente"),
-                (15, "bueno"),
-                (14, "bueno"),
-                (13, "aprobado"),
-                (11, "aprobado"),
-                (10, "desaprobado"),
-                (0,  "desaprobado"),
-            ]
-            for nota, exp in CASOS:
-                ok, result, err = _call(fn, nota)
-                if not ok:
-                    checks.append((False, f"clasificar_nota({nota})", f"Error: {err}"))
-                elif isinstance(result, str) and result.strip().lower() == exp:
-                    checks.append((True, f"clasificar_nota({nota})", f"✓ → '{result}'"))
-                else:
-                    checks.append((False, f"clasificar_nota({nota})", f"Para nota={nota} debería ser '{exp.title()}', obtuve '{result}'"))
-        return self._award(checks, 9)
-
-    def check_ex9(self):
-        """Ex9 — calcular_factorial(n) (9 pts)"""
-        _header("EJERCICIO 9 — Función calcular_factorial(n) (9 pts)")
-        checks = []
-        fn = self._check_fn(checks, "calcular_factorial")
-        if fn:
-            CASOS = [(0, 1), (1, 1), (5, 120), (6, 720), (10, 3628800)]
-            for n, exp in CASOS:
-                ok, result, err = _call(fn, n)
-                if not ok:
-                    checks.append((False, f"calcular_factorial({n})", f"Error: {err}"))
-                elif result == exp:
-                    checks.append((True, f"calcular_factorial({n})", f"✓ → {result}"))
-                else:
-                    checks.append((False, f"calcular_factorial({n})", f"{n}! debería ser {exp}, obtuve {result}"))
-        return self._award(checks, 9)
-
-    def check_ex10(self):
-        """Ex10 — es_palindromo(palabra) (16 pts)"""
-        _header("EJERCICIO 10 — Función es_palindromo(palabra) (16 pts)")
-        checks = []
-        fn = self._check_fn(checks, "es_palindromo")
-        if fn:
-            CASOS = [
-                ("ana",      True),
-                ("radar",    True),
-                ("level",    True),
-                ("reconocer", True),
-                ("hola",     False),
-                ("python",   False),
-                ("codigo",   False),
-                ("a",        True),
-            ]
-            for palabra, exp in CASOS:
-                ok, result, err = _call(fn, palabra)
-                if not ok:
-                    checks.append((False, f"es_palindromo('{palabra}')", f"Error: {err}"))
-                elif result is exp or result == exp:
-                    checks.append((True, f"es_palindromo('{palabra}')", f"✓ → {result}"))
-                else:
-                    checks.append((False, f"es_palindromo('{palabra}')", f"Debería ser {exp}, obtuve {result}"))
-        return self._award(checks, 16)
+    def check_debug2(self):
+        """Debug2 — Acumulador en el Nivel Equivocado (3 pts)"""
+        self._header("🔧 DEBUG 2 — Acumulador en el Nivel Equivocado", icon="🔧", pts=3)
+        # TODO: fill in Section 3.2
+        return self._award("debug2", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 3)
 
     def check_debug2b(self):
-        """Debug 2B — Spanish Flu second-wave state-reset bug"""
-        _header("DEBUG 2B — Segunda Ola: Estado entre olas (sin puntos — autoevaluación)")
-        print("  ⚙️  Este debug se evalúa por inspección.")
-        print("  ✅  Correcto si la Ola 2 comienza donde terminó la Ola 1 (no desde infectados_0).")
-        print("  💡  Pista: ¿qué variable deberías pasar a la segunda iteración?")
+        """Debug2B — El Error que Mató a 50 Millones (3 pts)"""
+        self._header("🔧 DEBUG 2B — El Error que Mató a 50 Millones", icon="🔧", pts=3)
+        # TODO: fill in Section 3.2
+        return self._award("debug2b", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 3)
 
-    def __getattr__(self, name):
-        """Fallback para métodos de verificación aún no implementados."""
-        if name.startswith("check_"):
-            def _stub(*args, **kwargs):
-                print(f"  ⚙️  {name}() — verificación pendiente de implementar en autograder_nb3.py")
-            return _stub
-        raise AttributeError(f"'{type(self).__name__}' no tiene el atributo '{name}'")
+    def check_ex5(self):
+        """Ex5 — Las Dos Olas de 1918 (8 pts)"""
+        self._header("EJERCICIO 5 — Las Dos Olas de 1918", icon="🍄", pts=8)
+        # TODO: fill in Section 3.2
+        return self._award("ex5", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
 
-    # ── RESUMEN FINAL ─────────────────────────────────────────
+    def check_mini_b(self):
+        """Checkpoint 3.2 — Loops Anidados: Tiempo"""
+        self._checkpoints.add("mini_b")
+        sección = {
+            "ex3":     ("Propagación en 5 Zonas",             8),
+            "ex4":     ("Tres Patógenos, Diez Días",           8),
+            "debug2":  ("Debug 2 – Acumulador",                3),
+            "debug2b": ("Debug 2B – Gripe 1918",               3),
+            "ex5":     ("Las Dos Olas de 1918",                8),
+        }
+        self._render_checkpoint("CHECKPOINT 3.2 — LOOPS ANIDADOS: TIEMPO", sección, "#d4870a")
+
+    # ═══════════════════════════════════════════════════════════
+    # SECCIÓN 3.3 — Ifs Anidados: Triage
+    # ═══════════════════════════════════════════════════════════
+
+    def check_ex6(self):
+        """Ex6 — Clasificador de Triage (8 pts)"""
+        self._header("EJERCICIO 6 — Clasificador de Triage", icon="🍄", pts=8)
+        # TODO: fill in Section 3.3
+        return self._award("ex6", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
+
+    def check_debug3(self):
+        """Debug3 — Error de Árbol (3 pts)"""
+        self._header("🔧 DEBUG 3 — Error de Árbol", icon="🔧", pts=3)
+        # TODO: fill in Section 3.3
+        return self._award("debug3", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 3)
+
+    def check_ex7(self):
+        """Ex7 — Clasificador de Zonas (8 pts)"""
+        self._header("EJERCICIO 7 — Clasificador de Zonas", icon="🍄", pts=8)
+        # TODO: fill in Section 3.3
+        return self._award("ex7", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
+
+    def check_t2(self):
+        """T2 — Teoría Sección 3.3 (4 pts)"""
+        self._header("❓ TEORÍA T2", icon="🧠", pts=4)
+        # TODO: fill in Section 3.3
+        return self._award("t2", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 4)
+
+    def check_mini_c(self):
+        """Checkpoint 3.3 — Ifs Anidados: Triage"""
+        self._checkpoints.add("mini_c")
+        sección = {
+            "ex6":    ("Clasificador de Triage",    8),
+            "debug3": ("Debug 3 – Error de Árbol",  3),
+            "ex7":    ("Clasificador de Zonas",      8),
+            "t2":     ("T2 – Teoría 3.3",            4),
+        }
+        self._render_checkpoint("CHECKPOINT 3.3 — IFS ANIDADOS: TRIAGE", sección, "#c0392b")
+
+    # ═══════════════════════════════════════════════════════════
+    # SECCIÓN 3.4 — Puente: Loops + Ifs
+    # ═══════════════════════════════════════════════════════════
+
+    def check_ex8(self):
+        """Ex8 — Protocolo de Cuarentena con Intervención (10 pts)"""
+        self._header("EJERCICIO 8 — Protocolo de Cuarentena con Intervención", icon="🍄", pts=10)
+        # TODO: fill in Section 3.4
+        return self._award("ex8", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 10)
+
+    def check_debug4(self):
+        """Debug4 — Dos Errores (3 pts)"""
+        self._header("🔧 DEBUG 4 — Dos Errores", icon="🔧", pts=3)
+        # TODO: fill in Section 3.4
+        return self._award("debug4", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 3)
+
+    def check_mini_d(self):
+        """Checkpoint 3.4 — Puente: Loops + Ifs"""
+        self._checkpoints.add("mini_d")
+        sección = {
+            "ex8":    ("Protocolo de Cuarentena", 10),
+            "debug4": ("Debug 4 – Dos Errores",    3),
+        }
+        self._render_checkpoint("CHECKPOINT 3.4 — PUENTE: LOOPS + IFS", sección, "#39e5b6")
+
+    # ═══════════════════════════════════════════════════════════
+    # SECCIÓN 3.5 — Funciones
+    # ═══════════════════════════════════════════════════════════
+
+    def check_ex9(self):
+        """Ex9 — clasificar_zona como función (6 pts)"""
+        self._header("EJERCICIO 9 — clasificar_zona como función", icon="🍄", pts=6)
+        # TODO: fill in Section 3.5
+        return self._award("ex9", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 6)
+
+    def check_debug5(self):
+        """Debug5 — return faltante (3 pts)"""
+        self._header("🔧 DEBUG 5 — return faltante", icon="🔧", pts=3)
+        # TODO: fill in Section 3.5
+        return self._award("debug5", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 3)
+
+    def check_ex10(self):
+        """Ex10 — simular_dia y tabla comparativa (8 pts)"""
+        self._header("EJERCICIO 10 — simular_dia y tabla comparativa", icon="🍄", pts=8)
+        # TODO: fill in Section 3.5
+        return self._award("ex10", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
+
+    def check_ex11(self):
+        """Ex11 — Motor de Intervención (10 pts)"""
+        self._header("EJERCICIO 11 — Motor de Intervención", icon="🍄", pts=10)
+        # TODO: fill in Section 3.5
+        return self._award("ex11", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 10)
+
+    def check_t3(self):
+        """T3 — Teoría Sección 3.5 (4 pts)"""
+        self._header("❓ TEORÍA T3", icon="🧠", pts=4)
+        # TODO: fill in Section 3.5
+        return self._award("t3", [
+            (False, "pendiente", "Verificador en construcción"),
+        ], 4)
+
+    def check_mini_e(self):
+        """Checkpoint 3.5 — Funciones"""
+        self._checkpoints.add("mini_e")
+        sección = {
+            "ex9":    ("clasificar_zona como función",      6),
+            "debug5": ("Debug 5 – return faltante",         3),
+            "ex10":   ("simular_dia y tabla comparativa",   8),
+            "ex11":   ("Motor de Intervención",            10),
+            "t3":     ("T3 – Teoría 3.5",                   4),
+        }
+        self._render_checkpoint("CHECKPOINT 3.5 — FUNCIONES", sección, "#4ca66b")
+
+    # ═══════════════════════════════════════════════════════════
+    # PARTE 2 — Ejercicios de Integración
+    # ═══════════════════════════════════════════════════════════
+
+    def check_intex1(self):
+        """IntEx1 — Perfil del Paciente Cero (6 pts)"""
+        self._header("INTEGRACIÓN 1 — Perfil del Paciente Cero", icon="✦", pts=6)
+        # TODO: fill in Part 2
+        return self._award("intex1", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 6)
+
+    def check_intex2(self):
+        """IntEx2 — Mapa de Propagación Urbana (8 pts)"""
+        self._header("INTEGRACIÓN 2 — Mapa de Propagación Urbana", icon="✦", pts=8)
+        # TODO: fill in Part 2
+        return self._award("intex2", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
+
+    def check_intex3(self):
+        """IntEx3 — Comparador de Pandemias (8 pts)"""
+        self._header("INTEGRACIÓN 3 — Comparador de Pandemias", icon="✦", pts=8)
+        # TODO: fill in Part 2
+        return self._award("intex3", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 8)
+
+    def check_intex4(self):
+        """IntEx4 — Protocolo de Cuarentena (10 pts)"""
+        self._header("INTEGRACIÓN 4 — Protocolo de Cuarentena", icon="✦", pts=10)
+        # TODO: fill in Part 2
+        return self._award("intex4", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 10)
+
+    def check_intex5(self):
+        """IntEx5 — Motor de Simulación Epidemiológica / capstone (12 pts)"""
+        self._header("INTEGRACIÓN 5 — Motor de Simulación Epidemiológica", icon="✦", pts=12)
+        # TODO: fill in Part 2
+        return self._award("intex5", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 12)
+
+    # ═══════════════════════════════════════════════════════════
+    # BONUS — Retos opcionales
+    # ═══════════════════════════════════════════════════════════
+
+    def check_reto1(self):
+        """Reto1 — Días hasta colapso (6 pts, bonus)"""
+        self._header("🌟 RETO 1 — Días hasta Colapso (BONUS)", icon="🌟", pts=6)
+        # TODO: fill in Bonus
+        return self._award("reto1", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 6)
+
+    def check_reto2(self):
+        """Reto2 — Motor SIR completo (6 pts, bonus)"""
+        self._header("🌟 RETO 2 — Motor SIR Completo (BONUS)", icon="🌟", pts=6)
+        # TODO: fill in Bonus
+        return self._award("reto2", [
+            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+        ], 6)
+
+    # ═══════════════════════════════════════════════════════════
+    # RESUMEN FINAL
+    # ═══════════════════════════════════════════════════════════
 
     def resumen(self):
-        print("\n" + "═" * 60)
-        print("  RESUMEN FINAL — Notebook 3: Funciones")
-        print("═" * 60)
-        pct    = round(self._earned / self._possible * 100) if self._possible else 0
-        filled = "█" * round(30 * pct / 100)
-        empty  = "░" * (30 - len(filled))
-        print(f"\n  Puntaje: {self._earned}/{self._possible} pts  ({pct}%)")
-        print(f"  [{filled}{empty}]")
-        if pct >= 90:
-            print("\n  🌟 ¡EXCELENTE! ¡Dominas las funciones!")
-        elif pct >= 70:
-            print("\n  👍 ¡Buen trabajo! Repasa los ❌ para mejorar.")
-        elif pct >= 50:
-            print("\n  📚 Vas por buen camino. ¡Sigue practicando!")
+        _, _, pct         = self._totals()
+        n                 = self._nombre()
+        lvl_num, lvl_name = _level_info(pct)
+        core_earned       = sum(e for k, (e, _) in self._scores.items() if k not in _BONUS_KEYS)
+        bonus_earned      = sum(e for k, (e, _) in self._scores.items() if k in _BONUS_KEYS)
+        bonus_possible    = sum(p for k, (_, p) in self._scores.items() if k in _BONUS_KEYS)
+        core_pct          = min(round(core_earned / _CORE_MAX * 100), 100)
+
+        if core_pct >= 96:
+            final_msg = (f"⚡ PROYECTO ELLIE. {n.upper()}, eres la última esperanza de la humanidad. "
+                         f"El modelo SIR es tuyo.")
+        elif core_pct >= 81:
+            final_msg = (f"🌿 AGENTE MARLENE. {n}, la humanidad te necesita. "
+                         f"Revisa los ✖ para completar la misión.")
+        elif core_pct >= 61:
+            final_msg = (f"🔦 EXPLORADOR FIREFLY. {n}, vas bien. "
+                         f"Cuando ya no queden luciérnagas, tú seguirás encendiendo.")
+        elif core_pct >= 41:
+            final_msg = (f"👁️ ACECHADOR. {n}, ves en la oscuridad pero el hongo aún te frena. "
+                         f"Practica los loops anidados.")
+        elif core_pct >= 21:
+            final_msg = (f"🍄 CORREDOR. {n}, el hongo te tiene pero aún piensas. "
+                         f"Relee la teoría y vuelve a intentar.")
         else:
-            print("\n  💪 ¡No te rindas! Repasa la teoría e inténtalo de nuevo.")
-        print(f"\n{'═' * 60}\n")
+            final_msg = (f"☠️ {n}, paciente cero. Cada celda ejecutada es un día de cuarentena cumplido. "
+                         f"¡Tú puedes!")
+
+        ach_display = {
+            "primer_contagio":     "🍄 Primer Contagio",
+            "ojo_clinico":         "🩺 Ojo Clínico",
+            "superviviente_zona":  "🚧 Superviviente de Zona",
+            "esporas":             "💨 Esporas",
+            "modelo_sir":          "📈 Modelo SIR",
+            "inmunidad_adaptativa":"🧬 Inmunidad Adaptativa",
+            "esperanza_humanidad": "✦ Esperanza de la Humanidad",
+        }
+
+        ach_html = ""
+        if self._achievements:
+            for ak, alabel in ach_display.items():
+                if ak in self._achievements:
+                    ach_html += (
+                        f'<div style="display:inline-flex;align-items:center;gap:5px;'
+                        f'padding:3px 8px;background:rgba(76,166,107,.08);'
+                        f'border:1px solid #4ca66b40;border-radius:2px;margin:2px;">'
+                        f'<span style="font-family:\'Share Tech Mono\',monospace;font-size:6px;'
+                        f'color:#4ca66b;">{alabel}</span></div>'
+                    )
+
+        lv_color = _lv_color(lvl_num)
+        xp_grad  = _XP_GRAD.get(lvl_num, _XP_GRAD[1])
+
+        self._submit_to_supabase(core_earned, _CORE_MAX, core_pct, lvl_num, lvl_name)
+
+        display(HTML(f'''
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  @keyframes tlou-glow{{0%,100%{{text-shadow:0 0 14px rgba(76,166,107,.8),2px 2px 0 #0d2d10}}
+    50%{{text-shadow:0 0 32px rgba(76,166,107,1),0 0 60px rgba(212,135,10,.4),2px 2px 0 #0d2d10}}}}
+  @keyframes tlou-xp{{from{{transform:scaleX(0)}}to{{transform:scaleX(1)}}}}
+</style>
+<div style="background:#020d02;border:2px solid #4ca66b;border-radius:6px;max-width:840px;
+  margin:12px 0;overflow:hidden;
+  box-shadow:0 0 40px rgba(76,166,107,.12),0 0 80px rgba(212,135,10,.06),0 10px 40px rgba(0,0,0,.8);">
+
+  <div style="background:linear-gradient(135deg,#010801,#011a06,#010801);
+    border-bottom:2px solid #d4870a;padding:22px 28px;text-align:center;position:relative;">
+    <div style="position:absolute;left:20px;top:50%;transform:translateY(-50%);">{self._logo_tag}</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(12px,2.5vw,18px);
+      color:#4ca66b;animation:tlou-glow 2.5s ease-in-out infinite;letter-spacing:3px;
+      margin-bottom:8px;">✦ FIREFLY RESEARCH NODE 7 ✦</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:#d4870a;
+      letter-spacing:2px;">NOTEBOOK III — RESUMEN FINAL DE MISIÓN</div>
+    <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);">{self._logo_tag}</div>
+  </div>
+
+  <div style="padding:24px 28px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div style="background:#010801;border:1px solid #0a1a0a;border-radius:3px;
+        padding:16px;text-align:center;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#2a3a2a;
+          letter-spacing:1px;margin-bottom:10px;">XP CORE</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(14px,3vw,22px);
+          color:#4ca66b;">{core_earned}/{_CORE_MAX}</div>
+      </div>
+      <div style="background:#010801;border:1px solid #0a1a0a;border-radius:3px;
+        padding:16px;text-align:center;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#2a3a2a;
+          letter-spacing:1px;margin-bottom:10px;">NIVEL</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(7px,1.4vw,11px);
+          color:{lv_color};">{lvl_name}</div>
+      </div>
+      <div style="background:#010801;border:1px solid #0a1a0a;border-radius:3px;
+        padding:16px;text-align:center;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#2a3a2a;
+          letter-spacing:1px;margin-bottom:10px;">SCORE</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(14px,3vw,22px);
+          color:#b8ff9a;">{core_pct}%</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#2a3a2a;">
+          PROGRESO CORE</span>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:7px;color:{lv_color};">
+          {core_pct}%</span>
+      </div>
+      <div style="width:100%;height:14px;background:#0a1a0a;border:1px solid #1a2a1a;
+        border-radius:3px;overflow:hidden;">
+        <div style="width:{core_pct}%;height:100%;background:{xp_grad};
+          border-radius:3px;transform-origin:left;
+          animation:tlou-xp 1.4s cubic-bezier(.4,0,.2,1) forwards;
+          box-shadow:0 0 8px rgba(76,166,107,.3);"></div>
+      </div>
+    </div>
+
+    {f"""
+    <div style="margin-bottom:20px;padding:12px 16px;background:#010801;
+      border:1px solid #39e5b640;border-radius:3px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#39e5b6;
+        margin-bottom:8px;">✧ BONUS XP</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:#39e5b6;">
+        {bonus_earned}/{bonus_possible} XP</div>
+    </div>""" if bonus_possible > 0 else ""}
+
+    <div style="background:#010801;border:1px solid #2d5a1b;border-radius:3px;
+      padding:14px 18px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:13px;color:#b8ff9a;line-height:1.7;">{final_msg}</div>
+    </div>
+
+    {f"""
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#2a3a2a;
+        letter-spacing:1px;margin-bottom:10px;">✦ LOGROS DESBLOQUEADOS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">{ach_html}</div>
+    </div>""" if ach_html else ""}
+
+    {"""
+    <div style="padding:12px 16px;background:#1a0000;border:2px solid #c0392b;
+      border-radius:3px;text-align:center;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#c0392b;
+        letter-spacing:2px;">🚫 PLAZO VENCIDO</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:#ff6666;
+        margin-top:6px;">La nota no será actualizada en la base de datos</div>
+    </div>""" if DEADLINE_PASSED else f"""
+    <div style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:7px;
+      color:#39e5b6;letter-spacing:1px;opacity:.9;">
+      📊 Calificación final enviada · {n} · {lvl_name}
+    </div>"""}
+  </div>
+</div>'''))
+
+
+grader = Autograder()

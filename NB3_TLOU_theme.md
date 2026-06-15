@@ -32,11 +32,11 @@ The notebook is a **Firefly Research Terminal**. Students are **Firefly field an
 
 ```python
 _LEVELS = [
-    (96, 6, "⚡ Proyecto Ellie"),
-    (81, 5, "🌿 Agente Marlene"),
+    (96, 6, "Ultima esperanza de la humanidad"),
+    (81, 5, ""),
     (61, 4, "🔦 Explorador Firefly"),
-    (41, 3, "👁️ Acechador"),
-    (21, 2, ""),
+    (41, 3, ""),
+    (21, 2, "Quarentena"),
     (0,  1, "Paciente 0"),
 ]
 ```

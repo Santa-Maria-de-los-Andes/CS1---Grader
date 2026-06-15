@@ -576,9 +576,26 @@ Los distritos más grandes de la ciudad. Los mismos distritos donde vivió el br
 
 cells.append(code("nb3-32-ej3-viz", """\
 # 🗺 Tu simulación de propagación — Lima, Perú
-_zonas_nombres = ["Zona Norte", "Zona Este", "Zona Centro", "Zona Sur", "Zona Oeste"]
-viz.semaforo_ciudad(_zonas_nombres, infectados, poblaciones, dia=dias, patogeno=f"R₀={r0}")
-mapa.brote_actual("lima", infectados, poblaciones, dia=dias, patogeno=f"COVID-19 simulado (R₀={r0})")"""))
+# Si aún no completaste el Ejercicio 3, usamos valores de referencia para que el mapa funcione.
+_zonas_nombres = ["San Juan de Lurigancho", "Ate", "Comas", "Villa El Salvador", "San Martín de Porres"]
+
+try:
+    _infectados_viz = list(infectados)
+    _pobs_viz       = list(poblaciones)
+    _dias_viz       = dias
+    _r0_viz         = r0
+    if _infectados_viz == [5, 12, 3, 20, 8]:   # ejercicio no completado aún
+        raise ValueError("ejercicio pendiente")
+except (NameError, ValueError):
+    # Valores de referencia: día 7, R₀=1.8, mismas poblaciones del ejercicio
+    _pobs_viz       = [500, 1200, 300, 2000, 800]
+    _infectados_viz = [min(int(x * 1.8**7), p) for x, p in zip([5, 12, 3, 20, 8], _pobs_viz)]
+    _dias_viz       = 7
+    _r0_viz         = 1.8
+    print("⚠️  Ejercicio 3 pendiente — mostrando simulación de referencia (Día 7, R₀=1.8)")
+
+viz.semaforo_ciudad(_zonas_nombres, _infectados_viz, _pobs_viz, dia=_dias_viz, patogeno=f"COVID-19 (R₀={_r0_viz})")
+mapa.brote_actual("lima", _infectados_viz, _pobs_viz, dia=_dias_viz, patogeno=f"COVID-19 simulado (R₀={_r0_viz})")"""))
 
 cells.append(md("nb3-32-prop-viz-md", """\
 ---
@@ -1222,35 +1239,16 @@ Los resultados están en los datos históricos — y en tu gráfica.
 *Ejecuta para ver el impacto cuantificado.*"""))
 
 cells.append(code("nb3-34-ej8-viz", """\
-# 📊 Impacto de la cuarentena — la diferencia en vidas
-_pobs = [5000, 3000, 8000, 2000, 10000]
-_inf0 = [100, 50, 200, 30, 500]
-_r0b  = r0_valores[2]   # COVID-19
+# 📊 Impacto de la cuarentena — cambia dia_cuarentena y el gráfico se actualiza
+_pobs_q = [5000, 3000, 8000, 2000, 10000]
+_inf0_q = [10, 5, 20, 3, 50]          # inicio contenido — permite ver divergencia
+_r0b    = r0_valores[2]               # COVID-19
 
-def _simular_q(dia_q):
-    inf = _inf0[:]
-    caidas = [False] * 5
-    totales = []
-    for dia in range(1, 22):
-        r0_hoy = _r0b * 0.4 if dia >= dia_q else _r0b
-        total = 0
-        for z in range(5):
-            if not caidas[z]:
-                tasa = inf[z] / _pobs[z]
-                if tasa > 0.6:
-                    caidas[z] = True
-                else:
-                    inf[z] = min(int(inf[z] * r0_hoy), _pobs[z])
-            total += inf[z]
-        totales.append(total)
-    return totales
-
-_sin_q = _simular_q(999)
-_q5    = _simular_q(5)
-_q14   = _simular_q(14)
-
-viz.impacto_cuarentena(_sin_q, _q5,  dia_cuarentena=5,  nombre_patogeno="COVID-19 — Cuarentena Día 5",  cfr=mortalidad[2])
-viz.impacto_cuarentena(_sin_q, _q14, dia_cuarentena=14, nombre_patogeno="COVID-19 — Cuarentena Día 14", cfr=mortalidad[2])"""))
+# Cambia el número para explorar: ¿qué pasa si actúas el Día 3? ¿El Día 20?
+viz.impacto_cuarentena(_inf0_q, _pobs_q, _r0b, dia_cuarentena=5,
+                       nombre_patogeno="COVID-19", cfr=mortalidad[2], dias=30)
+viz.impacto_cuarentena(_inf0_q, _pobs_q, _r0b, dia_cuarentena=14,
+                       nombre_patogeno="COVID-19", cfr=mortalidad[2], dias=30)"""))
 
 cells.append(md("nb3-34-ej8-viz-interp", """\
 ---
@@ -1282,13 +1280,13 @@ Las tres funciones ya están implementadas abajo. Tu trabajo es:
 
 cells.append(code("nb3-34-diseno", """\
 # ══════════════════════════════════════════════
-# TRES INTERVENCIONES — misma ciudad, mismos 21 días
-# COVID-19, 5 zonas
+# TRES INTERVENCIONES — misma ciudad, 30 días
+# COVID-19, 5 zonas — inicio contenido para ver divergencia
 # ══════════════════════════════════════════════
 _pobs = [5000, 3000, 8000, 2000, 10000]
-_inf0 = [100, 50, 200, 30, 500]
-_r0b  = r0_valores[2]   # COVID-19
-_dias = 21
+_inf0 = [10, 5, 20, 3, 50]    # inicio bajo: las 3 intervenciones divergen más
+_r0b  = r0_valores[2]          # COVID-19
+_dias = 30
 
 def _simular(inf_inicio, factor, dia_activa):
     \"\"\"Simula una intervención. Devuelve lista de totales ciudad por día.\"\"\"
@@ -1309,30 +1307,30 @@ def _simular(inf_inicio, factor, dia_activa):
         totales.append(total)
     return totales
 
-# OPCIÓN A: Cuarentena estricta (R0 × 0.3, activa Día 10)
-curva_A = _simular(_inf0, factor=0.3, dia_activa=10)
+# OPCIÓN A: Cuarentena estricta (R0 × 0.3, activa Día 7)
+curva_A = _simular(_inf0, factor=0.3, dia_activa=7)
 
-# OPCIÓN B: Rastreo de contactos (R0 × 0.4, activa Día 5 — más temprano)
-curva_B = _simular(_inf0, factor=0.4, dia_activa=5)
+# OPCIÓN B: Rastreo de contactos (R0 × 0.5, activa Día 5 — más temprano pero menos agresivo)
+curva_B = _simular(_inf0, factor=0.5, dia_activa=5)
 
-# OPCIÓN C: Vacunación parcial (30% menos susceptibles desde inicio, R0 sin cambio)
-_inf_vacunados = [int(v * 0.7) for v in _inf0]   # 30% ya inmunes
+# OPCIÓN C: Vacunación parcial (40% menos susceptibles desde inicio, R0 sin cambio)
+_inf_vacunados = [int(v * 0.6) for v in _inf0]   # 40% ya inmunes al inicio
 curva_C = _simular(_inf_vacunados, factor=1.0, dia_activa=999)
 
 # Sin intervención — línea base
 curva_base = _simular(_inf0, factor=1.0, dia_activa=999)
 
-# Resultados en día 21
-print(f"Sin intervención:        {curva_base[-1]:>6} infectados al Día {_dias}")
-print(f"A — Cuarentena estricta: {curva_A[-1]:>6} infectados al Día {_dias}")
-print(f"B — Rastreo temprano:    {curva_B[-1]:>6} infectados al Día {_dias}")
-print(f"C — Vacunación parcial:  {curva_C[-1]:>6} infectados al Día {_dias}")
+# Resultados en día final
+print(f"Sin intervención:        {curva_base[-1]:>7,} infectados al Día {_dias}")
+print(f"A — Cuarentena D7:       {curva_A[-1]:>7,} infectados al Día {_dias}")
+print(f"B — Rastreo D5:          {curva_B[-1]:>7,} infectados al Día {_dias}")
+print(f"C — Vacunación 40%:      {curva_C[-1]:>7,} infectados al Día {_dias}")
 
-# Vidas salvadas estimadas (CFR = 2%)
-cfr = mortalidad[2]
+# Vidas salvadas estimadas (CFR = 2% → dividir entre 100)
+_cfr = mortalidad[2]
 for nombre, curva in [("A", curva_A), ("B", curva_B), ("C", curva_C)]:
     casos_evitados = sum(max(b - c, 0) for b, c in zip(curva_base, curva))
-    print(f"  Intervención {nombre}: ~{int(casos_evitados * cfr)} vidas salvadas estimadas")
+    print(f"  Intervención {nombre}: ~{int(casos_evitados * _cfr / 100):,} vidas salvadas estimadas")
 
 # Mi conclusión — ¿cuál es más efectiva y por qué?
 # (Pista: piensa en la RAZÓN epidemiológica, no solo en el número)

@@ -159,7 +159,6 @@ class VizEpidemias:
         )
         _apply_theme(fig)
         fig.show()
-        return fig
 
     # ─────────────────────────────────────────────────────────────
     # 2. COMPARAR PATÓGENOS
@@ -193,27 +192,19 @@ class VizEpidemias:
 
             fig.add_trace(go.Scatter(
                 x=dias, y=totales, name=nombre,
+                mode="lines+markers",
+                marker=dict(size=4),
                 line=dict(color=col, width=2.5, dash=style),
                 hovertemplate=f"{nombre}<br>DÍA %{{x}}<br>INFECTADOS: %{{y:,}}<extra></extra>",
             ))
 
-            # Anotación escalonada para evitar solapamiento
-            y_offset = pico * (1 + 0.06 * idx)
-            fig.add_annotation(
-                x=pico_d, y=y_offset,
-                text=f"▶ {nombre}<br>  PICO: {pico:,}",
-                showarrow=False,
-                font=dict(size=10, color=col, family="Courier New"),
-                xanchor="left",
-            )
-
         # Nota especial si Walker está en el conjunto
         if any("Walker" in k for k in resultados_dict):
             fig.add_annotation(
-                x=0.01, y=0.97, xref="paper", yref="paper",
-                text="⚠ WALKER — MODELO NO APLICA (REANIMACIÓN)",
+                x=0.01, y=0.05, xref="paper", yref="paper",
+                text="⚠ WALKER: R₀ bajo, MODELO SIR no captura reanimación",
                 showarrow=False,
-                font=dict(size=10, color="#D4870A", family="Courier New"),
+                font=dict(size=9, color="#D4870A", family="Courier New"),
                 align="left",
             )
 
@@ -228,82 +219,96 @@ class VizEpidemias:
         )
         _apply_theme(fig)
         fig.show()
-        return fig
 
     # ─────────────────────────────────────────────────────────────
     # 3. IMPACTO DE CUARENTENA — "vidas salvadas"
     # ─────────────────────────────────────────────────────────────
     @staticmethod
-    def impacto_cuarentena(sin_intervencion, con_intervencion, dia_cuarentena,
-                           nombre_patogeno="COVID-19", cfr=0.02):
+    def impacto_cuarentena(infectados_ini, poblaciones, r0, dia_cuarentena,
+                           nombre_patogeno="COVID-19", cfr=2.0,
+                           dias=21, reduccion_r0=0.4):
         """
-        Dos curvas superpuestas + área sombreada de casos evitados.
+        Compara sin cuarentena vs. con cuarentena — calcula ambas curvas internamente.
+        Cambia dia_cuarentena para ver el impacto en tiempo real.
 
-        sin_intervencion : lista de infectados/día sin cuarentena
-        con_intervencion : lista de infectados/día con cuarentena
-        dia_cuarentena   : día en que se implementó la cuarentena
-        cfr              : tasa de mortalidad por caso (para estimar vidas salvadas)
+        infectados_ini  : lista de infectados por zona al inicio
+        poblaciones     : lista de poblaciones por zona
+        r0              : número básico de reproducción (sin intervención)
+        dia_cuarentena  : día en que se activa la cuarentena (1-indexed)
+        cfr             : tasa de mortalidad en % (ej. 2.0 para COVID-19)
+        dias            : duración de la simulación
+        reduccion_r0    : factor de R₀ durante cuarentena (0.4 = reducción del 60%)
         """
         if not _PLOTLY:
             print("plotly no disponible"); return
 
-        n    = max(len(sin_intervencion), len(con_intervencion))
-        dias = list(range(1, n + 1))
+        def _simular(dia_q):
+            inf    = list(infectados_ini)
+            caidas = [False] * len(inf)
+            totales = []
+            for dia in range(1, dias + 1):
+                r0_hoy = r0 * reduccion_r0 if dia >= dia_q else r0
+                total  = 0
+                for z in range(len(inf)):
+                    if not caidas[z]:
+                        tasa = inf[z] / max(poblaciones[z], 1)
+                        if tasa > 0.6:
+                            caidas[z] = True
+                        else:
+                            inf[z] = min(int(inf[z] * r0_hoy), poblaciones[z])
+                    total += inf[z]
+                totales.append(total)
+            return totales
 
-        def pad(lst): return lst + [lst[-1]] * (n - len(lst))
-        s_ext = pad(list(sin_intervencion))
-        c_ext = pad(list(con_intervencion))
+        dias_x  = list(range(1, dias + 1))
+        s_ext   = _simular(999)                # sin cuarentena
+        c_ext   = _simular(dia_cuarentena)     # con cuarentena
 
         casos_evitados = sum(max(s - c, 0) for s, c in zip(s_ext, c_ext))
-        vidas_salvadas = int(casos_evitados * cfr)
+        vidas_salvadas = int(casos_evitados * cfr / 100)   # cfr is in %
 
         fig = go.Figure()
 
-        # Área sombreada (casos evitados)
         fig.add_trace(go.Scatter(
-            x=dias + dias[::-1],
+            x=dias_x + dias_x[::-1],
             y=s_ext + c_ext[::-1],
-            fill="toself",
-            fillcolor="rgba(192,57,43,0.15)",
+            fill="toself", fillcolor="rgba(192,57,43,0.12)",
             line=dict(color="rgba(0,0,0,0)"),
-            name=f"CASOS EVITADOS (~{casos_evitados:,})",
+            name=f"CASOS EVITADOS  {casos_evitados:,}",
             hoverinfo="skip",
         ))
-
         fig.add_trace(go.Scatter(
-            x=dias, y=s_ext, name="SIN CUARENTENA",
-            line=dict(color="#C0392B", width=3),
+            x=dias_x, y=s_ext, name="SIN CUARENTENA",
+            line=dict(color="#C0392B", width=2.5),
             hovertemplate="DÍA %{x}<br>SIN CUARENTENA: %{y:,}<extra></extra>",
         ))
         fig.add_trace(go.Scatter(
-            x=dias, y=c_ext, name=f"CUARENTENA DÍA {dia_cuarentena}",
-            line=dict(color="#4CA66B", width=3),
+            x=dias_x, y=c_ext, name=f"CUARENTENA DÍA {dia_cuarentena}",
+            line=dict(color="#4CA66B", width=2.5),
             hovertemplate="DÍA %{x}<br>CON CUARENTENA: %{y:,}<extra></extra>",
         ))
 
-        # Línea del día de cuarentena
         fig.add_vline(
-            x=dia_cuarentena, line_width=2, line_dash="dash", line_color="#D4870A",
-            annotation_text=f"  ⚠ CUARENTENA — DÍA {dia_cuarentena}",
-            annotation_font=dict(color="#D4870A", size=12, family="Courier New"),
+            x=dia_cuarentena, line_width=1.5, line_dash="dash", line_color="#D4870A",
+            annotation_text=f"  ⚠ DÍA {dia_cuarentena}",
+            annotation_font=dict(color="#D4870A", size=11, family="Courier New"),
         )
 
-        # Anotación de vidas salvadas
         fig.add_annotation(
-            x=n * 0.55, y=max(s_ext) * 0.82,
-            text=(f"<b>▶ VIDAS SALVADAS ESTIMADAS</b>"
-                  f"<br><span style='font-size:22px'>{vidas_salvadas:,}</span>"
-                  f"<br>CFR = {cfr*100:.1f}% (muertes / casos)"),
-            showarrow=False, align="center",
-            font=dict(size=12, color="#B8FF9A", family="Courier New"),
-            bgcolor="#0D0D0D", bordercolor="#4CA66B", borderwidth=2,
-            borderpad=12,
+            x=0.97, y=0.96, xref="paper", yref="paper",
+            text=(f"▶ VIDAS SALVADAS EST.<br>"
+                  f"<span style='font-size:18px;color:#4CA66B'><b>{vidas_salvadas:,}</b></span><br>"
+                  f"<span style='font-size:10px'>CFR {cfr:.1f}% · {casos_evitados:,} casos evitados</span>"),
+            showarrow=False, align="right",
+            font=dict(size=11, color="#B8FF9A", family="Courier New"),
+            bgcolor="#0D0D0D", bordercolor="#4CA66B", borderwidth=1,
+            borderpad=10,
         )
 
         fig.update_layout(
             title=dict(
-                text=f"[ PROTOCOLO CUARENTENA — {nombre_patogeno.upper()} ]",
-                font=dict(size=16, color="#B8FF9A", family="Courier New"),
+                text=f"[ CUARENTENA DÍA {dia_cuarentena} — {nombre_patogeno.upper()} ]",
+                font=dict(size=15, color="#B8FF9A", family="Courier New"),
             ),
             xaxis_title="DÍA DE SIMULACIÓN",
             yaxis_title="TOTAL INFECTADOS",
@@ -311,7 +316,6 @@ class VizEpidemias:
         )
         _apply_theme(fig)
         fig.show()
-        return fig
 
     # ─────────────────────────────────────────────────────────────
     # 4. PROPAGACIÓN MULTI-ZONA (series de tiempo)
@@ -371,7 +375,6 @@ class VizEpidemias:
         )
         _apply_theme(fig)
         fig.show()
-        return fig
 
     # ─────────────────────────────────────────────────────────────
     # 5. SEMÁFORO DE ZONAS — tablero de estado tipo terminal
@@ -707,10 +710,17 @@ class VizEpidemias:
             line=dict(color="#39E5B6", width=1.5, dash="dot"),
         ))
 
+        def _yrange(Il, Rl, h):
+            # Focus scale on the epidemic activity (I + R), not on S.
+            # S clips at the top for low R₀ — that's intentional and readable.
+            peak = max(max(Il), max(Rl), h, 3.0)   # minimum 3% so axis isn't microscopic
+            return [0, min(peak * 1.20, 105)]        # cap at 105 so we never exceed 100%
+
         frames = []
         for r0 in r0_vals:
             Sl, Il, Rl = _sim(r0)
             h = _herd(r0)
+            yr = _yrange(Il, Rl, h)
             frames.append(go.Frame(
                 data=[
                     go.Scatter(y=Sl),
@@ -718,10 +728,17 @@ class VizEpidemias:
                     go.Scatter(y=Rl),
                     go.Scatter(y=[h, h]),
                 ],
-                layout=go.Layout(title=dict(
-                    text=_title(r0),
-                    font=dict(size=14, color="#B8FF9A", family="Courier New"),
-                )),
+                layout=go.Layout(
+                    title=dict(
+                        text=_title(r0),
+                        font=dict(size=14, color="#B8FF9A", family="Courier New"),
+                    ),
+                    yaxis=dict(
+                        range=yr,
+                        gridcolor="#1C1C1C", zerolinecolor="#1C1C1C",
+                        tickfont=dict(color="#8FA3A8", family="Courier New"),
+                    ),
+                ),
                 name=str(r0),
             ))
         fig.frames = frames
@@ -734,11 +751,13 @@ class VizEpidemias:
             label=f"{r0:.1f}",
         ) for r0 in r0_vals]
 
+        init_yr = _yrange(I0, R0, h0)
         fig.update_layout(
             title=dict(text=_title(r0_vals[init_idx]),
                        font=dict(size=14, color="#B8FF9A", family="Courier New")),
             xaxis_title="DÍA DE SIMULACIÓN",
             yaxis_title="% POBLACIÓN",
+            yaxis=dict(range=init_yr),
             height=520,
             sliders=[dict(
                 active=init_idx,
@@ -754,5 +773,4 @@ class VizEpidemias:
             updatemenus=[],
         )
         _apply_theme(fig)
-        fig.update_yaxes(range=[0, 105])
         fig.show()
