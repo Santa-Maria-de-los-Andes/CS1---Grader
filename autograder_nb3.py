@@ -837,34 +837,156 @@ async function agRegister() {{
     def check_ex1(self):
         """Ex1 — Expansión Radial del Cordyceps (6 pts)"""
         self._header("EJERCICIO 1 — Expansión Radial del Cordyceps", icon="🍄", pts=6)
-        # TODO: fill in Section 3.1
-        return self._award("ex1", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
-        ], 6)
+        checks = []
+        fila = _get("fila")
+        col  = _get("col")
+
+        # After a correct 6×6 loop, fila=5 and col=5
+        if fila is None:
+            checks.append((False, "loop exterior (fila)",
+                           "Variable 'fila' no encontrada — ¿ejecutaste la celda? Usa: for fila in range(6)"))
+        elif fila == 5:
+            checks.append((True, "loop exterior — 6 filas", "✓ fila llegó a 5 (range(6))"))
+        else:
+            checks.append((False, "loop exterior — 6 filas",
+                           f"fila={fila} — el loop exterior debe ser range(6) (0 a 5)"))
+
+        if col is None:
+            checks.append((False, "loop interior (col)",
+                           "Variable 'col' no encontrada — usa: for col in range(6)"))
+        elif col == 5:
+            checks.append((True, "loop interior — 6 columnas", "✓ col llegó a 5 (range(6))"))
+        else:
+            checks.append((False, "loop interior — 6 columnas",
+                           f"col={col} — el loop interior debe ser range(6) (0 a 5)"))
+
+        # Spot-check: last cell (5,5) is distance 4 from center → NOT infected
+        # We can verify the Manhattan distance variable if the student defined it
+        dist = _get("distancia") or _get("dist") or _get("d")
+        if dist is not None and not isinstance(dist, bool) and isinstance(dist, (int, float)):
+            exp_last = abs(5 - 3) + abs(5 - 3)   # = 4
+            if _approx(dist, exp_last):
+                checks.append((True, "distancia Manhattan (última celda = 4)",
+                               f"✓ abs(5-3)+abs(5-3) = {exp_last}"))
+            else:
+                checks.append((False, "distancia Manhattan",
+                               f"La última celda (5,5) debe tener distancia 4, obtuve {dist}. "
+                               f"Verifica: abs(fila-3)+abs(col-3)"))
+
+        return self._award("ex1", checks, 6)
 
     def check_ex2(self):
         """Ex2 — Dos Patógenos, Mismo Mapa (6 pts)"""
         self._header("EJERCICIO 2 — Dos Patógenos, Mismo Mapa", icon="🍄", pts=6)
-        # TODO: fill in Section 3.1
-        return self._award("ex2", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
-        ], 6)
+        checks = []
+        # Expected infected counts: Cordyceps (radius≤2) = 13, COVID (radius≤1) = 5
+        EXP_CORD  = 13
+        EXP_COVID = 5
+
+        fila = _get("fila")
+        col  = _get("col")
+
+        if fila == 5 and col == 5:
+            checks.append((True, "loops 6×6 ejecutados", "✓ fila=5, col=5"))
+        else:
+            checks.append((False, "loops 6×6",
+                           f"fila={fila}, col={col} — ambos loops deben ser range(6). "
+                           f"¿Ejecutaste las dos cuadrículas?"))
+
+        # Search for Cordyceps count (13)
+        cord_found = False
+        for name in ["infectadas_cord", "n_cord", "total_cord", "infectadas_cordyceps",
+                     "infectadas1", "count_cord", "zonas_cord", "cord_count"]:
+            v = _get(name)
+            if isinstance(v, int) and not isinstance(v, bool):
+                if v == EXP_CORD:
+                    checks.append((True, f"Cordyceps infectadas = 13 ({name})", "✓ 13 zonas"))
+                else:
+                    checks.append((False, f"Cordyceps infectadas ({name}={v})",
+                                   f"Debe ser 13 (radio≤2 desde centro (3,3)), obtuve {v}"))
+                cord_found = True
+                break
+        if not cord_found:
+            checks.append((False, "Cordyceps infectadas (variable no encontrada)",
+                           f"Guarda el conteo en una variable, ej: infectadas_cord = 0. "
+                           f"Debe ser {EXP_CORD}"))
+
+        # Search for COVID count (5)
+        covid_found = False
+        for name in ["infectadas_covid", "n_covid", "total_covid", "infectadas_covid19",
+                     "infectadas2", "count_covid", "zonas_covid", "covid_count", "infectadas"]:
+            v = _get(name)
+            if isinstance(v, int) and not isinstance(v, bool):
+                if v == EXP_COVID:
+                    checks.append((True, f"COVID-19 infectadas = 5 ({name})", "✓ 5 zonas"))
+                else:
+                    checks.append((False, f"COVID-19 infectadas ({name}={v})",
+                                   f"Debe ser 5 (radio≤1 desde centro (3,3)), obtuve {v}"))
+                covid_found = True
+                break
+        if not covid_found:
+            checks.append((False, "COVID-19 infectadas (variable no encontrada)",
+                           f"Guarda el conteo en una variable, ej: infectadas_covid = 0. "
+                           f"Debe ser {EXP_COVID}"))
+
+        return self._award("ex2", checks, 6)
 
     def check_debug1(self):
         """Debug1 — Error de Indentación (3 pts)"""
         self._header("🔧 DEBUG 1 — Error de Indentación", icon="🔧", pts=3)
-        # TODO: fill in Section 3.1
-        return self._award("debug1", [
-            (False, "pendiente", "Verificador en construcción"),
-        ], 3)
+        checks = []
+        fila = _get("fila")
+        col  = _get("col")
+        zona = _get("zona")
+
+        # After debug1 (range(3)×range(3)), fila=2, col=2, zona=8
+        if fila is None:
+            checks.append((False, "loop externo (fila)", "Variable 'fila' no encontrada — ¿ejecutaste la celda?"))
+        elif fila == 2:
+            checks.append((True, "loop externo range(3)", "✓ fila=2"))
+        else:
+            checks.append((False, "loop externo range(3)",
+                           f"fila={fila} — el loop debe ser range(3). ¿Modificaste el código?"))
+
+        if col is None:
+            checks.append((False, "loop interno (col)", "Variable 'col' no encontrada"))
+        elif col == 2:
+            checks.append((True, "loop interno range(3)", "✓ col=2"))
+        else:
+            checks.append((False, "loop interno range(3)",
+                           f"col={col} — el loop debe ser range(3)"))
+
+        if zona is None:
+            checks.append((False, "zona", "Variable 'zona' no encontrada — ¿ejecutaste la celda?"))
+        elif zona == 8:
+            checks.append((True, "zona == 8 (celda 2×3+2, última iteración)",
+                           "✓ El loop procesó las 9 celdas — indentación correcta"))
+        else:
+            checks.append((False, "zona",
+                           f"Debe ser 8 (última celda: 2*3+2=8), obtuve {zona}"))
+
+        return self._award("debug1", checks, 3)
 
     def check_t1(self):
-        """T1 — Teoría Sección 3.1 (4 pts)"""
-        self._header("❓ TEORÍA T1", icon="🧠", pts=4)
-        # TODO: fill in Section 3.1
-        return self._award("t1", [
-            (False, "pendiente", "Verificador en construcción"),
-        ], 4)
+        """T1 — Ejecuciones del loop interior 6×5 (4 pts)"""
+        self._header("❓ TEORÍA T1 — Ejecuciones del loop interior", icon="🧠", pts=4)
+        checks = []
+        r = _get("respuesta_t1")
+
+        if r is None:
+            checks.append((False, "respuesta_t1",
+                           "No definida — escribe: respuesta_t1 = 'b'"))
+        elif not isinstance(r, str):
+            checks.append((False, "respuesta_t1", "Debe ser str, ej: respuesta_t1 = 'b'"))
+        elif r.strip().lower() == "b":
+            checks.append((True, "respuesta_t1 == 'b'",
+                           "¡Correcto! 6 filas × 5 columnas = 30 ejecuciones"))
+        else:
+            checks.append((False, "respuesta_t1",
+                           f"Incorrecto ('{r}'). Pista: el print interior ejecuta "
+                           f"filas × columnas veces — 6 × 5 = ?"))
+
+        return self._award("t1", checks, 4)
 
     def check_mini_a(self):
         """Checkpoint 3.1 — Loops Anidados: Grids"""
@@ -884,42 +1006,227 @@ async function agRegister() {{
     def check_ex3(self):
         """Ex3 — Propagación en 5 Zonas (8 pts)"""
         self._header("EJERCICIO 3 — Propagación en 5 Zonas", icon="🍄", pts=8)
-        # TODO: fill in Section 3.2
-        return self._award("ex3", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
-        ], 8)
+        checks = []
+        # infectados=[5,12,3,20,8], poblaciones=[500,1200,300,2000,800], r0=1.8, dias=7
+        # Expected after 7 days (in-place updates, capped at population):
+        EXP_INFECTADOS  = [291, 685, 162, 1204, 469]
+        EXP_TOTAL_DIA7  = 2811   # sum of EXP_INFECTADOS
+
+        dia         = _get("dia")
+        infectados  = _get("infectados")
+        total       = _get("total_ciudad") or _get("total")
+
+        if dia is None:
+            checks.append((False, "loop exterior (dia)",
+                           "Variable 'dia' no encontrada — usa: for dia in range(1, dias+1)"))
+        elif dia == 7:
+            checks.append((True, "loop exterior — 7 días", "✓ dia=7"))
+        else:
+            checks.append((False, "loop exterior — 7 días",
+                           f"dia={dia} — el loop de días debe ir de 1 a {7}. ¿Usaste dias=7?"))
+
+        if infectados is None:
+            checks.append((False, "infectados (lista final)",
+                           "Variable 'infectados' no encontrada — actualiza la lista del starter"))
+        elif not isinstance(infectados, list) or len(infectados) != 5:
+            checks.append((False, "infectados (lista final)",
+                           f"Debe ser lista de 5 zonas, obtuve {type(infectados).__name__}"))
+        elif infectados == EXP_INFECTADOS:
+            checks.append((True, "infectados día 7",
+                           f"✓ {infectados} — todas las zonas correctas"))
+        else:
+            wrong = [(i, EXP_INFECTADOS[i], infectados[i])
+                     for i in range(5) if infectados[i] != EXP_INFECTADOS[i]]
+            pos, e, o = wrong[0]
+            checks.append((False, "infectados día 7",
+                           f"Zona {pos}: esperaba {e}, obtuve {o}. "
+                           f"Verifica: infectados[i] = min(int(infectados[i]*r0), poblaciones[i])"))
+
+        if total is None:
+            checks.append((False, "total_ciudad (día 7)",
+                           f"Variable 'total_ciudad' no encontrada — suma los infectados de todas las zonas "
+                           f"en cada día. Debe ser {EXP_TOTAL_DIA7}"))
+        elif total == EXP_TOTAL_DIA7:
+            checks.append((True, f"total_ciudad == {EXP_TOTAL_DIA7}", "✓ suma correcta del día 7"))
+        else:
+            checks.append((False, "total_ciudad",
+                           f"Debe ser {EXP_TOTAL_DIA7}, obtuve {total}. "
+                           f"Asegúrate de acumular DENTRO del loop de días, no dentro del de zonas"))
+
+        return self._award("ex3", checks, 8)
 
     def check_ex4(self):
         """Ex4 — Tres Patógenos, Diez Días (8 pts)"""
         self._header("EJERCICIO 4 — Tres Patógenos, Diez Días", icon="🍄", pts=8)
-        # TODO: fill in Section 3.2
-        return self._award("ex4", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
-        ], 8)
+        checks = []
+        # Pathogens: COVID r0=2.5, Ébola r0=1.8, Sarampión r0=15.0
+        # infectados_0=50, poblacion=50_000, 10 days
+        # Expected day-10: COVID=50000 (cap), Ébola=17767, Sarampión=50000 (cap)
+        EXP_EBOLA        = 17_767
+        EXP_SARAM        = 50_000
+
+        dia        = _get("dia")
+        infectados = _get("infectados")
+
+        if dia is None:
+            checks.append((False, "loop interior (dia)",
+                           "Variable 'dia' no encontrada — usa: for dia in range(1, 11)"))
+        elif dia == 10:
+            checks.append((True, "loop interior — 10 días", "✓ dia=10"))
+        else:
+            checks.append((False, "loop interior — 10 días",
+                           f"dia={dia} — el loop de días debe llegar a 10"))
+
+        # After 3 pathogens loop, infectados = Sarampión result = 50000 (at cap)
+        if infectados is None:
+            checks.append((False, "infectados (último patógeno)",
+                           f"Variable 'infectados' no encontrada — "
+                           f"Sarampión (R0=15) debe llegar a {EXP_SARAM} en día 3"))
+        elif isinstance(infectados, (int, float)) and not isinstance(infectados, bool):
+            if infectados == EXP_SARAM:
+                checks.append((True, f"Sarampión saturó población ({EXP_SARAM})",
+                               f"✓ R0=15 llega al techo en día 3 — impresionante"))
+            elif infectados == EXP_EBOLA:
+                checks.append((False, "orden de patógenos",
+                               f"infectados={infectados} corresponde a Ébola — el último patógeno "
+                               f"(Sarampión, R0=15) debe ser el último en el loop exterior"))
+            else:
+                checks.append((False, "infectados día 10",
+                               f"Obtuve {infectados}. Ébola→{EXP_EBOLA}, COVID/Sarampión→{EXP_SARAM}"))
+        else:
+            checks.append((False, "infectados",
+                           f"Debe ser int con el total del último patógeno, obtuve {type(infectados).__name__}"))
+
+        return self._award("ex4", checks, 8)
 
     def check_debug2(self):
         """Debug2 — Acumulador en el Nivel Equivocado (3 pts)"""
         self._header("🔧 DEBUG 2 — Acumulador en el Nivel Equivocado", icon="🔧", pts=3)
-        # TODO: fill in Section 3.2
-        return self._award("debug2", [
-            (False, "pendiente", "Verificador en construcción"),
-        ], 3)
+        checks = []
+        # Fixed: total_ciudad=0 at the DIA level → total after 3 days = 503
+        # Buggy: total_ciudad=0 inside zone loop → total = last zone only = 168
+        EXP_TOTAL_FIXED = 503
+        EXP_TOTAL_BUGGY = 168
+
+        total_ciudad = _get("total_ciudad")
+        dia          = _get("dia")
+
+        if total_ciudad is None:
+            checks.append((False, "total_ciudad",
+                           "Variable 'total_ciudad' no encontrada — ¿ejecutaste la celda de Debug 2?"))
+        elif total_ciudad == EXP_TOTAL_FIXED:
+            checks.append((True, f"total_ciudad == {EXP_TOTAL_FIXED} (acumulador en nivel correcto)",
+                           "✓ total_ciudad = 0 está ANTES del loop de zonas, no dentro"))
+        elif total_ciudad == EXP_TOTAL_BUGGY:
+            checks.append((False, "total_ciudad",
+                           f"total_ciudad={EXP_TOTAL_BUGGY} — el bug sigue presente. "
+                           f"Mueve 'total_ciudad = 0' al nivel del loop de días (debe ser {EXP_TOTAL_FIXED})"))
+        else:
+            checks.append((False, "total_ciudad",
+                           f"Debe ser {EXP_TOTAL_FIXED} (corregido) o {EXP_TOTAL_BUGGY} (bug), "
+                           f"obtuve {total_ciudad}. ¿Modificaste los datos del ejercicio?"))
+
+        if dia is None:
+            checks.append((False, "dia", "Variable 'dia' no encontrada — ¿ejecutaste la celda?"))
+        elif dia == 3:
+            checks.append((True, "loop días — range(1, 4)", "✓ dia=3"))
+        else:
+            checks.append((False, "dia",
+                           f"Debe ser 3 (dias=3), obtuve {dia}. ¿Modificaste el código?"))
+
+        return self._award("debug2", checks, 3)
 
     def check_debug2b(self):
         """Debug2B — El Error que Mató a 50 Millones (3 pts)"""
         self._header("🔧 DEBUG 2B — El Error que Mató a 50 Millones", icon="🔧", pts=3)
-        # TODO: fill in Section 3.2
-        return self._award("debug2b", [
-            (False, "pendiente", "Verificador en construcción"),
-        ], 3)
+        checks = []
+        # After fix: Ola 2 starts from where Ola 1 ended (not reset to infectados_0)
+        # Both buggy and fixed end with infectados=100000 (cap) after Ola 2
+        # Structural check: both olas ran to completion
+
+        ola        = _get("ola")
+        dia        = _get("dia")
+        infectados = _get("infectados")
+
+        if ola is None:
+            checks.append((False, "loop olas",
+                           "Variable 'ola' no encontrada — ¿ejecutaste la celda de Debug 2B?"))
+        elif ola == 2:
+            checks.append((True, "ambas olas ejecutadas (ola=2)", "✓ el loop corrió 2 olas"))
+        else:
+            checks.append((False, "ambas olas",
+                           f"ola={ola} — el loop debe completar ambas olas (range(1,3))"))
+
+        if dia is None:
+            checks.append((False, "loop días (dia)",
+                           "Variable 'dia' no encontrada — usa: for dia in range(1, dias_por_ola+1)"))
+        elif dia == 10:
+            checks.append((True, "loop días — 10 por ola (dia=10)", "✓"))
+        else:
+            checks.append((False, "loop días",
+                           f"dia={dia} — cada ola tiene 10 días"))
+
+        return self._award("debug2b", checks, 3)
 
     def check_ex5(self):
         """Ex5 — Las Dos Olas de 1918 (8 pts)"""
         self._header("EJERCICIO 5 — Las Dos Olas de 1918", icon="🍄", pts=8)
-        # TODO: fill in Section 3.2
-        return self._award("ex5", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
-        ], 8)
+        checks = []
+        # poblacion=100_000, r0=2.0, dias=10
+        # Ola 1: start=100 → day 10 = 100000 (hits cap day 10)
+        # Ola 2: start=5000 → day 10 = 100000 (hits cap day 5)
+        # diferencia = abs(100000 - 100000) = 0
+        EXP_OLA1_DIA10  = 100_000
+        EXP_OLA2_DIA10  = 100_000
+        EXP_DIFERENCIA  = 0
+
+        dia        = _get("dia")
+        infectados = _get("infectados")
+
+        if dia is None:
+            checks.append((False, "loop días (dia)",
+                           "Variable 'dia' no encontrada — usa: for dia in range(1, dias+1)"))
+        elif dia == 10:
+            checks.append((True, "loop días — 10 días (dia=10)", "✓"))
+        else:
+            checks.append((False, "loop días",
+                           f"dia={dia} — el loop de días debe llegar a 10"))
+
+        if infectados is None:
+            checks.append((False, "infectados (última ola, día 10)",
+                           "No encontré 'infectados' — ¿ejecutaste la celda?"))
+        elif isinstance(infectados, (int, float)) and not isinstance(infectados, bool):
+            if infectados == EXP_OLA2_DIA10:
+                checks.append((True, f"Ola 2 día 10 = {EXP_OLA2_DIA10} (saturó población)",
+                               "✓ R0=2.0, inicio=5000 → saturación en día 5"))
+            else:
+                checks.append((False, "infectados (Ola 2 día 10)",
+                               f"Debe ser {EXP_OLA2_DIA10} (ambas olas saturan con R0=2.0), "
+                               f"obtuve {infectados}"))
+        else:
+            checks.append((False, "infectados", f"Debe ser int, obtuve {type(infectados).__name__}"))
+
+        # Check difference between olas (expected = 0, both saturate)
+        diff = None
+        for name in ["diferencia", "diff", "diferencia_olas", "dif"]:
+            v = _get(name)
+            if isinstance(v, (int, float)) and not isinstance(v, bool):
+                diff = (name, v)
+                break
+        if diff is None:
+            checks.append((False, "diferencia ola1 vs ola2",
+                           f"Variable 'diferencia' no encontrada — "
+                           f"calcula: diferencia = infectados_ola1 - infectados_ola2. "
+                           f"Resultado: {EXP_DIFERENCIA} (ambas olas llegan al mismo techo)"))
+        elif diff[1] == EXP_DIFERENCIA:
+            checks.append((True, f"diferencia == 0 ({diff[0]})",
+                           "✓ Ambas olas saturan la ciudad — la velocidad cambia, el destino no"))
+        else:
+            checks.append((False, f"diferencia ({diff[0]}={diff[1]})",
+                           f"Debe ser {EXP_DIFERENCIA} — ambas olas alcanzan la población máxima. "
+                           f"¿Calculaste las diferencias al día 10?"))
+
+        return self._award("ex5", checks, 8)
 
     def check_mini_b(self):
         """Checkpoint 3.2 — Loops Anidados: Tiempo"""
@@ -939,34 +1246,145 @@ async function agRegister() {{
 
     def check_ex6(self):
         """Ex6 — Clasificador de Triage (8 pts)"""
-        self._header("EJERCICIO 6 — Clasificador de Triage", icon="🍄", pts=8)
-        # TODO: fill in Section 3.3
+        self._header("EJERCICIO 6 — Clasificador de Triage", icon="🔴", pts=8)
+
+        resultado   = _get("resultado")
+        infectado   = _get("infectado")
+        horas       = _get("horas_expuesto")
+
+        # Expected classifications for all 6 patients in order
+        _expected = [
+            "LIMPIO",
+            "INMUNE — CASO DE ESTUDIO",
+            "CUARENTENA TEMPRANA",
+            "CUARENTENA TEMPRANA",
+            "CUARENTENA TARDÍA",
+            "CASO PERDIDO",
+        ]
+
+        # Search for a list of 6 classification results
+        _list_names = [
+            "clasificaciones", "resultados", "clases", "triage_resultados",
+            "lista_resultados", "outputs", "todas", "mis_resultados",
+            "lista_clasificaciones", "clasificacion_pacientes",
+        ]
+        _rlist = None
+        for _n in _list_names:
+            _v = _get(_n)
+            if isinstance(_v, list) and len(_v) == 6:
+                _rlist = _v
+                break
+
+        # Check 1: last patient (Paciente 6: infectado=True, horas=48, sin recursos) → CASO PERDIDO
+        c1 = isinstance(resultado, str) and resultado.strip().upper() == "CASO PERDIDO"
+
+        # Check 2: loop variable state confirms all 6 patients were processed
+        c2 = (infectado is True or infectado == True) and horas == 48
+
+        # Check 3: classification list exists and contains CUARENTENA TARDÍA (patient 5)
+        c3 = (_rlist is not None and
+              any(isinstance(r, str) and "CUARENTENA TARDÍA" in r.upper() for r in _rlist))
+
+        # Check 4: classification list contains INMUNE — CASO DE ESTUDIO (patient 2)
+        c4 = (_rlist is not None and
+              any(isinstance(r, str) and "INMUNE" in r.upper() for r in _rlist))
+
         return self._award("ex6", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "Paciente 6 — CASO PERDIDO",
+             f"resultado='{resultado}'" if resultado else "resultado no encontrado"),
+            (c2, "Loop completo (6 pacientes)",
+             f"infectado={infectado}, horas_expuesto={horas} (esperado True, 48)"),
+            (c3, "Lista — CUARENTENA TARDÍA",
+             "lista de 6 clasificaciones incluye CUARENTENA TARDÍA" if c3
+             else "no se encontró lista con CUARENTENA TARDÍA"),
+            (c4, "Lista — INMUNE",
+             "lista incluye INMUNE — CASO DE ESTUDIO" if c4
+             else "no se encontró lista con INMUNE — CASO DE ESTUDIO"),
         ], 8)
 
     def check_debug3(self):
         """Debug3 — Error de Árbol (3 pts)"""
         self._header("🔧 DEBUG 3 — Error de Árbol", icon="🔧", pts=3)
-        # TODO: fill in Section 3.3
+
+        resultado        = _get("resultado")
+        infectado        = _get("infectado")
+        horas_expuesto   = _get("horas_expuesto")
+        recursos_medicos = _get("recursos_medicos")
+
+        # After fix: horas=10 <24, recursos=True → "Cuarentena temprana — recursos OK"
+        EXP = "Cuarentena temprana — recursos OK"
+
+        c1 = isinstance(resultado, str) and resultado.strip() == EXP
+        # Confirm inputs were not changed (fix is structural, not input-gaming)
+        c2 = (infectado is True or infectado == True)
+        c3 = horas_expuesto == 10 and (recursos_medicos is True or recursos_medicos == True)
+
         return self._award("debug3", [
-            (False, "pendiente", "Verificador en construcción"),
+            (c1, "Resultado correcto",
+             f"resultado='{resultado}' esperado='{EXP}'"),
+            (c2, "Entrada preservada — infectado=True",
+             f"infectado={infectado} (no cambies la entrada, solo la estructura)"),
+            (c3, "Entradas preservadas — horas=10, recursos=True",
+             f"horas_expuesto={horas_expuesto}, recursos_medicos={recursos_medicos}"),
         ], 3)
 
     def check_ex7(self):
         """Ex7 — Clasificador de Zonas (8 pts)"""
         self._header("EJERCICIO 7 — Clasificador de Zonas", icon="🍄", pts=8)
-        # TODO: fill in Section 3.3
+
+        resultado            = _get("resultado")
+        cfr                  = _get("cfr")
+        infectados           = _get("infectados")
+        poblacion            = _get("poblacion")
+        dias_sin_suministros = _get("dias_sin_suministros")
+
+        # Prueba 2 (Ébola): infectados=800, poblacion=5000, dias=4, cfr=0.65
+        #   tasa = 800/5000 = 0.16 (16%)  — not >60%
+        #   cfr = 0.65 > 0.5 → ZONA PERDIDA ✓
+        EXP_EBOLA = "ZONA PERDIDA"
+
+        # Check 1: Ébola test result (last cell test)
+        c1 = isinstance(resultado, str) and resultado.strip().upper() == EXP_EBOLA.upper()
+
+        # Check 2: Ébola CFR (mortalidad[3] = 0.65) was last value used
+        c2 = _approx(cfr, 0.65) if cfr is not None else False
+
+        # Check 3: inputs match the exercise spec (not modified by student)
+        c3 = (infectados == 800 and poblacion == 5000 and dias_sin_suministros == 4)
+
+        # Check 4: COVID prueba result (tasa=16%, dias_sin_sum=4>3 → ZONA ROJA)
+        _covid_names = [
+            "resultado_covid", "resultado1", "zona_covid", "zona1",
+            "resultado_1", "r1", "z1", "resultado_c", "zona_c",
+            "resultado_prueba1", "zona_prueba1",
+        ]
+        _r_covid = next((_get(n) for n in _covid_names
+                         if isinstance(_get(n), str) and _get(n).strip().upper() == "ZONA ROJA"),
+                        None)
+        c4 = _r_covid is not None
+
         return self._award("ex7", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "Ébola → ZONA PERDIDA",
+             f"resultado='{resultado}' (cfr=0.65>0.5 activa ZONA PERDIDA)"),
+            (c2, "CFR Ébola (0.65)",
+             f"cfr={cfr} esperado≈0.65"),
+            (c3, "Datos de zona correctos",
+             f"infectados={infectados}, poblacion={poblacion}, dias={dias_sin_suministros}"),
+            (c4, "COVID → ZONA ROJA (variable separada)",
+             "encontrado resultado_covid/zona1/etc='ZONA ROJA'" if c4
+             else "guarda el resultado de COVID en una variable separada (resultado_covid, zona1…)"),
         ], 8)
 
     def check_t2(self):
         """T2 — Teoría Sección 3.3 (4 pts)"""
         self._header("❓ TEORÍA T2", icon="🧠", pts=4)
-        # TODO: fill in Section 3.3
+
+        r = _get("respuesta_t2")
+        c1 = isinstance(r, str) and r.strip().lower() == "b"
+
         return self._award("t2", [
-            (False, "pendiente", "Verificador en construcción"),
+            (c1, "Respuesta T2",
+             f"respuesta_t2='{r}' esperado='b' — el if anidado solo se evalúa si el exterior es True"),
         ], 4)
 
     def check_mini_c(self):
@@ -986,18 +1404,99 @@ async function agRegister() {{
 
     def check_ex8(self):
         """Ex8 — Protocolo de Cuarentena con Intervención (10 pts)"""
-        self._header("EJERCICIO 8 — Protocolo de Cuarentena con Intervención", icon="🍄", pts=10)
-        # TODO: fill in Section 3.4
+        self._header("EJERCICIO 8 — Protocolo de Cuarentena con Intervención", icon="🏙️", pts=10)
+
+        dia          = _get("dia")
+        infectados_z = _get("infectados_z")
+        zonas_caidas = _get("zonas_caidas")
+        dia_q        = _get("dia_cuarentena")
+
+        # Both valid final states (dia_cuarentena=5 or dia_cuarentena=14)
+        _INF_DQ5  = [3905, 1950, 7812, 1167, 7812]   # dq=5: zone 3 survives
+        _INF_DQ14 = [3905, 1950, 7812, 2000, 7812]   # dq=14: all fall
+
+        # Search common total variable names for last-day total
+        _tot_names = ["total", "total_infectados", "total_ciudad",
+                      "totales", "total_dia", "t_infectados"]
+        _tot = None
+        for _n in _tot_names:
+            _v = _get(_n)
+            if isinstance(_v, list) and len(_v) == 21:
+                _tot = _v[-1]
+                break
+            if isinstance(_v, (int, float)) and _v in (22646, 23479):
+                _tot = int(_v)
+                break
+
+        # Check 1: simulation ran all 21 days
+        c1 = dia == 21
+
+        # Check 2: zones 0, 1, 2 always fall — correct regardless of dia_cuarentena
+        c2 = (isinstance(infectados_z, list) and len(infectados_z) == 5
+              and infectados_z[0] == 3905
+              and infectados_z[2] == 7812)
+
+        # Check 3: zone 3 result (key difference between the two valid runs)
+        c3 = (isinstance(infectados_z, list) and len(infectados_z) == 5
+              and infectados_z[3] in (1167, 2000))
+
+        # Check 4: zonas_caidas tracking list is correct shape
+        c4 = (isinstance(zonas_caidas, list) and len(zonas_caidas) == 5
+              and zonas_caidas[0] is True and zonas_caidas[2] is True)
+
+        # Check 5: total infectados for the last day matches either valid run
+        c5 = _tot in (22646, 23479)
+
+        def _inf_str():
+            if isinstance(infectados_z, list):
+                return str(infectados_z)
+            return "infectados_z no encontrado"
+
         return self._award("ex8", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "21 días simulados",
+             f"dia={dia} (esperado 21)"),
+            (c2, "Zonas 0 y 2 correctas",
+             f"infectados_z[0]={infectados_z[0] if isinstance(infectados_z,list) and len(infectados_z)>0 else '?'}, "
+             f"infectados_z[2]={infectados_z[2] if isinstance(infectados_z,list) and len(infectados_z)>2 else '?'}"),
+            (c3, "Zona 3 — clave de la cuarentena",
+             f"infectados_z[3]={infectados_z[3] if isinstance(infectados_z,list) and len(infectados_z)>3 else '?'} "
+             f"(1167→dq=5 salva la zona | 2000→dq=14 cae)"),
+            (c4, "zonas_caidas correcto",
+             f"zonas_caidas={zonas_caidas if isinstance(zonas_caidas,list) else 'no encontrado'}"),
+            (c5, "Total ciudad último día",
+             f"total={_tot} (esperado 22646 ó 23479)" if _tot is not None
+             else "no se encontró variable total (totales, total_infectados…)"),
         ], 10)
 
     def check_debug4(self):
         """Debug4 — Dos Errores (3 pts)"""
         self._header("🔧 DEBUG 4 — Dos Errores", icon="🔧", pts=3)
-        # TODO: fill in Section 3.4
+
+        total_infectados = _get("total_infectados")
+        dia              = _get("dia")
+        zonas_inf        = _get("zonas_inf")
+
+        # Fixed expected state after 5 days with r0=2.0
+        EXP_TOTAL = 13000
+        EXP_ZONAS = [2000, 3000, 1500, 4000, 2500]
+
+        # Check 1: Bug 1 fixed — accumulator at outer loop level → correct total
+        c1 = total_infectados == EXP_TOTAL
+
+        # Check 2: loop ran 5 days
+        c2 = dia == 5
+
+        # Check 3: zone updates correct (same in both buggy/fixed; validates cell ran)
+        c3 = zonas_inf == EXP_ZONAS
+
         return self._award("debug4", [
-            (False, "pendiente", "Verificador en construcción"),
+            (c1, "Total infectados correcto",
+             f"total_infectados={total_infectados} "
+             f"(esperado {EXP_TOTAL} — mueve 'total_infectados=0' fuera del loop interior)"),
+            (c2, "Loop completó 5 días",
+             f"dia={dia} (esperado 5)"),
+            (c3, "Zonas actualizadas",
+             f"zonas_inf={zonas_inf} (esperado {EXP_ZONAS})"),
         ], 3)
 
     def check_mini_d(self):

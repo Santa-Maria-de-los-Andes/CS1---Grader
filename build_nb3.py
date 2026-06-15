@@ -1334,18 +1334,15 @@ for nombre, curva in [("A", curva_A), ("B", curva_B), ("C", curva_C)]:
 
 # Mi conclusión — ¿cuál es más efectiva y por qué?
 # (Pista: piensa en la RAZÓN epidemiológica, no solo en el número)
-# Mi respuesta: ___"""))
+# Mi respuesta: ___
 
-cells.append(md("nb3-34-diseno-viz-md", """\
-### 📊 Visualiza — Las tres intervenciones en una gráfica"""))
-
-cells.append(code("nb3-34-diseno-viz", """\
+# ── Visualización ──────────────────────────────────────────
 viz.comparar_patogenos(
     {"Sin intervención":             curva_base,
      "A — Cuarentena estricta":     curva_A,
      "B — Rastreo temprano Día 5": curva_B,
-     "C — Vacunación parcial": curva_C},
-    titulo="Diseño de Intervención — COVID-19, 21 días"
+     "C — Vacunación parcial":      curva_C},
+    titulo="Diseño de Intervención — COVID-19, 30 días"
 )"""))
 
 cells.append(md("nb3-34-debug4-md", """\
