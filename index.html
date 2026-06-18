@@ -47,6 +47,11 @@
       70%  { box-shadow: 0 0 0 10px rgba(255,60,60,0), 0 8px 32px rgba(0,0,0,.7); }
       100% { box-shadow: 0 0 0 0 rgba(255,60,60,0), 0 8px 32px rgba(0,0,0,.7); }
     }
+    @keyframes pulse-green {
+      0%   { box-shadow: 0 0 0 0 rgba(76,166,107,.4), 0 8px 32px rgba(0,0,0,.7); }
+      70%  { box-shadow: 0 0 0 10px rgba(76,166,107,0), 0 8px 32px rgba(0,0,0,.7); }
+      100% { box-shadow: 0 0 0 0 rgba(76,166,107,0), 0 8px 32px rgba(0,0,0,.7); }
+    }
     @keyframes spin-dot { to { transform: rotate(360deg); } }
     @keyframes ticker   { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
     @keyframes slide-up { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
@@ -154,6 +159,15 @@
     }
     .quest-card.nb2:hover { border-color: #ff6666; }
 
+    /* NB3 — firefly green */
+    .quest-card.nb3 {
+      background: linear-gradient(145deg, #001008, #001a10);
+      border: 2px solid #4ca66b;
+      box-shadow: 0 0 32px rgba(76,166,107,.18), 0 8px 32px rgba(0,0,0,.7);
+      animation: pulse-green 3s ease-in-out infinite;
+    }
+    .quest-card.nb3:hover { border-color: #6dd68e; }
+
     /* Locked */
     .quest-card.locked {
       background: linear-gradient(145deg, #0a0a12, #0e0e18);
@@ -167,19 +181,22 @@
       content: ''; position: absolute; top: 0; left: 0;
       width: 60px; height: 60px; border-radius: 0 0 100% 0; opacity: .35;
     }
-    .quest-card.nb1::before  { background: radial-gradient(circle at top left, #ffd700, transparent 70%); }
-    .quest-card.nb2::before  { background: radial-gradient(circle at top left, #ff3c3c, transparent 70%); }
+    .quest-card.nb1::before    { background: radial-gradient(circle at top left, #ffd700, transparent 70%); }
+    .quest-card.nb2::before    { background: radial-gradient(circle at top left, #ff3c3c, transparent 70%); }
+    .quest-card.nb3::before    { background: radial-gradient(circle at top left, #4ca66b, transparent 70%); }
     .quest-card.locked::before { display: none; }
 
     /* ── Card internals ── */
     .card-nb-tag { font-size: 7px; letter-spacing: 2px; margin-bottom: 2px; }
     .nb1 .card-nb-tag    { color: #ffd700; }
     .nb2 .card-nb-tag    { color: #ff3c3c; }
+    .nb3 .card-nb-tag    { color: #4ca66b; }
     .locked .card-nb-tag { color: #333355; }
 
     .card-title { font-size: clamp(9px, 1.8vw, 12px); letter-spacing: 1px; line-height: 1.7; }
     .nb1 .card-title    { color: #ffe580; }
     .nb2 .card-title    { color: #ff8080; }
+    .nb3 .card-title    { color: #80d4a0; }
     .locked .card-title { color: #2a2a44; }
 
     .card-desc { font-size: 11px; color: #6666aa; line-height: 1.6; }
@@ -196,6 +213,9 @@
     }
     .nb2 .stat-pill {
       background: rgba(255,60,60,.08); border: 1px solid #ff3c3c40; color: #cc3333;
+    }
+    .nb3 .stat-pill {
+      background: rgba(76,166,107,.08); border: 1px solid #4ca66b40; color: #3a8a55;
     }
     .stat-pill.live::before {
       content: '● '; color: #39ff14;
@@ -215,6 +235,9 @@
     .nb2 .card-btn {
       background: rgba(255,60,60,.18); border: 1px solid #ff3c3c70; color: #ff6666;
     }
+    .nb3 .card-btn {
+      background: rgba(76,166,107,.18); border: 1px solid #4ca66b70; color: #4ca66b;
+    }
     .quest-card:not(.locked):hover .card-btn { opacity: .75; }
 
     /* spinner */
@@ -224,7 +247,8 @@
       border-radius: 50%; display: inline-block;
       animation: spin-dot .8s linear infinite; vertical-align: middle;
     }
-    .spin-dot.red { border-color: #ff3c3c30; border-top-color: #ff3c3c; }
+    .spin-dot.red   { border-color: #ff3c3c30; border-top-color: #ff3c3c; }
+    .spin-dot.green { border-color: #4ca66b30; border-top-color: #4ca66b; }
 
     /* lock overlay */
     .lock-overlay {
@@ -340,16 +364,16 @@
       <span class="px card-btn">▶ VER RANKING</span>
     </a>
 
-    <!-- NB3 locked -->
-    <div class="quest-card locked">
+    <!-- NB3 -->
+    <a href="nb3.html" class="quest-card nb3">
       <div class="px card-nb-tag">NOTEBOOK III</div>
-      <div class="px card-title">??? FUNCIONES</div>
-      <div class="lock-overlay">
-        <div class="lock-icon">🔒</div>
-        <div class="px lock-text">AÚN NO<br>DESBLOQUEADO</div>
-        <div class="px lock-badge">PRÓXIMAMENTE</div>
+      <div class="px card-title">🍄 EPIDEMIAS</div>
+      <div class="card-desc">Loops, funciones y el modelo SIR. El Cordyceps se propaga. Tú modelas la catástrofe.</div>
+      <div class="card-stats" id="stats-nb3">
+        <span class="px stat-pill"><span class="spin-dot green"></span></span>
       </div>
-    </div>
+      <span class="px card-btn">▶ VER RANKING</span>
+    </a>
 
     <!-- NB4 locked -->
     <div class="quest-card locked">
@@ -392,6 +416,7 @@ async function loadStats() {
   const nbs = [
     { nb: 'nb1', elId: 'stats-nb1' },
     { nb: 'nb2', elId: 'stats-nb2' },
+    { nb: 'nb3', elId: 'stats-nb3' },
   ];
 
   const results = await Promise.all(nbs.map(({ nb }) =>
@@ -422,7 +447,7 @@ async function loadStats() {
       <span class="px stat-pill">AVG ${avg}%</span>
     `;
 
-    const label = i === 0 ? 'NB1' : 'NB2';
+    const label = ['NB1', 'NB2', 'NB3'][i] || `NB${i+1}`;
     tickerParts.push(`${label} LÍDER: ${topName} · ${top}%`);
     tickerParts.push(`${label} · ${players} GUERREROS · PROMEDIO ${avg}%`);
   });

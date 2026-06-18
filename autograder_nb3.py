@@ -1514,42 +1514,150 @@ async function agRegister() {{
 
     def check_ex9(self):
         """Ex9 — clasificar_zona como función (6 pts)"""
-        self._header("EJERCICIO 9 — clasificar_zona como función", icon="🍄", pts=6)
-        # TODO: fill in Section 3.5
+        self._header("EJERCICIO 9 — clasificar_zona como función", icon="🏥", pts=6)
+
+        fn = _get("clasificar_zona")
+        _r1 = _r2 = _r3 = None
+        if callable(fn):
+            try:
+                _r1 = fn(3500, 5000, 0.02)   # tasa=70%>60% → ZONA PERDIDA
+                _r2 = fn(80,   5000, 0.65)   # cfr=0.65>0.5 → ZONA PERDIDA
+                _r3 = fn(200,  5000, 0.02)   # tasa=4%≤5%   → ZONA VERDE
+            except Exception:
+                pass
+
+        c1 = isinstance(_r1, str) and _r1.strip().upper() == "ZONA PERDIDA"
+        c2 = isinstance(_r2, str) and _r2.strip().upper() == "ZONA PERDIDA"
+        c3 = isinstance(_r3, str) and _r3.strip().upper() == "ZONA VERDE"
+
         return self._award("ex9", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "tasa>60% → ZONA PERDIDA",
+             f"clasificar_zona(3500,5000,0.02)='{_r1}' (tasa=70%)"),
+            (c2, "cfr>0.5 → ZONA PERDIDA",
+             f"clasificar_zona(80,5000,0.65)='{_r2}' (cfr=0.65 Ébola)"),
+            (c3, "tasa≤5% → ZONA VERDE",
+             f"clasificar_zona(200,5000,0.02)='{_r3}' (tasa=4%)"),
         ], 6)
 
     def check_debug5(self):
         """Debug5 — return faltante (3 pts)"""
         self._header("🔧 DEBUG 5 — return faltante", icon="🔧", pts=3)
-        # TODO: fill in Section 3.5
+
+        resultado = _get("resultado")
+        fn        = _get("simular_dia")
+
+        _direct = None
+        _cap    = None
+        if callable(fn):
+            try:
+                _direct = fn(100, 2.5, 5000)    # 250 — no cap
+                _cap    = fn(100, 2.5, 200)      # 200 — capped
+            except Exception:
+                pass
+
+        c1 = resultado == 250
+        c2 = _direct == 250
+        c3 = _cap == 200
+
         return self._award("debug5", [
-            (False, "pendiente", "Verificador en construcción"),
+            (c1, "resultado correcto",
+             f"resultado={resultado} esperado=250 (añade 'return nuevos' al final)"),
+            (c2, "simular_dia(100,2.5,5000)",
+             f"devuelve {_direct} esperado 250"),
+            (c3, "simular_dia(100,2.5,200) — cap",
+             f"devuelve {_cap} esperado 200 (límite de capacidad)"),
         ], 3)
 
     def check_ex10(self):
         """Ex10 — simular_dia y tabla comparativa (8 pts)"""
-        self._header("EJERCICIO 10 — simular_dia y tabla comparativa", icon="🍄", pts=8)
-        # TODO: fill in Section 3.5
+        self._header("EJERCICIO 10 — simular_dia y tabla comparativa", icon="📊", pts=8)
+
+        fn = _get("simular_dia")
+        _basic = _cap = _walker = _saram = None
+        if callable(fn):
+            try:
+                _basic  = fn(100,  2.5,  5000)    # 250
+                _cap    = fn(1500, 15.0, 10000)   # 10000 — Sarampión cap
+                _walker = fn(100,  1.2,  10000)   # 120
+                _saram  = fn(100,  15.0, 10000)   # 1500 — Sarampión day 1
+            except Exception:
+                pass
+
+        c1 = _basic  == 250
+        c2 = _cap    == 10000
+        c3 = _walker == 120
+        c4 = _saram  == 1500
+
         return self._award("ex10", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "simular_dia(100, 2.5, 5000)",
+             f"devuelve {_basic} esperado 250"),
+            (c2, "Sarampión — cap activado",
+             f"simular_dia(1500,15.0,10000)={_cap} esperado 10000"),
+            (c3, "Walker day 1",
+             f"simular_dia(100,1.2,10000)={_walker} esperado 120"),
+            (c4, "Sarampión day 1",
+             f"simular_dia(100,15.0,10000)={_saram} esperado 1500"),
         ], 8)
 
     def check_ex11(self):
         """Ex11 — Motor de Intervención (10 pts)"""
-        self._header("EJERCICIO 11 — Motor de Intervención", icon="🍄", pts=10)
-        # TODO: fill in Section 3.5
+        self._header("EJERCICIO 11 — Motor de Intervención", icon="⚡", pts=10)
+
+        fn_r0  = _get("r0_efectivo")
+        fn_sb  = _get("simular_brote")
+        rc     = _get("resultado_covid")
+        rg     = _get("resultado_gripe")
+
+        # r0_efectivo checks
+        _re_on = _re_off = None
+        if callable(fn_r0):
+            try:
+                _re_on  = fn_r0(2.5, True,  0.4)   # 1.0
+                _re_off = fn_r0(2.5, False, 0.4)   # 2.5
+            except Exception:
+                pass
+
+        c1 = _approx(_re_on,  1.0)
+        c2 = _approx(_re_off, 2.5)
+
+        # simular_brote result checks
+        # COVID: hits cap (100000) at day 8 → index 7
+        c3 = (isinstance(rc, list) and len(rc) == 30 and rc[7] == 100000)
+
+        # Gripe 1918: peaks at day 9 (index 8) = 51200, then decreases
+        c4 = (isinstance(rg, list) and len(rg) >= 9 and rg[8] == 51200)
+
+        # Intervention effect: Gripe day 10 (index 9) drops to 40960
+        c5 = (isinstance(rg, list) and len(rg) >= 10 and rg[9] == 40960)
+
+        def _lstr(lst, i):
+            if isinstance(lst, list) and len(lst) > i:
+                return str(lst[i])
+            return "?"
+
         return self._award("ex11", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "r0_efectivo — intervención activa",
+             f"r0_efectivo(2.5,True,0.4)={_re_on} esperado 1.0"),
+            (c2, "r0_efectivo — sin intervención",
+             f"r0_efectivo(2.5,False,0.4)={_re_off} esperado 2.5"),
+            (c3, "COVID — alcanza pico en día 8",
+             f"resultado_covid[7]={_lstr(rc,7)} esperado 100000 (cap)"),
+            (c4, "Gripe 1918 — pico día 9",
+             f"resultado_gripe[8]={_lstr(rg,8)} esperado 51200"),
+            (c5, "Gripe — intervención reduce día 10",
+             f"resultado_gripe[9]={_lstr(rg,9)} esperado 40960 (r0=0.8 reduce infectados)"),
         ], 10)
 
     def check_t3(self):
         """T3 — Teoría Sección 3.5 (4 pts)"""
         self._header("❓ TEORÍA T3", icon="🧠", pts=4)
-        # TODO: fill in Section 3.5
+
+        r = _get("respuesta_t3")
+        c1 = isinstance(r, str) and r.strip().lower() == "c"
+
         return self._award("t3", [
-            (False, "pendiente", "Verificador en construcción"),
+            (c1, "Respuesta T3",
+             f"respuesta_t3='{r}' esperado='c' — una función sin return devuelve None"),
         ], 4)
 
     def check_mini_e(self):
@@ -1570,42 +1678,185 @@ async function agRegister() {{
 
     def check_intex1(self):
         """IntEx1 — Perfil del Paciente Cero (6 pts)"""
-        self._header("INTEGRACIÓN 1 — Perfil del Paciente Cero", icon="✦", pts=6)
-        # TODO: fill in Part 2
+        self._header("INTEGRACIÓN 1 — Perfil del Paciente Cero", icon="🩺", pts=6)
+
+        # Search for the classification variable (hint uses 'clasificacion')
+        _clas_names = ["clasificacion", "clasificacion_paciente", "nivel",
+                       "estado", "perfil", "resultado"]
+        _clas = next((_get(n) for n in _clas_names
+                      if isinstance(_get(n), str) and "TERMINAL" in _get(n).upper()),
+                     None)
+
+        # Loop variables from last patient (hint unpacking: horas, fiebre, neuro, consciencia)
+        horas     = _get("horas")          or _get("horas_expuesto")
+        fiebre    = _get("fiebre")         or _get("tiene_fiebre")
+        neuro     = _get("neuro")          or _get("tiene_sintomas_neurologicos")
+        consciencia = _get("consciencia")  or _get("perdio_consciencia")
+
+        # c1: last classification is CASO TERMINAL (covers all 5 levels → must have included it)
+        c1 = _clas is not None
+
+        # c2: last patient was exposed (horas > 0)
+        c2 = (isinstance(horas, (int, float)) and horas > 0)
+
+        # c3: last patient had full symptom profile → CASO TERMINAL path
+        c3 = (fiebre is True and neuro is True and consciencia is True)
+
         return self._award("intex1", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "CASO TERMINAL encontrado",
+             f"clasificacion='{_clas}'" if _clas else "no se encontró 'CASO TERMINAL' en clasificacion/nivel/estado"),
+            (c2, "Último paciente expuesto",
+             f"horas/horas_expuesto={horas} (debe ser >0)"),
+            (c3, "Síntomas completos en último paciente",
+             f"fiebre={fiebre}, neuro={neuro} (ambos deben ser True)"),
         ], 6)
 
     def check_intex2(self):
         """IntEx2 — Mapa de Propagación Urbana (8 pts)"""
-        self._header("INTEGRACIÓN 2 — Mapa de Propagación Urbana", icon="✦", pts=8)
-        # TODO: fill in Part 2
+        self._header("INTEGRACIÓN 2 — Mapa de Propagación Urbana", icon="🗺️", pts=8)
+
+        cont_qz     = _get("cont_qz")
+        cont_p0     = _get("cont_p0")
+        cont_segura = _get("cont_segura")
+        cont_nodo   = _get("cont_nodo")
+
+        # Expected counts for 8×8 grid with priority rules
+        c1 = cont_qz     == 4    # corners
+        c2 = cont_p0     == 5    # fila+col <= 2 (excluding corners)
+        c3 = cont_segura == 13   # Manhattan distance ≤ 2 from (4,4)
+        c4 = cont_nodo   == 7    # fila%3==0 and col%3==0 (excluding QZ/P0/segura)
+
         return self._award("intex2", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "Zonas QZ (esquinas)",
+             f"cont_qz={cont_qz} esperado 4"),
+            (c2, "Zonas P0 (origen)",
+             f"cont_p0={cont_p0} esperado 5"),
+            (c3, "Zonas seguras (centro)",
+             f"cont_segura={cont_segura} esperado 13"),
+            (c4, "Nodos de infección",
+             f"cont_nodo={cont_nodo} esperado 7"),
         ], 8)
 
     def check_intex3(self):
         """IntEx3 — Comparador de Pandemias (8 pts)"""
-        self._header("INTEGRACIÓN 3 — Comparador de Pandemias", icon="✦", pts=8)
-        # TODO: fill in Part 2
+        self._header("INTEGRACIÓN 3 — Comparador de Pandemias", icon="📊", pts=8)
+
+        # After outer loop: i=6 (Peste Bubónica), dia=14 (inner loop last value)
+        i        = _get("i")
+        dia      = _get("dia")
+        pico_inf = _get("pico_inf")
+        pico_dia = _get("pico_dia")
+        muertes  = _get("muertes")
+
+        # Peste Bubónica (i=6, r0=2.6): caps at 50000 on day 8, muertes=int(50000*0.30)=15000
+        c1 = (i == 6 and dia == 14)
+        c2 = (pico_inf == 50_000)
+        c3 = (muertes == 15_000)
+        c4 = (pico_dia == 8)
+
         return self._award("intex3", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "Loop completo (7 patógenos, 14 días)",
+             f"i={i} (esperado 6), dia={dia} (esperado 14)"),
+            (c2, "Pico Peste Bubónica",
+             f"pico_inf={pico_inf} esperado 50000 (cap de ciudad)"),
+            (c3, "Muertes estimadas",
+             f"muertes={muertes} esperado 15000 (50000×0.30)"),
+            (c4, "Día del pico",
+             f"pico_dia={pico_dia} esperado 8"),
         ], 8)
 
     def check_intex4(self):
         """IntEx4 — Protocolo de Cuarentena (10 pts)"""
-        self._header("INTEGRACIÓN 4 — Protocolo de Cuarentena", icon="✦", pts=10)
-        # TODO: fill in Part 2
+        self._header("INTEGRACIÓN 4 — Protocolo de Cuarentena", icon="🏙️", pts=10)
+
+        dia            = _get("dia")
+        zonas_caidas   = _get("zonas_caidas")
+        zonas_inf      = _get("zonas_inf")
+        dia_cuarentena = _get("dia_cuarentena")
+
+        # Both valid runs (dq=7 or dq=20) produce identical frozen zone values
+        # because all 6 zones collapse in days 4-6 before any quarantine kicks in.
+        # Zones freeze when tasa > 0.6 is detected AFTER the update.
+        EXP_Z0 = 4875   # Zone 0 (pop=5000): freezes at 97.5% on day 5
+        EXP_Z4 = 7812   # Zone 4 (pop=8000): freezes at 97.6% on day 4
+
+        c1 = (dia == 30)
+        c2 = (isinstance(zonas_caidas, list) and len(zonas_caidas) == 6
+              and all(zonas_caidas))
+        c3 = (isinstance(zonas_inf, list) and len(zonas_inf) == 6
+              and zonas_inf[0] == EXP_Z0)
+        c4 = (isinstance(zonas_inf, list) and len(zonas_inf) == 6
+              and zonas_inf[4] == EXP_Z4)
+        c5 = (dia_cuarentena in (7, 20))
+
+        def _zi(i):
+            if isinstance(zonas_inf, list) and len(zonas_inf) > i:
+                return zonas_inf[i]
+            return "?"
+
         return self._award("intex4", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "30 días simulados",
+             f"dia={dia} (esperado 30)"),
+            (c2, "Todas las zonas cayeron",
+             f"zonas_caidas={zonas_caidas}"),
+            (c3, "Zona 0 — valor correcto",
+             f"zonas_inf[0]={_zi(0)} esperado {EXP_Z0}"),
+            (c4, "Zona 4 — valor correcto",
+             f"zonas_inf[4]={_zi(4)} esperado {EXP_Z4}"),
+            (c5, "dia_cuarentena válido",
+             f"dia_cuarentena={dia_cuarentena} (esperado 7 ó 20)"),
         ], 10)
 
     def check_intex5(self):
         """IntEx5 — Motor de Simulación Epidemiológica / capstone (12 pts)"""
-        self._header("INTEGRACIÓN 5 — Motor de Simulación Epidemiológica", icon="✦", pts=12)
-        # TODO: fill in Part 2
+        self._header("INTEGRACIÓN 5 — Motor de Simulación Epidemiológica", icon="⚡", pts=12)
+
+        fn_ar  = _get("aplicar_r0")
+        fn_re  = _get("r0_efectivo")
+        tc     = _get("total_cordyceps")
+        tv     = _get("total_covid")
+
+        # Test aplicar_r0
+        _ar1 = _ar2 = None
+        if callable(fn_ar):
+            try:
+                _ar1 = fn_ar(100, 2.5, 5000)   # 250 — no cap
+                _ar2 = fn_ar(1000, 2.5, 100)   # 100 — capped
+            except Exception:
+                pass
+
+        # Test r0_efectivo(r0_base, dia, dia_intervencion, tasa_actual)
+        _re1 = _re2 = _re3 = None
+        if callable(fn_re):
+            try:
+                _re1 = fn_re(2.5, 10, 10, 0.1)   # 1.0 — dia triggers
+                _re2 = fn_re(2.5,  5, 10, 0.35)  # 1.0 — tasa>0.3 triggers
+                _re3 = fn_re(2.5,  5, 10, 0.1)   # 2.5 — neither triggers
+            except Exception:
+                pass
+
+        c1 = (_ar1 == 250 and _ar2 == 100)
+        c2 = _approx(_re1, 1.0) if _re1 is not None else False
+        c3 = _approx(_re2, 1.0) if _re2 is not None else False
+        c4 = (_approx(_re3, 2.5) if _re3 is not None else False)
+
+        # simular_ciudad results: Cordyceps max=11143, COVID last=8979
+        c5 = (isinstance(tc, list) and len(tc) == 30 and max(tc) == 11143)
+        c6 = (isinstance(tv, list) and len(tv) == 30 and tv[-1] == 8979)
+
         return self._award("intex5", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
+            (c1, "aplicar_r0 — básico y cap",
+             f"(100,2.5,5000)={_ar1} esp 250 | (1000,2.5,100)={_ar2} esp 100"),
+            (c2, "r0_efectivo — dia activa intervención",
+             f"r0_efectivo(2.5,10,10,0.1)={_re1} esperado 1.0"),
+            (c3, "r0_efectivo — tasa activa intervención",
+             f"r0_efectivo(2.5,5,10,0.35)={_re2} esperado 1.0 (tasa=0.35>0.3)"),
+            (c4, "r0_efectivo — sin intervención",
+             f"r0_efectivo(2.5,5,10,0.1)={_re3} esperado 2.5"),
+            (c5, "Cordyceps — pico correcto",
+             f"total_cordyceps len={len(tc) if isinstance(tc,list) else '?'} max={max(tc) if isinstance(tc,list) and tc else '?'} (esperado 11143)"),
+            (c6, "COVID — último día correcto",
+             f"total_covid[-1]={tv[-1] if isinstance(tv,list) and tv else '?'} (esperado 8979)"),
         ], 12)
 
     # ═══════════════════════════════════════════════════════════

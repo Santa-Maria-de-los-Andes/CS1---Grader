@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Quest NB3 · I.E. Santa María de los Andes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      background: #0D0D0D;
+      color: #B8FF9A;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Organic spore texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent 0px, transparent 3px,
+          rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px, transparent 80px,
+          rgba(76,166,107,.012) 80px, rgba(76,166,107,.012) 81px
+        );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── Pixel font shorthand ── */
+    .px { font-family: 'Press Start 2P', monospace; }
+
+    /* ── Keyframes ── */
+    @keyframes glow-amber {
+      0%,100% { text-shadow: 0 0 14px rgba(212,135,10,.8), 2px 2px 0 #3a1a00; }
+      50%      { text-shadow: 0 0 32px rgba(212,135,10,1), 0 0 60px rgba(192,57,43,.5), 2px 2px 0 #3a1a00; }
+    }
+    @keyframes glow-fedra {
+      0%,100% { text-shadow: 0 0 10px rgba(192,57,43,.7), 1px 1px 0 #4a0000; }
+      50%      { text-shadow: 0 0 24px rgba(192,57,43,1), 0 0 48px rgba(212,135,10,.4), 1px 1px 0 #4a0000; }
+    }
+    @keyframes blink     { 50% { opacity: 0; } }
+    @keyframes float     { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes xp-fill   { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes slide-in  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes shimmer   { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes pulse-cordyceps {
+      0%   { box-shadow: 0 0 0 0 rgba(212,135,10,.5); }
+      70%  { box-shadow: 0 0 0 10px rgba(212,135,10,0); }
+      100% { box-shadow: 0 0 0 0 rgba(212,135,10,0); }
+    }
+    @keyframes ticker { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+    @keyframes spin-dot { to { transform: rotate(360deg); } }
+
+    /* ── Layout ── */
+    .page { max-width: 960px; margin: 0 auto; padding: 0 16px 40px; }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      padding: 32px 16px 24px;
+      border-bottom: 2px solid #4ca66b20;
+      margin-bottom: 24px;
+    }
+    .header-title {
+      font-size: clamp(10px, 2.2vw, 17px);
+      color: #D4870A;
+      animation: glow-amber 2.5s ease-in-out infinite;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+    }
+    .header-sub {
+      font-size: 8px;
+      color: #C0392B;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+      animation: glow-fedra 3s ease-in-out infinite;
+    }
+    .header-sub2 {
+      font-size: 7px;
+      color: #2a3a2a;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Live ticker ── */
+    .ticker-wrap {
+      overflow: hidden;
+      background: #080808;
+      border: 1px solid #4ca66b20;
+      border-radius: 2px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+    }
+    .ticker-label {
+      flex-shrink: 0;
+      background: #1a3a1a;
+      color: #4ca66b;
+      font-size: 7px;
+      padding: 0 10px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      letter-spacing: 1px;
+    }
+    .ticker-inner {
+      white-space: nowrap;
+      animation: ticker 30s linear infinite;
+      font-size: 8px;
+      color: #D4870A;
+      padding: 0 40px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: #080808;
+      border: 1px solid #1a2a1a;
+      border-radius: 4px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .stat-label { font-size: 7px; color: #2a3a2a; letter-spacing: 1px; margin-bottom: 10px; }
+    .stat-value        { font-size: clamp(14px, 3vw, 22px); color: #D4870A; }
+    .stat-value.blood  { color: #C0392B; }
+    .stat-value.frost  { color: #39E5B6; }
+
+    /* ── Podium ── */
+    .podium-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+      align-items: end;
+    }
+    .podium-card {
+      border-radius: 4px;
+      padding: 16px 12px 14px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .podium-card.rank1 {
+      background: linear-gradient(160deg, #100800, #1e1200);
+      border: 2px solid #D4870A;
+      box-shadow: 0 0 28px rgba(212,135,10,.2), 0 8px 24px rgba(0,0,0,.7);
+      order: 2;
+      animation: pulse-cordyceps 2.5s ease-in-out infinite;
+    }
+    .podium-card.rank2 {
+      background: linear-gradient(160deg, #050808, #0d1a10);
+      border: 2px solid #4ca66b;
+      box-shadow: 0 0 16px rgba(76,166,107,.2), 0 6px 18px rgba(0,0,0,.6);
+      order: 1;
+    }
+    .podium-card.rank3 {
+      background: linear-gradient(160deg, #080808, #101a10);
+      border: 2px solid #1a3a1a;
+      box-shadow: 0 0 12px rgba(26,58,26,.15), 0 6px 18px rgba(0,0,0,.6);
+      order: 3;
+    }
+    .podium-crown { font-size: 28px; margin-bottom: 6px; animation: float 3s ease-in-out infinite; }
+    .podium-rank  { font-size: 7px; color: #2a3a2a; letter-spacing: 1px; margin-bottom: 8px; }
+    .podium-name  { font-size: clamp(7px, 1.5vw, 10px); color: #B8FF9A; margin-bottom: 10px; word-break: break-all; }
+    .podium-pct   { font-size: clamp(16px, 3.5vw, 26px); margin-bottom: 8px; }
+    .podium-card.rank1 .podium-pct { color: #D4870A; text-shadow: 0 0 14px rgba(212,135,10,.6); }
+    .podium-card.rank2 .podium-pct { color: #4ca66b; }
+    .podium-card.rank3 .podium-pct { color: #2d5a3a; }
+    .podium-level { font-size: 7px; color: #3a5a3a; line-height: 1.6; }
+
+    /* ── Rank list ── */
+    .rank-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 40px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      background: #080808;
+      border: 1px solid #0a1a0a;
+      border-radius: 3px;
+      padding: 10px 14px;
+      animation: slide-in .35s ease both;
+      transition: border-color .2s;
+    }
+    .rank-row:hover { border-color: #4ca66b30; }
+
+    .rank-num {
+      font-size: 10px;
+      color: #2a3a2a;
+      text-align: center;
+      width: 40px;
+    }
+
+    .rank-info { min-width: 0; }
+    .rank-name  { font-size: clamp(7px, 1.2vw, 9px); color: #B8FF9A; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-level { font-size: 7px; color: #3a5a3a; margin-bottom: 6px; }
+
+    .xp-track {
+      width: 100%;
+      height: 7px;
+      background: #0d1a0d;
+      border: 1px solid #1a2a1a;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      border-radius: 2px;
+      transform-origin: left;
+      animation: xp-fill .9s cubic-bezier(.4,0,.2,1) both;
+    }
+
+    .rank-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .rank-pct    { font-size: clamp(10px, 2vw, 14px); }
+    .rank-badges { display: flex; gap: 5px; }
+    .badge {
+      font-size: 7px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .badge-ach  { background: rgba(212,135,10,.08); border: 1px solid #d4870a30; color: #a86800; }
+    .badge-str  { background: rgba(192,57,43,.08);  border: 1px solid #c0392b30; color: #c05533; }
+    .badge-note { background: rgba(57,229,182,.08); border: 1px solid #39e5b630; color: #39e5b6; }
+
+    /* ── TLOU Level colors ── */
+    .lv1 { color: #444444; }                                          /* Paciente 0          — dead gray */
+    .lv2 { color: #7a3000; }                                          /* Cuarentena          — dark amber */
+    .lv3 { color: #cc5500; }                                          /* Acechador           — cordyceps orange */
+    .lv4 { color: #2d7a45; }                                          /* Explorador Firefly  — firefly dark green */
+    .lv5 { color: #4ca66b; }                                          /* Agente Marlene      — firefly green */
+    .lv6 {
+      background: linear-gradient(90deg,#cc5500,#d4870a,#4ca66b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 200%; animation: shimmer 3s linear infinite;   /* Proyecto Ellie      — cordyceps meets firefly */
+    }
+
+    .xp-lv1 { background: linear-gradient(90deg,#1a1a1a,#2d2d2d); }
+    .xp-lv2 { background: linear-gradient(90deg,#2d1200,#5c2800); }
+    .xp-lv3 { background: linear-gradient(90deg,#3d1800,#8b4500); }
+    .xp-lv4 { background: linear-gradient(90deg,#0a2010,#1a5030); }
+    .xp-lv5 { background: linear-gradient(90deg,#0d3020,#2a7050); }
+    .xp-lv6 { background: linear-gradient(90deg,#0d2d20,#4ca66b,#d4870a); background-size:200%; animation: shimmer 3s linear infinite; }
+
+    /* ── Loading / empty states ── */
+    .loading { text-align: center; padding: 60px 20px; }
+    .spin-dot {
+      width: 14px; height: 14px;
+      border: 2px solid #1a2a1a;
+      border-top-color: #4ca66b;
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin-dot .8s linear infinite;
+      margin-bottom: 16px;
+    }
+    .loading-text { font-size: 8px; color: #2a3a2a; letter-spacing: 1px; }
+
+    .empty { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 40px; margin-bottom: 16px; }
+    .empty-text { font-size: 8px; color: #2a3a2a; line-height: 2; }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 8px; color: #4ca66b; letter-spacing: 1px; }
+
+    /* ── Refresh button ── */
+    .refresh-btn {
+      background: none;
+      border: 1px solid #4ca66b40;
+      color: #4ca66b60;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 5px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .refresh-btn:hover { border-color: #4ca66b; color: #4ca66b; }
+
+    /* ── Countdown ── */
+    .countdown { font-size: 7px; color: #2a3a2a; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #0a1a0a;
+    }
+    .footer-logo {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: #080808;
+      border: 2px solid #4ca66b;
+      border-radius: 6px;
+      padding: 18px 32px;
+      box-shadow: 0 0 28px rgba(76,166,107,.2), 0 0 60px rgba(76,166,107,.06);
+    }
+    .footer-logo-img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(212,135,10,.4));
+      animation: float 4s ease-in-out infinite;
+    }
+    .footer-logo-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      background: linear-gradient(135deg,#D4870A,#4ca66b,#D4870A);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200%;
+      animation: shimmer 3s linear infinite;
+      letter-spacing: 3px;
+    }
+    .footer-sub { font-size: 7px; color: #0a1a0a; margin-top: 10px; letter-spacing: 1px; }
+
+    /* ── School banner ── */
+    .school-banner {
+      width: 100%;
+      background: #050505;
+      border-bottom: 1px solid #4ca66b18;
+      padding: 0 20px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .school-left { display: flex; align-items: center; gap: 10px; }
+    .school-emblem {
+      width: 28px; height: 28px;
+      border-radius: 50%; overflow: hidden; flex-shrink: 0;
+      filter: drop-shadow(0 0 4px rgba(212,135,10,.35));
+    }
+    .school-emblem img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .school-name-text {
+      font-family: 'Segoe UI', Georgia, serif;
+      font-size: clamp(10px, 1.8vw, 13px);
+      color: #4a5a4a;
+      letter-spacing: 0.5px;
+      font-style: italic;
+    }
+    .school-name-text strong { font-style: normal; color: #6a8a6a; font-weight: 600; }
+    .school-right {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: #4ca66b40;
+      letter-spacing: 1px;
+    }
+
+    /* ── Footer school block ── */
+    .footer-school { margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .footer-school-name {
+      font-family: 'Segoe UI', Georgia, serif;
+      font-size: 13px; color: #2a3a2a; font-style: italic; letter-spacing: 0.5px;
+    }
+    .footer-school-name strong { color: #3a5a3a; font-style: normal; }
+
+    /* ── Zone filter bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 12px 14px;
+      background: #080808;
+      border: 1px solid #4ca66b20;
+      border-radius: 4px;
+    }
+    .filter-label { font-size: 7px; color: #2a3a2a; letter-spacing: 1px; flex-shrink: 0; }
+    .filter-btn {
+      background: none;
+      border: 1px solid #1a2a1a;
+      color: #3a5a3a;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 5px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: #4ca66b40; color: #4ca66b80; }
+    .filter-btn.active {
+      background: #4ca66b10;
+      border-color: #4ca66b;
+      color: #4ca66b;
+    }
+
+    /* ── Spore divider ── */
+    .rune-divider {
+      text-align: center;
+      font-size: 10px;
+      color: #1a2a1a;
+      letter-spacing: 12px;
+      margin: 8px 0 20px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .school-right { display: none; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stats-row .stat-card:last-child { grid-column: span 2; }
+      .podium-wrap { grid-template-columns: 1fr; }
+      .podium-card { order: unset !important; }
+      .rank-row { grid-template-columns: 32px 1fr auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── School identity banner (sticky top) ── -->
+<div class="school-banner">
+  <div class="school-left">
+    <div class="school-emblem">
+      <img src="icono%20SMA.png" alt="SMA">
+    </div>
+    <span class="school-name-text">
+      <strong>I.E. Santa María de los Andes</strong>
+    </span>
+  </div>
+  <div class="school-right">PYTHON QUEST · NB3 · 2026</div>
+</div>
+
+<div class="page">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="px header-title">✦ FIREFLY RESEARCH NODE 7 ✦</div>
+    <div class="px header-sub">MODO EPIDEMIA — THE LAST OF US</div>
+    <div class="px header-sub2">TERMINAL DE ANÁLISIS — NOTEBOOK III</div>
+    <div class="rune-divider">✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧</div>
+    <div class="ticker-wrap">
+      <div class="px ticker-label">✦</div>
+      <div class="px ticker-inner" id="ticker">Inicializando terminal…</div>
+    </div>
+  </div>
+
+  <!-- ── Stats row ── -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card">
+      <div class="px stat-label">SUPERVIVIENTES</div>
+      <div class="px stat-value" id="stat-players">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="px stat-label">SCORE MÁXIMO</div>
+      <div class="px stat-value blood" id="stat-top">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="px stat-label">PROMEDIO CLASE</div>
+      <div class="px stat-value frost" id="stat-avg">—</div>
+    </div>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div class="loading" id="loading-state">
+    <div class="spin-dot"></div>
+    <div class="px loading-text">CONECTANDO AL NODO DE INVESTIGACIÓN…</div>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="empty" id="error-state" style="display:none;">
+    <div class="empty-icon">🍄</div>
+    <div class="px empty-text" id="error-msg">Error al cargar datos.</div>
+  </div>
+
+  <!-- ── Main content (hidden until data loads) ── -->
+  <div id="main-content" style="display:none;">
+
+    <!-- Zone filter -->
+    <div class="filter-bar" id="filter-bar">
+      <span class="px filter-label">ZONA:</span>
+      <button class="filter-btn active" data-grade="all" onclick="setFilter('all')">TODOS</button>
+    </div>
+
+    <!-- Podium -->
+    <div class="section-header">
+      <div class="px section-title">✦ PODIO DE SUPERVIVIENTES</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="px countdown" id="countdown"></span>
+        <button class="refresh-btn" onclick="loadLeaderboard()">↺ SYNC</button>
+      </div>
+    </div>
+    <div class="podium-wrap" id="podium"></div>
+
+    <!-- Full ranking -->
+    <div class="section-header" style="margin-top:28px;">
+      <div class="px section-title">📈 CLASIFICACIÓN COMPLETA</div>
+    </div>
+    <div class="rank-list" id="rank-list"></div>
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <div class="footer-logo">
+      <img class="footer-logo-img" src="icono%20SMA.png" alt="I.E. Santa María de los Andes">
+      <span class="footer-logo-label">SMA</span>
+    </div>
+    <div class="footer-school">
+      <span class="footer-school-name">
+        <strong>I.E. Santa María de los Andes</strong>
+      </span>
+    </div>
+    <div class="px footer-sub" style="margin-top:14px;">PYTHON QUEST v1 NB3 · THE LAST OF US · AUTOGRADER</div>
+  </div>
+
+</div>
+
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── Config ──────────────────────────────────────────────────
+const SUPABASE_URL      = 'https://uwykikwutjtkpffwmdiq.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_aBG6GD4wn9CgpSE-47fagQ_sNhnzznu';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── TLOU Level helpers ───────────────────────────────────────
+const LV_CLASS = ['','lv1','lv2','lv3','lv4','lv5','lv6'];
+const XP_CLASS = ['','xp-lv1','xp-lv2','xp-lv3','xp-lv4','xp-lv5','xp-lv6'];
+
+function lvClass(n)  { return LV_CLASS[Math.min(n, 6)] || 'lv1'; }
+function xpClass(n)  { return XP_CLASS[Math.min(n, 6)] || 'xp-lv1'; }
+
+function playerName(player) {
+  if (player.nombre) return player.nombre;
+  return (player.email || 'anon').split('@')[0];
+}
+
+// ── Render helpers ───────────────────────────────────────────
+function renderPodiumCard(player, rank) {
+  if (!player) return '<div></div>';
+  // TLOU icons: ⚡ Proyecto Ellie (1st), 🔦 Firefly (2nd), 🌿 Survivor (3rd)
+  const crowns  = ['', '⚡', '🔦', '🌿'];
+  const rankCls = ['', 'rank1', 'rank2', 'rank3'];
+  const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
+  const name     = playerName(player);
+  return `
+    <div class="podium-card ${rankCls[rank]}">
+      <div class="podium-crown">${crowns[rank]}</div>
+      <div class="px podium-rank">#${rank}</div>
+      <div class="px podium-name">${name}</div>
+      <div class="px podium-pct">${player.pct}%</div>
+      <div class="px podium-level ${lvClass(player.level_num)}">${player.level_name || ''}</div>
+      <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+        <span class="px badge badge-ach">✦ ${achCount}</span>
+        ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderRankRow(player, rank, delay) {
+  const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
+  const name     = playerName(player);
+  return `
+    <div class="rank-row" style="animation-delay:${delay}ms;">
+      <div class="px rank-num">${rank}</div>
+      <div class="rank-info">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <div class="px rank-name" style="margin-bottom:0;">${name}</div>
+          <span class="px badge badge-ach">✦ ${achCount}</span>
+          ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
+        </div>
+        <div class="px rank-level ${lvClass(player.level_num)}" style="margin-bottom:6px;">
+          ${player.level_name || ''}
+        </div>
+        <div class="xp-track">
+          <div class="xp-fill ${xpClass(player.level_num)}"
+               style="width:${player.pct}%;animation-delay:${delay}ms;"></div>
+        </div>
+      </div>
+      <div class="rank-meta">
+        <div class="px rank-pct ${lvClass(player.level_num)}">${player.pct}%</div>
+      </div>
+    </div>`;
+}
+
+// ── Filter state ─────────────────────────────────────────────
+let allPlayers   = [];
+let activeFilter = 'all';
+
+function buildFilterButtons(players) {
+  const grades = [...new Set(players.map(p => p.grado).filter(Boolean).sort())];
+  const bar = document.getElementById('filter-bar');
+  bar.querySelectorAll('[data-grade]:not([data-grade="all"])').forEach(el => el.remove());
+  grades.forEach(grade => {
+    const btn = document.createElement('button');
+    btn.className     = 'filter-btn px';
+    btn.dataset.grade = grade;
+    btn.textContent   = grade;
+    btn.onclick       = () => setFilter(grade);
+    bar.appendChild(btn);
+  });
+}
+
+function setFilter(grade) {
+  activeFilter = grade;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.grade === grade);
+  });
+  const filtered = grade === 'all'
+    ? allPlayers
+    : allPlayers.filter(p => p.grado === grade);
+  renderLeaderboard(filtered);
+}
+
+// ── Main render ──────────────────────────────────────────────
+function renderLeaderboard(players) {
+  const top3   = players.slice(0, 3);
+  const avgPct = players.length
+    ? Math.round(players.reduce((s, p) => s + p.pct, 0) / players.length)
+    : 0;
+  const topPct = players.length ? players[0].pct : 0;
+
+  document.getElementById('stat-players').textContent = players.length;
+  document.getElementById('stat-top').textContent     = topPct + '%';
+  document.getElementById('stat-avg').textContent     = avgPct + '%';
+
+  // Ticker
+  const achLeader    = [...players].sort((a,b) =>
+    (b.achievements||[]).length - (a.achievements||[]).length)[0];
+  const streakLeader = [...players].sort((a,b) => (b.streak||0) - (a.streak||0))[0];
+  const tickerParts  = [
+    `${players.length} SUPERVIVIENTES EN EL CAMPO`,
+    topPct > 0 ? `LÍDER: ${playerName(top3[0])} · ${topPct}%` : '',
+    avgPct > 0 ? `PROMEDIO DE ZONA: ${avgPct}%` : '',
+    achLeader ? `MÁS LOGROS: ${playerName(achLeader)} · ${(achLeader.achievements||[]).length} ✦` : '',
+    streakLeader?.streak >= 2 ? `RACHA MÁS ALTA: ${playerName(streakLeader)} · 🔥×${streakLeader.streak}` : '',
+  ].filter(Boolean).join('   ✦   ');
+  document.getElementById('ticker').textContent = tickerParts;
+
+  // Podium (visual order: 2nd · 1st · 3rd)
+  const podiumEl = document.getElementById('podium');
+  podiumEl.innerHTML = [
+    renderPodiumCard(top3[1], 2),
+    renderPodiumCard(top3[0], 1),
+    renderPodiumCard(top3[2], 3),
+  ].join('');
+
+  // Full list
+  const listEl = document.getElementById('rank-list');
+  listEl.innerHTML = players.length
+    ? players.map((p, i) => renderRankRow(p, i + 1, i * 40)).join('')
+    : '<div class="empty"><div class="empty-icon">🍄</div>'
+      + '<div class="px empty-text">Sin supervivientes en esta zona.</div></div>';
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('error-state').style.display   = 'none';
+  document.getElementById('main-content').style.display  = 'block';
+}
+
+// ── Fetch ────────────────────────────────────────────────────
+async function loadLeaderboard() {
+  try {
+    const { data, error } = await db
+      .rpc('get_best_submissions', { nb: 'nb3' })
+      .order('pct',          { ascending: false })
+      .order('earned',       { ascending: false })
+      .order('submitted_at', { ascending: true });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display   = 'block';
+      document.getElementById('error-msg').textContent =
+        '🍄 Aún no hay supervivientes. ¡Sé el primero en entrar a la zona!';
+      return;
+    }
+
+    allPlayers = data;
+    buildFilterButtons(allPlayers);
+    setFilter(activeFilter);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display   = 'block';
+    document.getElementById('error-msg').textContent =
+      'Error: ' + (err.message || 'No se pudo conectar al nodo de investigación.');
+  }
+}
+
+// ── Auto-refresh countdown ────────────────────────────────────
+const REFRESH_SEC = 60;
+let secondsLeft = REFRESH_SEC;
+let countdownId = null;
+
+function startCountdown() {
+  clearInterval(countdownId);
+  secondsLeft = REFRESH_SEC;
+  countdownId = setInterval(() => {
+    secondsLeft--;
+    const el = document.getElementById('countdown');
+    if (el) el.textContent = `🔄 ${secondsLeft}s`;
+    if (secondsLeft <= 0) {
+      clearInterval(countdownId);
+      loadLeaderboard().then(startCountdown);
+    }
+  }, 1000);
+}
+
+// ── Boot ─────────────────────────────────────────────────────
+loadLeaderboard().then(startCountdown);
+</script>
+</body>
+</html>
