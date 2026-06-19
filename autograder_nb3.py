@@ -27,11 +27,11 @@ _BONUS_MAX  = 12
 
 # ─── TLOU Levels (by % of core score) ────────────────────────
 _LEVELS = [
-    (96, 6, "⚡ Proyecto Ellie"),
-    (81, 5, "🌿 Agente Marlene"),
-    (61, 4, "🔦 Explorador Firefly"),
-    (41, 3, "👁️ Acechador"),
-    (21, 2, "🍄 Corredor"),
+    (96, 6, "⚡ Inmune"),
+    (81, 5, "🧬 Portador"),
+    (61, 4, "🔦 Firefly"),
+    (41, 3, "🌿 Sobreviviente"),
+    (21, 2, "🧪 Expuesto"),
     (0,  1, "☠️ Paciente 0"),
 ]
 
@@ -41,7 +41,7 @@ _XP_GRAD = {
     3: "linear-gradient(90deg,#3d1800,#8b4500)",
     4: "linear-gradient(90deg,#0a2010,#1a5030)",
     5: "linear-gradient(90deg,#0d3020,#2a7050)",
-    6: "linear-gradient(90deg,#0d2d20,#4ca66b,#d4870a)",
+    6: "linear-gradient(90deg,#2d0a0a,#D4870A,#4ca66b)",
 }
 
 _LV_CSS_COLOR = {
@@ -50,7 +50,7 @@ _LV_CSS_COLOR = {
     3: "#cc5500",
     4: "#2d7a45",
     5: "#4ca66b",
-    6: "#4ca66b",
+    6: "#D4870A",
 }
 
 
@@ -58,7 +58,7 @@ def _level_info(pct):
     for thresh, num, name in _LEVELS:
         if pct >= thresh:
             return num, name
-    return 1, "☠️ Paciente 0"
+    return 1, "☠️ Paciente 0"  # noqa: RUF001
 
 
 def _lv_color(n):
@@ -420,7 +420,7 @@ async function agRegister() {{
         import threading as _thr
         _thr.Thread(
             target=self._submit_to_supabase,
-            args=(earned, possible, pct, lvl_num, lvl_name, True),
+            args=(core_earned, _CORE_MAX, pct, lvl_num, lvl_name, True),
             daemon=True,
         ).start()
 
@@ -614,30 +614,42 @@ async function agRegister() {{
         uid = f"lu{_r.randint(10000, 99999)}"
 
         _cfg = {
-            2: dict(bg="linear-gradient(160deg,#0d0a00,#1e1000)",
+            2: dict(bg="linear-gradient(160deg,#0a0500,#1a0d00)",
                     c="#7a3000", sc="#cc5500", rc="#7a3000",
-                    sub="CORREDOR — EL HONGO TE TIENE, PERO AÚN PIENSAS", icon="🍄"),
-            3: dict(bg="linear-gradient(160deg,#150800,#2e1400)",
-                    c="#cc5500", sc="#ff7722", rc="#cc5500",
-                    sub="ACECHADOR — VES EN LA OSCURIDAD", icon="👁️"),
-            4: dict(bg="linear-gradient(160deg,#001208,#002818)",
+                    icon="🧪",
+                    sub="HAS SIDO EXPUESTO — LA CUARENTENA NO TE DETUVO",
+                    deco="⬡ ⬡ ⬡ ⬡ ⬡"),
+            3: dict(bg="linear-gradient(160deg,#100800,#2a1400)",
+                    c="#cc5500", sc="#ff7733", rc="#cc5500",
+                    icon="🌿",
+                    sub="SOBREVIVISTE AL BROTE — EL CORDYCEPS NO TE VENCIÓ",
+                    deco="⬡ ✦ ⬡ ✦ ⬡"),
+            4: dict(bg="linear-gradient(160deg,#040d06,#0a1e10)",
                     c="#2d7a45", sc="#4ca66b", rc="#2d7a45",
-                    sub="FIREFLY — CUANDO YA NO QUEDEN LUCIÉRNAGAS...", icon="🔦"),
-            5: dict(bg="linear-gradient(160deg,#001a0a,#003020)",
-                    c="#4ca66b", sc="#39e5b6", rc="#4ca66b",
-                    sub="AGENTE MARLENE — LA HUMANIDAD TE NECESITA", icon="🌿"),
-            6: dict(bg="linear-gradient(160deg,#001208,#002010,#1a0800)",
-                    c="#4ca66b", sc="#d4870a", rc="#39e5b6",
-                    sub="PROYECTO ELLIE — INMUNE. AL ERROR. AL CAOS. A LA ENTROPÍA.", icon="⚡"),
+                    icon="🔦",
+                    sub="CUANDO LO BUSCAS, LA LUCIÉRNAGA TE ENCUENTRA",
+                    deco="✦ ⬡ ✦ ⬡ ✦"),
+            5: dict(bg="linear-gradient(160deg,#051408,#0f2a14)",
+                    c="#4ca66b", sc="#7dcf99", rc="#4ca66b",
+                    icon="🧬",
+                    sub="LLEVAS EN TI LO QUE PUEDE SALVAR AL MUNDO",
+                    deco="⬡ ✦ ⬡ ✦ ⬡"),
+            6: dict(bg="linear-gradient(160deg,#0d0500,#04100a,#0d0500)",
+                    c="#D4870A", sc="#4ca66b", rc="#C0392B",
+                    icon="⚡",
+                    sub="LA HUMANIDAD SOBREVIVE EN TI — PROTÉGELA",
+                    deco="⬡ ✦ ☣ ✦ ⬡"),
         }
-        cfg = _cfg.get(lvl_num, _cfg[2])
+        cfg  = _cfg.get(lvl_num, _cfg[2])
         c, sc, rc = cfg["c"], cfg["sc"], cfg["rc"]
+        deco = cfg["deco"]
 
+        # Sparks — all delayed to fire when logo exits (~1.32s)
         _sd = [(-50,-88),(0,-100),(50,-88),(92,-35),(78,55),(0,92),(-78,55),(-92,-35)]
         _bd = [(-4,-115),(115,0),(4,115),(-115,0)]
         spark_css, spark_html = "", ""
         for i, (dx, dy) in enumerate(_sd):
-            d = 0.12 + i * 0.035
+            d = 1.32 + i * 0.03
             sz = 4 if i % 2 == 0 else 3
             spark_css  += (f"@keyframes {uid}-s{i}{{0%{{transform:translate(0,0);opacity:1}}"
                            f"100%{{transform:translate({dx}px,{dy}px);opacity:0}}}}")
@@ -646,7 +658,7 @@ async function agRegister() {{
                            f'animation:{uid}-s{i} .85s ease-out {d:.2f}s forwards;'
                            f'pointer-events:none;z-index:6;"></div>')
         for i, (dx, dy) in enumerate(_bd):
-            d = 0.08 + i * 0.08
+            d = 1.30 + i * 0.07
             spark_css  += (f"@keyframes {uid}-b{i}{{0%{{transform:translate(0,0);opacity:.9}}"
                            f"100%{{transform:translate({dx}px,{dy}px);opacity:0}}}}")
             spark_html += (f'<div style="position:absolute;top:50%;left:50%;width:6px;height:6px;'
@@ -656,94 +668,122 @@ async function agRegister() {{
 
         extra_ring = ""
         if lvl_num == 6:
-            extra_ring = (f'<div style="position:absolute;top:50%;left:50%;width:100px;height:100px;'
-                          f'margin:-50px;border-radius:50%;border:2px solid #39e5b6;opacity:0;'
-                          f'animation:{uid}-ring 1.6s ease-out .5s forwards;'
+            extra_ring = (f'<div style="position:absolute;top:50%;left:50%;width:90px;height:90px;'
+                          f'margin:-45px;border-radius:50%;border:2px solid {sc};opacity:0;'
+                          f'animation:{uid}-ring 1.6s ease-out 1.92s forwards;'
                           f'pointer-events:none;z-index:5;"></div>')
 
-        return f'''<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+        # lv6 gets tricolor gradient name treatment
+        if lvl_num == 6:
+            name_style = (
+                f'background:linear-gradient(90deg,#C0392B,#D4870A,#4ca66b);'
+                f'-webkit-background-clip:text;-webkit-text-fill-color:transparent;'
+                f'background-size:200%;'
+                f'animation:{uid}-rise .55s ease-out 1.96s both,shimmer 3s linear 2.5s infinite;'
+            )
+        else:
+            name_style = (
+                f'color:{c};text-shadow:0 0 20px {c}88,2px 2px 0 #000;'
+                f'animation:{uid}-rise .55s ease-out 1.96s both,'
+                f'{uid}-pulse 2.8s ease-in-out 2.5s infinite;'
+            )
+
+        return f'''<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  @keyframes {uid}-flash{{0%{{opacity:.6}}35%{{opacity:.15}}100%{{opacity:0}}}}
-  @keyframes {uid}-ring {{0%{{transform:scale(.08);opacity:.95}}100%{{transform:scale(4.5);opacity:0}}}}
-  @keyframes {uid}-icon {{
+  @keyframes shimmer{{0%{{background-position:-200% 0}}100%{{background-position:200% 0}}}}
+  @keyframes {uid}-logo{{
+    0%  {{transform:scale(1)   rotate(0deg);    opacity:1}}
+    18% {{transform:scale(1)   rotate(0deg);    opacity:1}}
+    47% {{transform:scale(1)   rotate(-360deg); opacity:1}}
+    68% {{transform:scale(1)   rotate(-720deg); opacity:1}}
+    80% {{transform:scale(1)   rotate(-1080deg);opacity:1}}
+    87% {{transform:scale(1)   rotate(-1080deg);opacity:1}}
+    100%{{transform:scale(2.4) rotate(-1080deg);opacity:0}}}}
+  @keyframes {uid}-ring{{0%{{transform:scale(.08);opacity:.95}}100%{{transform:scale(4.5);opacity:0}}}}
+  @keyframes {uid}-icon{{
     0%  {{transform:scale(0) rotate(-25deg);opacity:0}}
     55% {{transform:scale(1.22) rotate(6deg);opacity:1}}
     72% {{transform:scale(0.91) rotate(-3deg)}}
     86% {{transform:scale(1.06) rotate(2deg)}}
     100%{{transform:scale(1) rotate(0deg)}}}}
-  @keyframes {uid}-slam {{
+  @keyframes {uid}-slam{{
     0%  {{transform:scaleX(3) scaleY(0.05);opacity:0;letter-spacing:16px}}
     55% {{transform:scaleX(1.04) scaleY(1.04);opacity:1}}
     100%{{transform:scale(1);letter-spacing:4px}}}}
-  @keyframes {uid}-rise {{
+  @keyframes {uid}-rise{{
     0%  {{transform:translateY(32px);opacity:0;filter:blur(6px)}}
     100%{{transform:translateY(0);opacity:1;filter:blur(0)}}}}
-  @keyframes {uid}-sub  {{from{{opacity:0;letter-spacing:6px}}to{{opacity:1;letter-spacing:2px}}}}
-  @keyframes {uid}-cl   {{from{{transform:translateX(-115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
-  @keyframes {uid}-cr   {{from{{transform:translateX(115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
-  @keyframes {uid}-rl   {{from{{opacity:0;transform:translateY(-50%) translateX(-36px)}}
-                          to{{opacity:.16;transform:translateY(-50%) translateX(0)}}}}
-  @keyframes {uid}-rr   {{from{{opacity:0;transform:translateY(-50%) translateX(36px)}}
-                          to{{opacity:.16;transform:translateY(-50%) translateX(0)}}}}
-  @keyframes {uid}-pulse{{0%,100%{{text-shadow:0 0 10px {c}88,2px 2px 0 #000}}
-                          50%{{text-shadow:0 0 32px {c},0 0 64px {c}55,2px 2px 0 #000}}}}
+  @keyframes {uid}-sub {{from{{opacity:0;letter-spacing:6px}}to{{opacity:1;letter-spacing:2px}}}}
+  @keyframes {uid}-cl  {{from{{transform:translateX(-115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
+  @keyframes {uid}-cr  {{from{{transform:translateX(115%);opacity:0}}to{{transform:translateX(0);opacity:1}}}}
+  @keyframes {uid}-dl  {{from{{opacity:0;transform:translateY(-50%) translateX(-36px)}}to{{opacity:.18;transform:translateY(-50%) translateX(0)}}}}
+  @keyframes {uid}-dr  {{from{{opacity:0;transform:translateY(-50%) translateX(36px)}}to{{opacity:.18;transform:translateY(-50%) translateX(0)}}}}
+  @keyframes {uid}-pulse{{0%,100%{{text-shadow:0 0 10px {c}88,2px 2px 0 #000}}50%{{text-shadow:0 0 32px {c},0 0 64px {c}55,2px 2px 0 #000}}}}
   {spark_css}
 </style>
 <div style="position:relative;overflow:hidden;background:{cfg['bg']};
   border:2px solid {c};border-radius:6px;max-width:840px;margin:14px 0;
   box-shadow:0 0 55px {c}44,0 0 110px {c}11,0 12px 50px rgba(0,0,0,.97);">
 
-  <div style="position:absolute;inset:0;background:{c};border-radius:4px;
-    animation:{uid}-flash .55s ease-out forwards;pointer-events:none;z-index:20;"></div>
+  <!-- SMA Logo: still → 3 CCW spins each faster → burst exit
+       Centered via margin so transform is free for the animation -->
+  <div style="position:absolute;top:50%;left:50%;
+    width:80px;height:80px;margin-top:-40px;margin-left:-40px;
+    z-index:25;pointer-events:none;">
+    <img src="{LOGO_URL}"
+      style="width:80px;height:80px;border-radius:50%;object-fit:cover;display:block;
+        filter:drop-shadow(0 0 20px {c}) drop-shadow(0 0 8px {c}99);
+        animation:{uid}-logo 1.52s linear forwards;"
+      onerror="this.style.display='none'">
+  </div>
 
+  <!-- Rings fire as logo bursts out (~1.32s) -->
   <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
     border-radius:50%;border:3px solid {rc};opacity:0;
-    animation:{uid}-ring 1.05s ease-out .04s forwards;pointer-events:none;z-index:8;"></div>
+    animation:{uid}-ring 1.05s ease-out 1.32s forwards;pointer-events:none;z-index:8;"></div>
   <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
     border-radius:50%;border:2px solid {sc}cc;opacity:0;
-    animation:{uid}-ring 1.35s ease-out .26s forwards;pointer-events:none;z-index:8;"></div>
+    animation:{uid}-ring 1.35s ease-out 1.52s forwards;pointer-events:none;z-index:8;"></div>
   <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
     border-radius:50%;border:1px solid {c}55;opacity:0;
-    animation:{uid}-ring 1.65s ease-out .48s forwards;pointer-events:none;z-index:8;"></div>
+    animation:{uid}-ring 1.65s ease-out 1.72s forwards;pointer-events:none;z-index:8;"></div>
   {extra_ring}
 
   {spark_html}
 
   <div style="position:absolute;left:14px;top:50%;
-    font-size:14px;color:{c};letter-spacing:5px;opacity:.4;
-    animation:{uid}-rl .9s ease-out .6s both;pointer-events:none;z-index:7;">
-    ✦ ✧ ✦ ✧ ✦</div>
+    font-size:14px;color:{c};letter-spacing:5px;
+    animation:{uid}-dl .9s ease-out 1.38s both;pointer-events:none;z-index:7;">
+    {deco}</div>
   <div style="position:absolute;right:14px;top:50%;
-    font-size:14px;color:{c};letter-spacing:5px;opacity:.4;
-    animation:{uid}-rr .9s ease-out .6s both;pointer-events:none;z-index:7;">
-    ✧ ✦ ✧ ✦ ✧</div>
+    font-size:14px;color:{c};letter-spacing:5px;
+    animation:{uid}-dr .9s ease-out 1.38s both;pointer-events:none;z-index:7;">
+    {deco}</div>
 
   <div style="position:relative;z-index:15;padding:42px 60px 32px;text-align:center;">
     <div style="font-size:54px;margin-bottom:16px;display:block;
-      animation:{uid}-icon .68s cubic-bezier(.34,1.56,.64,1) .15s both;">
+      animation:{uid}-icon .68s cubic-bezier(.34,1.56,.64,1) 1.44s both;">
       {cfg['icon']}</div>
-    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:{c};
+    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:{c};
       letter-spacing:4px;margin-bottom:20px;
-      animation:{uid}-slam .52s cubic-bezier(.22,.61,.36,1) .38s both;">
+      animation:{uid}-slam .52s cubic-bezier(.22,.61,.36,1) 1.68s both;">
       ¡ASCENDISTE!</div>
-    <div style="font-family:'Share Tech Mono',monospace;
-      font-size:clamp(13px,2.8vw,20px);color:{c};letter-spacing:4px;margin-bottom:18px;
-      text-shadow:0 0 20px {c}88,2px 2px 0 #000;
-      animation:{uid}-rise .55s ease-out .72s both,
-                {uid}-pulse 2.8s ease-in-out 1.3s infinite;">
+    <div style="font-family:'Press Start 2P',monospace;
+      font-size:clamp(13px,2.8vw,22px);letter-spacing:4px;margin-bottom:18px;
+      {name_style}">
       {lvl_name}</div>
-    <div style="font-family:'Share Tech Mono',monospace;font-size:7px;
-      color:#2a3a2a;letter-spacing:2px;
-      animation:{uid}-sub .5s ease-out 1.0s both;">{cfg['sub']}</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;
+      color:#444433;letter-spacing:2px;
+      animation:{uid}-sub .5s ease-out 2.24s both;">{cfg['sub']}</div>
     <div style="display:flex;align-items:center;margin-top:26px;overflow:hidden;">
-      <div style="font-size:12px;color:{c};opacity:.3;letter-spacing:4px;flex-shrink:0;
-        animation:{uid}-cl .6s ease-out .92s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
+      <div style="font-size:12px;color:{c};opacity:.4;letter-spacing:2px;flex-shrink:0;
+        animation:{uid}-cl .6s ease-out 2.1s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,{c}60,{c}10);margin:0 8px;"></div>
-      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:{c};opacity:.65;
-        animation:{uid}-rise .4s ease-out 1.1s both;">LV {lvl_num}</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:{c};opacity:.65;
+        animation:{uid}-rise .4s ease-out 2.3s both;">LV {lvl_num}</div>
       <div style="flex:1;height:1px;background:linear-gradient(90deg,{c}10,{c}60);margin:0 8px;"></div>
-      <div style="font-size:12px;color:{c};opacity:.3;letter-spacing:4px;flex-shrink:0;
-        animation:{uid}-cr .6s ease-out .92s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
+      <div style="font-size:12px;color:{c};opacity:.4;letter-spacing:2px;flex-shrink:0;
+        animation:{uid}-cr .6s ease-out 2.1s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
     </div>
   </div>
 </div>'''
@@ -872,6 +912,30 @@ async function agRegister() {{
                 checks.append((False, "distancia Manhattan",
                                f"La última celda (5,5) debe tener distancia 4, obtuve {dist}. "
                                f"Verifica: abs(fila-3)+abs(col-3)"))
+
+        # Count of infected cells: Manhattan ≤ 2 from (3,3) in a 6×6 grid = 13 cells.
+        # This check is ALWAYS added — it verifies the student evaluated the condition
+        # inside the loop (not just printed `[X]` for every cell unconditionally).
+        _count_names = ["infectadas", "total_infectadas", "count", "contador",
+                        "zonas_infectadas", "n_infectadas", "n_infectados",
+                        "infectados_count", "total", "conteo"]
+        _cnt = None
+        for _n in _count_names:
+            _v = _get(_n)
+            if isinstance(_v, int) and not isinstance(_v, bool):
+                _cnt = (_n, _v)
+                break
+        if _cnt is not None:
+            checks.append((_cnt[1] == 13,
+                           f"Zonas infectadas = 13 ({_cnt[0]})",
+                           f"En una cuadrícula 6×6 con radio ≤ 2 desde (3,3) hay exactamente 13 "
+                           f"zonas infectadas. Obtuviste {_cnt[1]}. "
+                           f"Verifica: abs(fila-3)+abs(col-3) <= 2"))
+        else:
+            checks.append((False,
+                           "Contador de zonas infectadas no encontrado",
+                           "Agrega un contador dentro del loop: infectadas += 1 cada vez que "
+                           "la condición Manhattan se cumple. Al final debe ser 13."))
 
         return self._award("ex1", checks, 6)
 
@@ -1062,12 +1126,13 @@ async function agRegister() {{
         # Pathogens: COVID r0=2.5, Ébola r0=1.8, Sarampión r0=15.0
         # infectados_0=50, poblacion=50_000, 10 days
         # Expected day-10: COVID=50000 (cap), Ébola=17767, Sarampión=50000 (cap)
-        EXP_EBOLA        = 17_767
-        EXP_SARAM        = 50_000
+        EXP_EBOLA = 17_767
+        EXP_SARAM = 50_000
 
         dia        = _get("dia")
         infectados = _get("infectados")
 
+        # c1 — inner loop ran 10 days
         if dia is None:
             checks.append((False, "loop interior (dia)",
                            "Variable 'dia' no encontrada — usa: for dia in range(1, 11)"))
@@ -1077,25 +1142,54 @@ async function agRegister() {{
             checks.append((False, "loop interior — 10 días",
                            f"dia={dia} — el loop de días debe llegar a 10"))
 
-        # After 3 pathogens loop, infectados = Sarampión result = 50000 (at cap)
+        # c2 — Sarampión (last pathogen) hit the population cap
         if infectados is None:
-            checks.append((False, "infectados (último patógeno)",
+            checks.append((False, "infectados (último patógeno — Sarampión)",
                            f"Variable 'infectados' no encontrada — "
                            f"Sarampión (R0=15) debe llegar a {EXP_SARAM} en día 3"))
         elif isinstance(infectados, (int, float)) and not isinstance(infectados, bool):
             if infectados == EXP_SARAM:
                 checks.append((True, f"Sarampión saturó población ({EXP_SARAM})",
-                               f"✓ R0=15 llega al techo en día 3 — impresionante"))
+                               "✓ R0=15 llega al techo en día 3"))
             elif infectados == EXP_EBOLA:
                 checks.append((False, "orden de patógenos",
-                               f"infectados={infectados} corresponde a Ébola — el último patógeno "
-                               f"(Sarampión, R0=15) debe ser el último en el loop exterior"))
+                               f"infectados={infectados} corresponde a Ébola — Sarampión debe ser "
+                               f"el último en el loop exterior"))
             else:
                 checks.append((False, "infectados día 10",
                                f"Obtuve {infectados}. Ébola→{EXP_EBOLA}, COVID/Sarampión→{EXP_SARAM}"))
         else:
             checks.append((False, "infectados",
-                           f"Debe ser int con el total del último patógeno, obtuve {type(infectados).__name__}"))
+                           f"Debe ser int, obtuve {type(infectados).__name__}"))
+
+        # c3 — Ébola loop ran: day-10 Ébola result (17767) must appear in a named variable.
+        # This verifies the outer pathogen loop actually executed all three iterations,
+        # not just Sarampión. Students who store each result get full credit here.
+        _ebola_names = [
+            "infectados_ebola", "ebola", "result_ebola", "resultado_ebola",
+            "infectados_3", "inf_ebola", "i_ebola", "total_ebola",
+            "ebola_dia10", "dia10_ebola", "infectados_e",
+        ]
+        _ebola_found = any(_get(n) == EXP_EBOLA for n in _ebola_names)
+        checks.append((_ebola_found,
+                       f"Ébola día 10 guardado = {EXP_EBOLA}",
+                       f"Guarda el resultado de Ébola en una variable: infectados_ebola = infectados "
+                       f"(después del loop de días para Ébola). Debe ser {EXP_EBOLA} "
+                       f"(r0=1.8, inicio=50, 10 días, población=50,000)"))
+
+        # c4 — outer loop covered all 3 pathogens: look for the outer loop index
+        # reaching the Sarampión position (index 5 if iterating [2,3,5])
+        _outer = next((_get(n) for n in ("i", "p", "idx", "j") if _get(n) is not None), None)
+        _nombre_last = _get("nombre")
+        _outer_ok = (_outer == 5                              # for i in [2, 3, 5]
+                     or _outer == 6                           # for i in range(7)
+                     or (isinstance(_nombre_last, str)
+                         and "saram" in _nombre_last.lower()))
+        checks.append((_outer_ok,
+                       "Loop exterior — 3 patógenos recorridos",
+                       f"El loop exterior debe iterar sobre los 3 patógenos. "
+                       f"Índice final esperado: i=5 (si usas [2,3,5]) o i=6 (range(7)). "
+                       f"Obtuve i={_outer}, nombre={_nombre_last}"))
 
         return self._award("ex4", checks, 8)
 
@@ -1140,9 +1234,13 @@ async function agRegister() {{
         """Debug2B — El Error que Mató a 50 Millones (3 pts)"""
         self._header("🔧 DEBUG 2B — El Error que Mató a 50 Millones", icon="🔧", pts=3)
         checks = []
-        # After fix: Ola 2 starts from where Ola 1 ended (not reset to infectados_0)
-        # Both buggy and fixed end with infectados=100000 (cap) after Ola 2
-        # Structural check: both olas ran to completion
+        # Bug: 'infectados = infectados_0' inside the ola loop resets state between olas.
+        # Fix: remove/replace that line so infectados carries over from Ola 1.
+        # Limitation: with r0=2.0 and 10 days both olas saturate at 100000 regardless,
+        # so final state is identical for buggy and fixed code. The distinguishing state
+        # is the VALUE of infectados at the BEGINNING of Ola 2 (100 buggy, 100000 fixed)
+        # which is not observable after the loop completes.
+        # Best available check: look for a variable the student stored to preserve Ola 1's end state.
 
         ola        = _get("ola")
         dia        = _get("dia")
@@ -1166,6 +1264,27 @@ async function agRegister() {{
             checks.append((False, "loop días",
                            f"dia={dia} — cada ola tiene 10 días"))
 
+        # c3 — the fix preserves Ola 1's final state: look for a variable storing it.
+        # Students who print/store infectados at end of Ola 1 will have infectados_ola1=100000.
+        # A student who only runs the buggy version won't need this variable.
+        _ola1_names = ["infectados_ola1", "fin_ola1", "infectados_fin_ola1",
+                       "ola1_final", "resultado_ola1", "total_ola1"]
+        _ola1 = next((_get(n) for n in _ola1_names
+                      if isinstance(_get(n), (int, float)) and not isinstance(_get(n), bool)),
+                     None)
+        if _ola1 is not None:
+            checks.append((_ola1 == 100_000,
+                           f"Fin Ola 1 = 100,000 (población saturada)",
+                           f"infectados al final de Ola 1 debe ser 100,000. "
+                           f"Obtuviste {_ola1}. La Ola 2 debe continuar desde este valor."))
+        else:
+            # Fall back: infectados after both olas = 100000 (necessary but not sufficient)
+            checks.append((infectados == 100_000,
+                           "infectados final = 100,000 (ambas olas saturaron)",
+                           f"infectados={infectados}, esperado 100,000. "
+                           f"Tip: guarda 'infectados_ola1 = infectados' al finalizar Ola 1 "
+                           f"para demostrar que la corrección preservó el estado entre olas."))
+
         return self._award("debug2b", checks, 3)
 
     def check_ex5(self):
@@ -1173,16 +1292,28 @@ async function agRegister() {{
         self._header("EJERCICIO 5 — Las Dos Olas de 1918", icon="🍄", pts=8)
         checks = []
         # poblacion=100_000, r0=2.0, dias=10
-        # Ola 1: start=100 → day 10 = 100000 (hits cap day 10)
-        # Ola 2: start=5000 → day 10 = 100000 (hits cap day 5)
-        # diferencia = abs(100000 - 100000) = 0
-        EXP_OLA1_DIA10  = 100_000
-        EXP_OLA2_DIA10  = 100_000
-        EXP_DIFERENCIA  = 0
+        # Ola 1 (start=100):  saturates at day 10 = 100000
+        # Ola 2 (start=5000): saturates at day  5 = 100000
+        # diferencia = 0 (both saturate — trivially equal, so this alone is not enough)
+        EXP_OLA_FINAL  = 100_000
+        EXP_DIFERENCIA = 0
 
         dia        = _get("dia")
         infectados = _get("infectados")
+        ola        = _get("ola")
 
+        # c1 — outer ola loop ran both olas
+        if ola is None:
+            checks.append((False, "loop olas (ola)",
+                           "Variable 'ola' no encontrada — usa: for ola in range(1, 3) o similar. "
+                           "El loop exterior debe iterar sobre las 2 olas."))
+        elif ola == 2:
+            checks.append((True, "ambas olas ejecutadas (ola=2)", "✓"))
+        else:
+            checks.append((False, "loop olas",
+                           f"ola={ola} — el loop exterior debe completar 2 olas"))
+
+        # c2 — inner day loop ran 10 days
         if dia is None:
             checks.append((False, "loop días (dia)",
                            "Variable 'dia' no encontrada — usa: for dia in range(1, dias+1)"))
@@ -1192,21 +1323,38 @@ async function agRegister() {{
             checks.append((False, "loop días",
                            f"dia={dia} — el loop de días debe llegar a 10"))
 
-        if infectados is None:
-            checks.append((False, "infectados (última ola, día 10)",
-                           "No encontré 'infectados' — ¿ejecutaste la celda?"))
-        elif isinstance(infectados, (int, float)) and not isinstance(infectados, bool):
-            if infectados == EXP_OLA2_DIA10:
-                checks.append((True, f"Ola 2 día 10 = {EXP_OLA2_DIA10} (saturó población)",
-                               "✓ R0=2.0, inicio=5000 → saturación en día 5"))
-            else:
-                checks.append((False, "infectados (Ola 2 día 10)",
-                               f"Debe ser {EXP_OLA2_DIA10} (ambas olas saturan con R0=2.0), "
-                               f"obtuve {infectados}"))
-        else:
-            checks.append((False, "infectados", f"Debe ser int, obtuve {type(infectados).__name__}"))
+        # c3 — each ola result stored separately (key check: proves both olas were computed)
+        # Ola 1 (start=100, 10 days, R0=2.0) saturates at day 10 → 100000
+        # Ola 2 (start=5000) saturates at day 5 → 100000
+        # Both equal 100000, but having TWO named variables confirms both loops ran.
+        _ola1_names = ["infectados_ola1", "ola1", "resultado_ola1", "fin_ola1",
+                       "infectados1", "total_ola1", "ola_1", "inf_ola1"]
+        _ola2_names = ["infectados_ola2", "ola2", "resultado_ola2", "fin_ola2",
+                       "infectados2", "total_ola2", "ola_2", "inf_ola2"]
+        _v1 = next((_get(n) for n in _ola1_names
+                    if isinstance(_get(n), (int, float)) and not isinstance(_get(n), bool)), None)
+        _v2 = next((_get(n) for n in _ola2_names
+                    if isinstance(_get(n), (int, float)) and not isinstance(_get(n), bool)), None)
 
-        # Check difference between olas (expected = 0, both saturate)
+        if _v1 is not None and _v2 is not None:
+            checks.append((_v1 == EXP_OLA_FINAL and _v2 == EXP_OLA_FINAL,
+                           f"Ola 1 y Ola 2 día 10 = {EXP_OLA_FINAL}",
+                           f"infectados_ola1={_v1}, infectados_ola2={_v2} "
+                           f"(ambas deben ser {EXP_OLA_FINAL})"))
+        else:
+            # Fall back: check infectados (last value, Ola 2)
+            if infectados is None:
+                checks.append((False, "resultados de ambas olas",
+                               f"Guarda los resultados: infectados_ola1 = infectados (al final de Ola 1), "
+                               f"infectados_ola2 = infectados (al final de Ola 2). "
+                               f"Ambas deben ser {EXP_OLA_FINAL}."))
+            else:
+                checks.append((infectados == EXP_OLA_FINAL,
+                               f"Ola 2 día 10 = {EXP_OLA_FINAL}",
+                               f"infectados={infectados} esperado {EXP_OLA_FINAL}. "
+                               f"Tip: guarda infectados_ola1 e infectados_ola2 por separado."))
+
+        # c4 — diferencia computed and == 0
         diff = None
         for name in ["diferencia", "diff", "diferencia_olas", "dif"]:
             v = _get(name)
@@ -1440,9 +1588,23 @@ async function agRegister() {{
         c3 = (isinstance(infectados_z, list) and len(infectados_z) == 5
               and infectados_z[3] in (1167, 2000))
 
-        # Check 4: zonas_caidas tracking list is correct shape
+        # Check 4: zonas_caidas structure AND zone 3 outcome tied to dia_cuarentena.
+        # Zone 3 (infectados_z[3]=30, poblacion=2000, tasa_init=1.5%) is the swing zone:
+        #   dia_cuarentena=5  → r0 drops before zone 3 collapses → zonas_caidas[3]=False
+        #   dia_cuarentena=14 → zone 3 collapses before quarantine → zonas_caidas[3]=True
+        # This directly tests that the quarantine if-condition inside the loop works.
+        _zc3_expected = None
+        if dia_q == 5:
+            _zc3_expected = False   # saved by early quarantine
+        elif dia_q == 14:
+            _zc3_expected = True    # falls before quarantine kicks in
+        _zc3_actual = (zonas_caidas[3] if isinstance(zonas_caidas, list)
+                       and len(zonas_caidas) > 3 else None)
+        _zc3_ok = (_zc3_expected is None               # unknown dia_cuarentena, skip
+                   or _zc3_actual == _zc3_expected)
         c4 = (isinstance(zonas_caidas, list) and len(zonas_caidas) == 5
-              and zonas_caidas[0] is True and zonas_caidas[2] is True)
+              and zonas_caidas[0] is True and zonas_caidas[2] is True
+              and _zc3_ok)
 
         # Check 5: total infectados for the last day matches either valid run
         c5 = _tot in (22646, 23479)
@@ -1461,8 +1623,9 @@ async function agRegister() {{
             (c3, "Zona 3 — clave de la cuarentena",
              f"infectados_z[3]={infectados_z[3] if isinstance(infectados_z,list) and len(infectados_z)>3 else '?'} "
              f"(1167→dq=5 salva la zona | 2000→dq=14 cae)"),
-            (c4, "zonas_caidas correcto",
-             f"zonas_caidas={zonas_caidas if isinstance(zonas_caidas,list) else 'no encontrado'}"),
+            (c4, f"zonas_caidas — zona 3 {'salvada' if _zc3_expected is False else 'caída' if _zc3_expected is True else '?'} (dq={dia_q})",
+             f"zonas_caidas={zonas_caidas if isinstance(zonas_caidas,list) else 'no encontrado'} | "
+             f"Zona 3 esperada: {_zc3_expected} con dia_cuarentena={dia_q}"),
             (c5, "Total ciudad último día",
              f"total={_tot} (esperado 22646 ó 23479)" if _tot is not None
              else "no se encontró variable total (totales, total_infectados…)"),
@@ -1866,18 +2029,83 @@ async function agRegister() {{
     def check_reto1(self):
         """Reto1 — Días hasta colapso (6 pts, bonus)"""
         self._header("🌟 RETO 1 — Días hasta Colapso (BONUS)", icon="🌟", pts=6)
-        # TODO: fill in Bonus
-        return self._award("reto1", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
-        ], 6)
+        fn = _get("dias_hasta_colapso")
+        if fn is None:
+            return self._award("reto1", [
+                (False, "función no encontrada",
+                 "Define la función dias_hasta_colapso(poblacion, infectados_0, r0)"),
+            ], 6)
+        try:
+            r_cord  = fn(100_000, 100, 3.5)   # Cordyceps → 6 días
+            r_sub1  = fn(100_000, 100, 0.99)  # R0<1 → nunca colapsa → -1
+        except Exception as e:
+            return self._award("reto1", [
+                (False, "error al llamar función", str(e)),
+            ], 6)
+        resultados = _get("resultados")
+        c1 = (r_cord == 6,
+              "Cordyceps colapsa en día 6",
+              f"dias_hasta_colapso(100_000, 100, 3.5) debe ser 6, obtuviste {r_cord}")
+        c2 = (r_sub1 == -1,
+              "R0=0.99 → nunca colapsa → -1",
+              f"Con R0=0.99 la infección cae — debe retornar -1, obtuviste {r_sub1}")
+        c3 = (isinstance(resultados, list) and len(resultados) == 7
+              and resultados[0][0] == 3,
+              "Sarampión colapsa primero (día 3)",
+              "resultados[0] debe ser Sarampión (3 días) — ¿llamaste la función para los 7 patógenos?")
+        return self._award("reto1", [c1, c2, c3], 6)
 
     def check_reto2(self):
         """Reto2 — Motor SIR completo (6 pts, bonus)"""
         self._header("🌟 RETO 2 — Motor SIR Completo (BONUS)", icon="🌟", pts=6)
-        # TODO: fill in Bonus
-        return self._award("reto2", [
-            (False, "pendiente", "Verificador en construcción — ¡vuelve pronto!"),
-        ], 6)
+        fn_sir  = _get("siguiente_paso_sir")
+        fn_beta = _get("r0_a_beta")
+        if fn_sir is None or fn_beta is None:
+            return self._award("reto2", [
+                (False, "funciones SIR no encontradas",
+                 "Ejecuta la celda de funciones proporcionadas antes de continuar"),
+            ], 6)
+        # c1 — r0_a_beta works
+        try:
+            b = fn_beta(2.5, 1 / 14)
+            beta_ok = _approx(b, 2.5 / 14, 1e-9)
+        except Exception:
+            beta_ok = False
+        # c2 — Cordyceps (R0=3.5, γ=1/2) peaks early and high
+        try:
+            N, I0 = 100_000, 10
+            S, I, R = float(N - I0), float(I0), 0.0
+            pico_I, pico_dia = float(I0), 0
+            bc = fn_beta(3.5, 0.5)
+            for dia in range(1, 61):
+                S, I, R = fn_sir(S, I, R, N, bc, 0.5)
+                if I > pico_I:
+                    pico_I = I; pico_dia = dia
+            cord_ok = (5 <= pico_dia <= 18 and pico_I > 20_000)
+        except Exception:
+            cord_ok = False
+        # c3 — COVID vacunado (R0=0.9, γ=1/14) nunca crece → pico_dia == 0
+        try:
+            S, I, R = float(N - I0), float(I0), 0.0
+            pico_I_v, pico_dia_v = float(I0), 0
+            bv = fn_beta(0.9, 1 / 14)
+            for dia in range(1, 61):
+                S, I, R = fn_sir(S, I, R, N, bv, 1 / 14)
+                if I > pico_I_v:
+                    pico_I_v = I; pico_dia_v = dia
+            covid_vac_ok = (pico_dia_v == 0)
+        except Exception:
+            covid_vac_ok = False
+        c1 = (beta_ok,
+              "r0_a_beta(2.5, 1/14) correcto",
+              "r0_a_beta(r0, gamma) debe retornar r0*gamma")
+        c2 = (cord_ok,
+              f"Cordyceps pico: día {pico_dia if cord_ok else '?'}, I={int(pico_I) if cord_ok else '?'}",
+              "Cordyceps (R0=3.5, γ=1/2) debe tener pico entre días 5–18 con I > 20,000")
+        c3 = (covid_vac_ok,
+              "COVID vacunado (R0=0.9) nunca crece",
+              "Con R0=0.9 la infección decrece desde el día 1 — pico_dia debe ser 0")
+        return self._award("reto2", [c1, c2, c3], 6)
 
     # ═══════════════════════════════════════════════════════════
     # RESUMEN FINAL
@@ -1948,7 +2176,6 @@ async function agRegister() {{
 <div style="background:#020d02;border:2px solid #4ca66b;border-radius:6px;max-width:840px;
   margin:12px 0;overflow:hidden;
   box-shadow:0 0 40px rgba(76,166,107,.12),0 0 80px rgba(212,135,10,.06),0 10px 40px rgba(0,0,0,.8);">
-
   <div style="background:linear-gradient(135deg,#010801,#011a06,#010801);
     border-bottom:2px solid #d4870a;padding:22px 28px;text-align:center;position:relative;">
     <div style="position:absolute;left:20px;top:50%;transform:translateY(-50%);">{self._logo_tag}</div>
@@ -2036,6 +2263,3 @@ async function agRegister() {{
     </div>"""}
   </div>
 </div>'''))
-
-
-grader = Autograder()

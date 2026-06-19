@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NB3 · Animation Playground</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      background: #0D0D0D;
+      color: #B8FF9A;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      padding: 40px 24px 80px;
+    }
+    .px { font-family: 'Press Start 2P', monospace; }
+
+    /* ─────────────────────────────────────────
+       SHARED KEYFRAMES
+    ───────────────────────────────────────── */
+    @keyframes glow-amber {
+      0%,100% { text-shadow: 0 0 14px rgba(212,135,10,.8), 2px 2px 0 #3a1a00; }
+      50%      { text-shadow: 0 0 32px rgba(212,135,10,1), 0 0 60px rgba(192,57,43,.5), 2px 2px 0 #3a1a00; }
+    }
+    @keyframes glow-fedra {
+      0%,100% { text-shadow: 0 0 10px rgba(192,57,43,.7), 1px 1px 0 #4a0000; }
+      50%      { text-shadow: 0 0 24px rgba(192,57,43,1), 0 0 48px rgba(212,135,10,.4), 1px 1px 0 #4a0000; }
+    }
+    @keyframes blink     { 50% { opacity: 0; } }
+    @keyframes float     { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes xp-fill   { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes slide-in  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes shimmer   { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes pulse-cordyceps {
+      0%   { box-shadow: 0 0 0 0 rgba(212,135,10,.5); }
+      70%  { box-shadow: 0 0 0 10px rgba(212,135,10,0); }
+      100% { box-shadow: 0 0 0 0 rgba(212,135,10,0); }
+    }
+    @keyframes ticker  { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+    @keyframes spin-dot { to { transform: rotate(360deg); } }
+
+    /* ─────────────────────────────────────────
+       PLAYGROUND CHROME
+    ───────────────────────────────────────── */
+    h1 { font-size: 9px; color: #D4870A; letter-spacing: 3px; margin-bottom: 6px; animation: glow-amber 2.5s ease-in-out infinite; }
+    h2 { font-size: 7px; color: #4ca66b; letter-spacing: 2px; margin-bottom: 16px; margin-top: 40px; border-bottom: 1px solid #1a2a1a; padding-bottom: 8px; }
+    .note { font-size: 11px; color: #2a3a2a; margin-bottom: 32px; }
+
+    .row { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; margin-bottom: 24px; }
+    .col { display: flex; flex-direction: column; gap: 10px; }
+    .label { font-size: 7px; color: #2a3a2a; letter-spacing: 1px; }
+
+    /* ─────────────────────────────────────────
+       SECTION 1 — Text glows
+    ───────────────────────────────────────── */
+    .glow-amber-demo { font-size: 12px; color: #D4870A; animation: glow-amber 2.5s ease-in-out infinite; }
+    .glow-fedra-demo { font-size: 12px; color: #C0392B; animation: glow-fedra 3s ease-in-out infinite; }
+    .blink-demo      { font-size: 12px; color: #4ca66b; animation: blink 1s step-end infinite; }
+
+    /* ─────────────────────────────────────────
+       SECTION 2 — Level name labels
+    ───────────────────────────────────────── */
+    .lv1 { color: #444444; }
+    .lv2 { color: #7a3000; }
+    .lv3 { color: #cc5500; }
+    .lv4 { color: #2d7a45; }
+    .lv5 { color: #4ca66b; }
+    .lv6 {
+      background: linear-gradient(90deg,#C0392B,#D4870A,#4ca66b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-size: 200%; animation: shimmer 3s linear infinite;
+    }
+    .level-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #080808; border: 1px solid #1a2a1a;
+      border-radius: 3px; padding: 10px 14px;
+    }
+    .level-pill .num { font-size: 8px; color: #2a3a2a; }
+
+    /* ─────────────────────────────────────────
+       SECTION 3 — XP bars
+    ───────────────────────────────────────── */
+    .xp-track {
+      width: 220px; height: 8px;
+      background: #0d1a0d; border: 1px solid #1a2a1a;
+      border-radius: 2px; overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%; border-radius: 2px;
+      transform-origin: left;
+      animation: xp-fill .9s cubic-bezier(.4,0,.2,1) both;
+    }
+    .xp-lv1 { background: linear-gradient(90deg,#1a1a1a,#2d2d2d); }
+    .xp-lv2 { background: linear-gradient(90deg,#2d1200,#5c2800); }
+    .xp-lv3 { background: linear-gradient(90deg,#3d1800,#8b4500); }
+    .xp-lv4 { background: linear-gradient(90deg,#0a2010,#1a5030); }
+    .xp-lv5 { background: linear-gradient(90deg,#0d3020,#2a7050); }
+    .xp-lv6 { background: linear-gradient(90deg,#2d0a0a,#D4870A,#4ca66b); background-size:200%; animation: xp-fill .9s cubic-bezier(.4,0,.2,1) both, shimmer 3s linear infinite; }
+
+    /* ─────────────────────────────────────────
+       SECTION 4 — Rank rows
+    ───────────────────────────────────────── */
+    .rank-row {
+      display: grid; grid-template-columns: 40px 1fr auto;
+      align-items: center; gap: 12px;
+      background: #080808; border: 1px solid #0a1a0a;
+      border-radius: 3px; padding: 10px 14px;
+      animation: slide-in .35s ease both;
+      max-width: 540px; transition: border-color .2s;
+    }
+    .rank-row:hover { border-color: #4ca66b30; }
+    .rank-num  { font-size: 10px; color: #2a3a2a; text-align: center; }
+    .rank-name { font-size: 9px; color: #B8FF9A; margin-bottom: 5px; }
+    .rank-level { font-size: 7px; margin-bottom: 6px; }
+    .rank-pct  { font-size: 14px; }
+    .badge     { font-size: 7px; padding: 2px 6px; border-radius: 2px; }
+    .badge-ach { background: rgba(212,135,10,.08); border: 1px solid #d4870a30; color: #a86800; }
+    .badge-str { background: rgba(192,57,43,.08);  border: 1px solid #c0392b30; color: #c05533; }
+
+    /* ─────────────────────────────────────────
+       SECTION 5 — Podium cards
+    ───────────────────────────────────────── */
+    .podium-card {
+      border-radius: 4px; padding: 20px 16px 16px;
+      text-align: center; max-width: 200px;
+    }
+    .podium-card.rank1 {
+      background: linear-gradient(160deg, #100800, #1e1200);
+      border: 2px solid #D4870A;
+      box-shadow: 0 0 28px rgba(212,135,10,.2), 0 8px 24px rgba(0,0,0,.7);
+      animation: pulse-cordyceps 2.5s ease-in-out infinite;
+    }
+    .podium-card.rank2 {
+      background: linear-gradient(160deg, #050808, #0d1a10);
+      border: 2px solid #4ca66b;
+      box-shadow: 0 0 16px rgba(76,166,107,.2), 0 6px 18px rgba(0,0,0,.6);
+    }
+    .podium-card.rank3 {
+      background: linear-gradient(160deg, #080808, #101a10);
+      border: 2px solid #1a3a1a;
+    }
+    .podium-crown { font-size: 28px; margin-bottom: 6px; animation: float 3s ease-in-out infinite; }
+    .podium-rank  { font-size: 7px; color: #2a3a2a; margin-bottom: 8px; }
+    .podium-name  { font-size: 9px; color: #B8FF9A; margin-bottom: 10px; }
+    .podium-pct   { font-size: 22px; margin-bottom: 8px; }
+    .rank1 .podium-pct { color: #D4870A; text-shadow: 0 0 14px rgba(212,135,10,.6); }
+    .rank2 .podium-pct { color: #4ca66b; }
+    .rank3 .podium-pct { color: #2d5a3a; }
+
+    /* ─────────────────────────────────────────
+       SECTION 7 — Ticker
+    ───────────────────────────────────────── */
+    .ticker-wrap {
+      overflow: hidden; background: #080808;
+      border: 1px solid #4ca66b20; border-radius: 2px;
+      height: 28px; display: flex; align-items: center; max-width: 600px;
+    }
+    .ticker-label {
+      flex-shrink: 0; background: #1a3a1a; color: #4ca66b;
+      font-size: 7px; padding: 0 10px; height: 100%;
+      display: flex; align-items: center; letter-spacing: 1px;
+    }
+    .ticker-inner {
+      white-space: nowrap; animation: ticker 14s linear infinite;
+      font-size: 8px; color: #D4870A; padding: 0 40px;
+    }
+
+    /* ─────────────────────────────────────────
+       SECTION 8 — Spinner
+    ───────────────────────────────────────── */
+    .spin-dot {
+      width: 14px; height: 14px;
+      border: 2px solid #1a2a1a; border-top-color: #4ca66b;
+      border-radius: 50%; display: inline-block;
+      animation: spin-dot .8s linear infinite;
+    }
+
+    /* replay button */
+    .replay-btn {
+      background: none; border: 1px solid #4ca66b40;
+      color: #4ca66b; font-family: 'Press Start 2P', monospace;
+      font-size: 7px; padding: 6px 12px; border-radius: 2px;
+      cursor: pointer; transition: all .2s; margin-top: 12px;
+    }
+    .replay-btn:hover { background: #4ca66b10; border-color: #4ca66b; }
+
+    .footer-note { font-size: 10px; color: #1a2a1a; margin-top: 60px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="px" style="margin-bottom:4px; font-size:7px; color:#2a3a2a; letter-spacing:2px;">ANIMATION PLAYGROUND</div>
+<h1>NB3 · VISUAL POLISH LAB</h1>
+<div class="note">Edit keyframes or class values in this file. Everything here is isolated from nb3.html.</div>
+
+
+<!-- ── 1. TEXT GLOWS ── -->
+<h2 class="px">1 · TEXT GLOWS</h2>
+<div class="row">
+  <div class="col">
+    <div class="label px">GLOW-AMBER (header title)</div>
+    <div class="px glow-amber-demo">✦ FIREFLY RESEARCH NODE 7 ✦</div>
+  </div>
+  <div class="col">
+    <div class="label px">GLOW-FEDRA (subtitle)</div>
+    <div class="px glow-fedra-demo">MODO EPIDEMIA — THE LAST OF US</div>
+  </div>
+  <div class="col">
+    <div class="label px">BLINK (cursor)</div>
+    <div class="px blink-demo">█</div>
+  </div>
+</div>
+
+
+<!-- ── 2. LEVEL LABELS ── -->
+<h2 class="px">2 · LEVEL LABELS (lv1 → lv6)</h2>
+<div class="row">
+  <div class="level-pill"><span class="px num">LV1</span><span class="px lv1">Paciente 0</span></div>
+  <div class="level-pill"><span class="px num">LV2</span><span class="px lv2">Expuesto</span></div>
+  <div class="level-pill"><span class="px num">LV3</span><span class="px lv3">Sobreviviente</span></div>
+  <div class="level-pill"><span class="px num">LV4</span><span class="px lv4">Firefly</span></div>
+  <div class="level-pill"><span class="px num">LV5</span><span class="px lv5">Portador</span></div>
+  <div class="level-pill"><span class="px num">LV6</span><span class="px lv6">Inmune</span></div>
+</div>
+
+
+<!-- ── 3. XP BARS ── -->
+<h2 class="px">3 · XP BARS</h2>
+<div id="xp-section"></div>
+<button class="replay-btn px" onclick="renderXP()">↺ REPLAY XP FILL</button>
+
+<script>
+const XP_DATA = [
+  { cls: 'xp-lv1', label: 'LV1 · Paciente 0',                      pct: 15 },
+  { cls: 'xp-lv2', label: 'LV2 · Expuesto',                         pct: 32 },
+  { cls: 'xp-lv3', label: 'LV3 · Sobreviviente',                    pct: 54 },
+  { cls: 'xp-lv4', label: 'LV4 · Firefly',                          pct: 72 },
+  { cls: 'xp-lv5', label: 'LV5 · Portador',                         pct: 88 },
+  { cls: 'xp-lv6', label: 'LV6 · Inmune',                          pct: 98 },
+];
+function renderXP() {
+  const sec = document.getElementById('xp-section');
+  sec.innerHTML = XP_DATA.map(d => `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+      <div class="px label" style="width:280px;">${d.label}</div>
+      <div class="xp-track" style="width:260px;">
+        <div class="xp-fill ${d.cls}" style="width:${d.pct}%;"></div>
+      </div>
+      <div class="px" style="font-size:9px;color:#D4870A;">${d.pct}%</div>
+    </div>`).join('');
+}
+renderXP();
+</script>
+
+
+<!-- ── 4. RANK ROWS (slide-in) ── -->
+<h2 class="px">4 · RANK ROWS (slide-in stagger)</h2>
+<div id="rank-section"></div>
+<button class="replay-btn px" onclick="renderRanks()">↺ REPLAY SLIDE-IN</button>
+
+<script>
+const RANK_DATA = [
+  { name: 'Ellie Williams', level: 'Inmune',                           lv: 6, pct: 98, ach: 8, streak: 5 },
+  { name: 'Joel Miller',    level: 'Portador',                          lv: 5, pct: 88, ach: 5, streak: 3 },
+  { name: 'Tommy Miller',   level: 'Firefly',                           lv: 4, pct: 72, ach: 3, streak: 2 },
+  { name: 'Tess',           level: 'Sobreviviente',                     lv: 3, pct: 54, ach: 2, streak: 0 },
+  { name: 'Marlene',        level: 'Expuesto',                          lv: 2, pct: 32, ach: 1, streak: 0 },
+];
+const LV_CLS = ['','lv1','lv2','lv3','lv4','lv5','lv6'];
+const XP_CLS = ['','xp-lv1','xp-lv2','xp-lv3','xp-lv4','xp-lv5','xp-lv6'];
+function renderRanks() {
+  document.getElementById('rank-section').innerHTML = RANK_DATA.map((p, i) => `
+    <div class="rank-row px" style="animation-delay:${i*60}ms; margin-bottom:6px;">
+      <div class="rank-num">${i+1}</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <div class="rank-name">${p.name}</div>
+          <span class="badge badge-ach px">✦ ${p.ach}</span>
+          ${p.streak >= 2 ? `<span class="badge badge-str px">🔥×${p.streak}</span>` : ''}
+        </div>
+        <div class="rank-level ${LV_CLS[p.lv]}">${p.level}</div>
+        <div class="xp-track" style="margin-top:6px;">
+          <div class="xp-fill ${XP_CLS[p.lv]}" style="width:${p.pct}%;animation-delay:${i*60}ms;"></div>
+        </div>
+      </div>
+      <div class="rank-pct ${LV_CLS[p.lv]}">${p.pct}%</div>
+    </div>`).join('');
+}
+renderRanks();
+</script>
+
+
+<!-- ── 5. PODIUM CARDS ── -->
+<h2 class="px">5 · PODIUM CARDS (pulse + float)</h2>
+<div class="row" style="align-items: flex-end;">
+  <div class="col">
+    <div class="label px">RANK 2</div>
+    <div class="podium-card rank2">
+      <div class="podium-crown" style="animation-delay:.4s;">🔦</div>
+      <div class="px podium-rank">#2</div>
+      <div class="px podium-name">Joel Miller</div>
+      <div class="px podium-pct">88%</div>
+      <div class="px podium-level lv5">Portador</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="label px">RANK 1 — pulse-cordyceps</div>
+    <div class="podium-card rank1">
+      <div class="podium-crown">⚡</div>
+      <div class="px podium-rank">#1</div>
+      <div class="px podium-name">Ellie Williams</div>
+      <div class="px podium-pct">98%</div>
+      <div class="px podium-level lv6">Inmune</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="label px">RANK 3</div>
+    <div class="podium-card rank3">
+      <div class="podium-crown" style="animation-delay:.8s;">🌿</div>
+      <div class="px podium-rank">#3</div>
+      <div class="px podium-name">Tommy Miller</div>
+      <div class="px podium-pct">72%</div>
+      <div class="px podium-level lv4">Firefly</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── 6. LEVEL-UP CARDS ★ ── -->
+<h2 class="px">6 · LEVEL-UP CARDS ★ — edit these to polish</h2>
+<div id="levelup-section"></div>
+<button class="replay-btn px" onclick="renderAllLevelUps()">↺ REPLAY ALL LEVEL UPS</button>
+<br>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+  <button class="replay-btn px" onclick="renderLevelUp(2)">↺ LV2 EXPUESTO</button>
+  <button class="replay-btn px" onclick="renderLevelUp(3)">↺ LV3 SOBREVIVIENTE</button>
+  <button class="replay-btn px" onclick="renderLevelUp(4)">↺ LV4 FIREFLY</button>
+  <button class="replay-btn px" onclick="renderLevelUp(5)">↺ LV5 PORTADOR</button>
+  <button class="replay-btn px" onclick="renderLevelUp(6)">↺ LV6 ÚLTIMA ESPERANZA</button>
+</div>
+
+<script>
+/* ─── Per-level TLOU config ───────────────────────────────────
+   c  = primary color (border, icon glow, ring 1, name pulse)
+   sc = secondary / spark color (ring 2, small sparks)
+   rc = ring 1 color
+   bg = card background gradient
+   icon = emoji icon (bouncy drop)
+   sub = flavor subtitle (all-caps, ≤ 55 chars per line)
+   deco = side decoration string (replaces Norse runes)
+──────────────────────────────────────────────────────────── */
+const LU_CFG = {
+  2: {
+    bg:   'linear-gradient(160deg,#0a0500,#1a0d00)',
+    c:    '#7a3000', sc: '#cc5500', rc: '#7a3000',
+    icon: '🧪',
+    name: 'Expuesto',
+    sub:  'HAS SIDO EXPUESTO — LA CUARENTENA NO TE DETUVO',
+    deco: '⬡ ⬡ ⬡ ⬡ ⬡',
+  },
+  3: {
+    bg:   'linear-gradient(160deg,#100800,#2a1400)',
+    c:    '#cc5500', sc: '#ff7733', rc: '#cc5500',
+    icon: '🌿',
+    name: 'Sobreviviente',
+    sub:  'SOBREVIVISTE AL BROTE — EL CORDYCEPS NO TE VENCIÓ',
+    deco: '⬡ ✦ ⬡ ✦ ⬡',
+  },
+  4: {
+    bg:   'linear-gradient(160deg,#040d06,#0a1e10)',
+    c:    '#2d7a45', sc: '#4ca66b', rc: '#2d7a45',
+    icon: '🔦',
+    name: 'Firefly',
+    sub:  'CUANDO LO BUSCAS, LA LUCIÉRNAGA TE ENCUENTRA',
+    deco: '✦ ⬡ ✦ ⬡ ✦',
+  },
+  5: {
+    bg:   'linear-gradient(160deg,#051408,#0f2a14)',
+    c:    '#4ca66b', sc: '#7dcf99', rc: '#4ca66b',
+    icon: '🧬',
+    name: 'Portador',
+    sub:  'LLEVAS EN TI LO QUE PUEDE SALVAR AL MUNDO',
+    deco: '⬡ ✦ ⬡ ✦ ⬡',
+  },
+  6: {
+    bg:   'linear-gradient(160deg,#0d0500,#04100a,#0d0500)',
+    c:    '#D4870A', sc: '#4ca66b', rc: '#C0392B',
+    icon: '⚡',
+    name: 'Inmune',
+    sub:  'LA HUMANIDAD SOBREVIVE EN TI — PROTÉGELA',
+    deco: '⬡ ✦ ☣ ✦ ⬡',
+  },
+};
+
+let _uid = 1000;
+
+function buildLevelUp(lvl) {
+  const cfg = LU_CFG[lvl];
+  if (!cfg) return '';
+  const uid = 'lu' + (_uid++);
+  const { bg, c, sc, rc, icon, name, sub, deco } = cfg;
+
+  /* 8 directional small sparks + 4 large cardinal sparks
+     All delayed by 1.3s so they fire as the logo exits */
+  const SD = [[-50,-88],[0,-100],[50,-88],[92,-35],[78,55],[0,92],[-78,55],[-92,-35]];
+  const BD = [[-4,-115],[115,0],[4,115],[-115,0]];
+
+  let sparkCSS = '', sparkHTML = '';
+  SD.forEach(([dx, dy], i) => {
+    const d = (1.32 + i * 0.03).toFixed(2);
+    const sz = i % 2 === 0 ? 4 : 3;
+    sparkCSS  += `@keyframes ${uid}-s${i}{0%{transform:translate(0,0);opacity:1}100%{transform:translate(${dx}px,${dy}px);opacity:0}}`;
+    sparkHTML += `<div style="position:absolute;top:50%;left:50%;width:${sz}px;height:${sz}px;border-radius:50%;background:${sc};margin:-${Math.floor(sz/2)}px;opacity:0;animation:${uid}-s${i} .85s ease-out ${d}s forwards;pointer-events:none;z-index:6;"></div>`;
+  });
+  BD.forEach(([dx, dy], i) => {
+    const d = (1.30 + i * 0.07).toFixed(2);
+    sparkCSS  += `@keyframes ${uid}-b${i}{0%{transform:translate(0,0);opacity:.9}100%{transform:translate(${dx}px,${dy}px);opacity:0}}`;
+    sparkHTML += `<div style="position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:${c};margin:-3px;opacity:0;animation:${uid}-b${i} 1.1s ease-out ${d}s forwards;pointer-events:none;z-index:6;"></div>`;
+  });
+
+  /* Extra ring for lv6 */
+  const extraRing = lvl === 6
+    ? `<div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;border-radius:50%;border:2px solid ${sc};opacity:0;animation:${uid}-ring 1.6s ease-out 1.92s forwards;pointer-events:none;z-index:5;"></div>`
+    : '';
+
+  const nameFontSize = 'clamp(13px,2.8vw,22px)';
+
+  const nameStyle = lvl === 6
+    ? `background:linear-gradient(90deg,#C0392B,#D4870A,#4ca66b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:${uid}-rise .55s ease-out 1.96s both,shimmer 3s linear 2.5s infinite;`
+    : `color:${c};text-shadow:0 0 20px ${c}88,2px 2px 0 #000;animation:${uid}-rise .55s ease-out 1.96s both,${uid}-pulse 2.8s ease-in-out 2.5s infinite;`;
+
+  return `
+<style>
+  /* Logo: still → 3 CCW rotations each faster → burst exit */
+  @keyframes ${uid}-logo {
+    0%   { transform: scale(1)   rotate(0deg);     opacity: 1; } /* start still */
+    18%  { transform: scale(1)   rotate(0deg);     opacity: 1; } /* hold still */
+    47%  { transform: scale(1)   rotate(-360deg);  opacity: 1; } /* R1  0.52s */
+    68%  { transform: scale(1)   rotate(-720deg);  opacity: 1; } /* R2  0.37s */
+    80%  { transform: scale(1)   rotate(-1080deg); opacity: 1; } /* R3  0.22s ← fast */
+    87%  { transform: scale(1)   rotate(-1080deg); opacity: 1; } /* brief hold */
+    100% { transform: scale(2.4) rotate(-1080deg); opacity: 0; } /* burst out */
+  }
+  @keyframes ${uid}-ring {0%{transform:scale(.08);opacity:.95}100%{transform:scale(4.5);opacity:0}}
+  @keyframes ${uid}-icon {
+    0%  {transform:scale(0) rotate(-25deg);opacity:0}
+    55% {transform:scale(1.22) rotate(6deg);opacity:1}
+    72% {transform:scale(0.91) rotate(-3deg)}
+    86% {transform:scale(1.06) rotate(2deg)}
+    100%{transform:scale(1) rotate(0deg)}}
+  @keyframes ${uid}-slam {
+    0%  {transform:scaleX(3) scaleY(0.05);opacity:0;letter-spacing:16px}
+    55% {transform:scaleX(1.04) scaleY(1.04);opacity:1}
+    100%{transform:scale(1);letter-spacing:4px}}
+  @keyframes ${uid}-rise {
+    0%  {transform:translateY(32px);opacity:0;filter:blur(6px)}
+    100%{transform:translateY(0);opacity:1;filter:blur(0)}}
+  @keyframes ${uid}-sub  {from{opacity:0;letter-spacing:6px}to{opacity:1;letter-spacing:2px}}
+  @keyframes ${uid}-cl   {from{transform:translateX(-115%);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes ${uid}-cr   {from{transform:translateX(115%);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes ${uid}-dl   {from{opacity:0;transform:translateY(-50%) translateX(-36px)}to{opacity:.18;transform:translateY(-50%) translateX(0)}}
+  @keyframes ${uid}-dr   {from{opacity:0;transform:translateY(-50%) translateX(36px)}to{opacity:.18;transform:translateY(-50%) translateX(0)}}
+  @keyframes ${uid}-pulse{0%,100%{text-shadow:0 0 10px ${c}88,2px 2px 0 #000}50%{text-shadow:0 0 32px ${c},0 0 64px ${c}55,2px 2px 0 #000}}
+  ${sparkCSS}
+</style>
+<div style="position:relative;overflow:hidden;background:${bg};
+  border:2px solid ${c};border-radius:6px;max-width:840px;margin:14px 0;
+  box-shadow:0 0 55px ${c}44,0 0 110px ${c}11,0 12px 50px rgba(0,0,0,.97);">
+
+  <!-- SMA Logo: 3 CCW spins getting faster, then bursts into level anim
+       Centering via margin (NOT transform) so animation transform is free -->
+  <div style="position:absolute;top:50%;left:50%;
+    width:80px;height:80px;margin-top:-40px;margin-left:-40px;
+    z-index:25;pointer-events:none;">
+    <img src="icono SMA.png"
+      style="width:80px;height:80px;border-radius:50%;object-fit:cover;display:block;
+        filter:drop-shadow(0 0 20px ${c}) drop-shadow(0 0 8px ${c}99);
+        animation:${uid}-logo 1.52s linear forwards;">
+  </div>
+
+  <!-- Rings fire as logo bursts out — logo exit starts at ~1.32s -->
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:3px solid ${rc};opacity:0;
+    animation:${uid}-ring 1.05s ease-out 1.32s forwards;pointer-events:none;z-index:8;"></div>
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:2px solid ${sc}cc;opacity:0;
+    animation:${uid}-ring 1.35s ease-out 1.52s forwards;pointer-events:none;z-index:8;"></div>
+  <div style="position:absolute;top:50%;left:50%;width:90px;height:90px;margin:-45px;
+    border-radius:50%;border:1px solid ${c}55;opacity:0;
+    animation:${uid}-ring 1.65s ease-out 1.72s forwards;pointer-events:none;z-index:8;"></div>
+  ${extraRing}
+
+  <!-- Sparks -->
+  ${sparkHTML}
+
+  <!-- Spore decorations (slide in after logo exits) -->
+  <div style="position:absolute;left:14px;top:50%;
+    font-size:16px;color:${c};letter-spacing:5px;
+    animation:${uid}-dl .9s ease-out 1.38s both;pointer-events:none;z-index:7;">
+    ${deco}</div>
+  <div style="position:absolute;right:14px;top:50%;
+    font-size:16px;color:${c};letter-spacing:5px;
+    animation:${uid}-dr .9s ease-out 1.38s both;pointer-events:none;z-index:7;">
+    ${deco}</div>
+
+  <!-- Main content (starts as logo scale-bursts out) -->
+  <div style="position:relative;z-index:15;padding:42px 60px 32px;text-align:center;">
+
+    <!-- Icon bouncy drop -->
+    <div style="font-size:54px;margin-bottom:16px;display:block;
+      animation:${uid}-icon .68s cubic-bezier(.34,1.56,.64,1) 1.44s both;">
+      ${icon}</div>
+
+    <!-- ¡ASCENDISTE! horizontal slam -->
+    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:${c};
+      letter-spacing:4px;margin-bottom:20px;
+      animation:${uid}-slam .52s cubic-bezier(.22,.61,.36,1) 1.68s both;">
+      ¡ASCENDISTE!</div>
+
+    <!-- Level name -->
+    <div style="font-family:'Press Start 2P',monospace;
+      font-size:${nameFontSize};letter-spacing:4px;margin-bottom:18px;
+      ${nameStyle}">
+      ${name}</div>
+
+    <!-- Flavor sub-text -->
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;
+      color:#444433;letter-spacing:2px;
+      animation:${uid}-sub .5s ease-out 2.24s both;">${sub}</div>
+
+    <!-- Spore-dot ornament -->
+    <div style="display:flex;align-items:center;margin-top:26px;overflow:hidden;">
+      <div style="font-size:13px;color:${c};opacity:.4;letter-spacing:2px;flex-shrink:0;
+        animation:${uid}-cl .6s ease-out 2.1s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,${c}60,${c}10);margin:0 8px;"></div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:${c};opacity:.65;
+        animation:${uid}-rise .4s ease-out 2.3s both;">LV ${lvl}</div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,${c}10,${c}60);margin:0 8px;"></div>
+      <div style="font-size:13px;color:${c};opacity:.4;letter-spacing:2px;flex-shrink:0;
+        animation:${uid}-cr .6s ease-out 2.1s both;">⬡ ⬡ ⬡ ⬡ ⬡</div>
+    </div>
+  </div>
+</div>`;
+}
+
+function renderLevelUp(lvl) {
+  const sec = document.getElementById('levelup-section');
+  /* replace or prepend the chosen level */
+  const id = 'lu-card-' + lvl;
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = id;
+    sec.appendChild(el);
+  }
+  el.innerHTML = buildLevelUp(lvl);
+}
+
+function renderAllLevelUps() {
+  document.getElementById('levelup-section').innerHTML = '';
+  [2, 3, 4, 5, 6].forEach((lvl, i) => {
+    setTimeout(() => renderLevelUp(lvl), i * 120);
+  });
+}
+
+renderAllLevelUps();
+</script>
+
+
+<!-- ── 7. TICKER ── -->
+<h2 class="px">7 · TICKER (scrolling news)</h2>
+<div class="ticker-wrap">
+  <div class="px ticker-label">✦</div>
+  <div class="px ticker-inner">
+    5 SUPERVIVIENTES EN EL CAMPO   ✦   LÍDER: Ellie Williams · 98%   ✦   PROMEDIO DE ZONA: 69%   ✦   MÁS LOGROS: Ellie Williams · 8 ✦   ✦   RACHA MÁS ALTA: Ellie Williams · 🔥×5
+  </div>
+</div>
+
+
+<!-- ── 8. SPINNER ── -->
+<h2 class="px">8 · LOADING SPINNER</h2>
+<div class="row" style="align-items:center;gap:14px;">
+  <div class="spin-dot"></div>
+  <div class="px" style="font-size:8px;color:#2a3a2a;letter-spacing:1px;">CONECTANDO AL NODO DE INVESTIGACIÓN…</div>
+</div>
+
+
+<div class="footer-note px">PYTHON QUEST · NB3 · ANIMATION PLAYGROUND · SOLO PARA POLISHING</div>
+
+</body>
+</html>
