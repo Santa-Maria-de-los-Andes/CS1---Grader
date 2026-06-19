@@ -154,14 +154,13 @@
       padding: 16px 12px 14px;
       text-align: center;
       position: relative;
-      overflow: hidden;
     }
     .podium-card.rank1 {
       background: linear-gradient(160deg, #100800, #1e1200);
       border: 2px solid #D4870A;
       box-shadow: 0 0 28px rgba(212,135,10,.2), 0 8px 24px rgba(0,0,0,.7);
       order: 2;
-      animation: pulse-cordyceps 2.5s ease-in-out infinite;
+      animation: rank1-pulse 2.8s ease-in-out infinite;
     }
     .podium-card.rank2 {
       background: linear-gradient(160deg, #050808, #0d1a10);
@@ -197,9 +196,8 @@
       border-radius: 3px;
       padding: 10px 14px;
       animation: slide-in .35s ease both;
-      transition: border-color .2s;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .rank-row:hover { border-color: #4ca66b30; }
 
     .rank-num {
       font-size: 10px;
@@ -258,11 +256,11 @@
       background-size: 200%; animation: shimmer 3s linear infinite;   /* Proyecto Ellie      — cordyceps meets firefly */
     }
 
-    .xp-lv1 { background: linear-gradient(90deg,#1a1a1a,#2d2d2d); }
-    .xp-lv2 { background: linear-gradient(90deg,#2d1200,#5c2800); }
-    .xp-lv3 { background: linear-gradient(90deg,#3d1800,#8b4500); }
-    .xp-lv4 { background: linear-gradient(90deg,#0a2010,#1a5030); }
-    .xp-lv5 { background: linear-gradient(90deg,#0d3020,#2a7050); }
+    .xp-lv1 { background: linear-gradient(90deg,#1a1a1a,#2d2d2d 85%,#3a3a3a); }
+    .xp-lv2 { background: linear-gradient(90deg,#2d1200,#5c2800 85%,#8b3c00); }
+    .xp-lv3 { background: linear-gradient(90deg,#3d1800,#8b4500 85%,#cc6600); }
+    .xp-lv4 { background: linear-gradient(90deg,#0a2010,#1a5030 85%,#2d7a45); }
+    .xp-lv5 { background: linear-gradient(90deg,#0d3020,#2a7050 85%,#4ca66b); }
     .xp-lv6 { background: linear-gradient(90deg,#0d2d20,#4ca66b,#d4870a); background-size:200%; animation: shimmer 3s linear infinite; }
 
     /* ── Loading / empty states ── */
@@ -289,7 +287,7 @@
       justify-content: space-between;
       margin-bottom: 14px;
     }
-    .section-title { font-size: 8px; color: #4ca66b; letter-spacing: 1px; }
+    .section-title { font-size: 8px; color: #4ca66b; letter-spacing: 2px; text-shadow: 0 0 14px rgba(76,166,107,.4); }
 
     /* ── Refresh button ── */
     .refresh-btn {
@@ -430,6 +428,41 @@
       margin: 8px 0 20px;
     }
 
+    /* ── Podium ring expansion ── */
+    @keyframes ring-expand-pod {
+      0%   { transform: translate(-50%,-50%) scale(.1);  opacity: .8; }
+      100% { transform: translate(-50%,-50%) scale(5.5); opacity: 0; }
+    }
+
+    /* ── Rank-1 ripple pulse (replaces pulse-cordyceps) ── */
+    @keyframes rank1-pulse {
+      0%   { box-shadow: 0 0 28px rgba(212,135,10,.22), 0 0 0 0   rgba(212,135,10,.32), 0 8px 24px rgba(0,0,0,.8); }
+      35%  { box-shadow: 0 0 44px rgba(212,135,10,.36), 0 0 0 10px rgba(212,135,10,.10), 0 8px 24px rgba(0,0,0,.8); }
+      65%  { box-shadow: 0 0 44px rgba(212,135,10,.30), 0 0 0 20px rgba(212,135,10,.03), 0 8px 24px rgba(0,0,0,.8); }
+      100% { box-shadow: 0 0 28px rgba(212,135,10,.22), 0 0 0 30px rgba(212,135,10,0),   0 8px 24px rgba(0,0,0,.8); }
+    }
+
+    /* ── Stat reveal on data load ── */
+    @keyframes stat-reveal {
+      from { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+      to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+    }
+
+    /* ── Per-level left accent on rank rows ── */
+    .rank-row.lv-a1 { box-shadow: inset 3px 0 0 #2d2d2d; }
+    .rank-row.lv-a2 { box-shadow: inset 3px 0 0 #7a3000; }
+    .rank-row.lv-a3 { box-shadow: inset 3px 0 0 #cc5500; }
+    .rank-row.lv-a4 { box-shadow: inset 3px 0 0 #2d7a45; }
+    .rank-row.lv-a5 { box-shadow: inset 3px 0 0 #4ca66b; }
+    .rank-row.lv-a6 { box-shadow: inset 3px 0 0 #D4870A; }
+
+    .rank-row.lv-a1:hover { box-shadow: inset 3px 0 0 #3d3d3d; border-color: #3d3d3d18; }
+    .rank-row.lv-a2:hover { box-shadow: inset 3px 0 0 #a04000, inset 0 0 24px rgba(122,48,0,.05);   border-color: #7a300025; }
+    .rank-row.lv-a3:hover { box-shadow: inset 3px 0 0 #dd6600, inset 0 0 24px rgba(204,85,0,.05);   border-color: #cc550025; }
+    .rank-row.lv-a4:hover { box-shadow: inset 3px 0 0 #3d9a55, inset 0 0 24px rgba(45,122,69,.05);  border-color: #2d7a4525; }
+    .rank-row.lv-a5:hover { box-shadow: inset 3px 0 0 #5db87a, inset 0 0 24px rgba(76,166,107,.06); border-color: #4ca66b25; }
+    .rank-row.lv-a6:hover { box-shadow: inset 3px 0 0 #E89A0A, inset 0 0 24px rgba(212,135,10,.07); border-color: #D4870A25; }
+
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .school-right { display: none; }
@@ -567,20 +600,36 @@ function playerName(player) {
 function renderPodiumCard(player, rank) {
   if (!player) return '<div></div>';
   // TLOU icons: ⚡ Proyecto Ellie (1st), 🔦 Firefly (2nd), 🌿 Survivor (3rd)
-  const crowns  = ['', '⚡', '🔦', '🌿'];
-  const rankCls = ['', 'rank1', 'rank2', 'rank3'];
+  const crowns   = ['', '⚡', '🔦', '🌿'];
+  const rankCls  = ['', 'rank1', 'rank2', 'rank3'];
+  const rankClr  = ['', '#D4870A', '#4ca66b', '#2d5a3a'];
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
   const name     = playerName(player);
+  const clr      = rankClr[rank] || '#4ca66b';
+
+  // Expanding rings — 3 for rank1, 2 for rank2, none for rank3
+  const ringCount  = rank === 1 ? 3 : rank === 2 ? 2 : 0;
+  const ringWeight = rank === 1 ? 2 : 1;
+  const rings = Array.from({ length: ringCount }, (_, i) => {
+    const delay = (i * 0.75).toFixed(2);
+    return `<div style="position:absolute;top:50%;left:50%;width:60px;height:60px;
+      border-radius:50%;border:${ringWeight}px solid ${clr};pointer-events:none;z-index:0;
+      animation:ring-expand-pod 2.4s ease-out ${delay}s infinite;"></div>`;
+  }).join('');
+
   return `
-    <div class="podium-card ${rankCls[rank]}">
-      <div class="podium-crown">${crowns[rank]}</div>
-      <div class="px podium-rank">#${rank}</div>
-      <div class="px podium-name">${name}</div>
-      <div class="px podium-pct">${player.pct}%</div>
-      <div class="px podium-level ${lvClass(player.level_num)}">${player.level_name || ''}</div>
-      <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-        <span class="px badge badge-ach">✦ ${achCount}</span>
-        ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
+    <div class="podium-card ${rankCls[rank]}" style="position:relative;">
+      ${rings}
+      <div style="position:relative;z-index:1;">
+        <div class="podium-crown">${crowns[rank]}</div>
+        <div class="px podium-rank">#${rank}</div>
+        <div class="px podium-name">${name}</div>
+        <div class="px podium-pct">${player.pct}%</div>
+        <div class="px podium-level ${lvClass(player.level_num)}">${player.level_name || ''}</div>
+        <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+          <span class="px badge badge-ach">✦ ${achCount}</span>
+          ${player.streak >= 2 ? `<span class="px badge badge-str">🔥×${player.streak}</span>` : ''}
+        </div>
       </div>
     </div>`;
 }
@@ -589,7 +638,7 @@ function renderRankRow(player, rank, delay) {
   const achCount = Array.isArray(player.achievements) ? player.achievements.length : 0;
   const name     = playerName(player);
   return `
-    <div class="rank-row" style="animation-delay:${delay}ms;">
+    <div class="rank-row lv-a${Math.min(player.level_num || 1, 6)}" style="animation-delay:${delay}ms;">
       <div class="px rank-num">${rank}</div>
       <div class="rank-info">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
@@ -640,6 +689,22 @@ function setFilter(grade) {
   renderLeaderboard(filtered);
 }
 
+// ── Stat count-up with entrance animation ────────────────────
+function animateStat(el, value) {
+  const num = parseFloat(value);
+  const suffix = isNaN(num) ? '' : value.replace(/[\d.]+/, '');
+  el.style.animation = 'none';
+  void el.offsetHeight;
+  el.style.animation = 'stat-reveal .45s cubic-bezier(.22,.61,.36,1) both';
+  if (isNaN(num)) { el.textContent = value; return; }
+  const dur = 520, t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    el.textContent = Math.round(num * (1 - Math.pow(1 - p, 3))) + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}
+
 // ── Main render ──────────────────────────────────────────────
 function renderLeaderboard(players) {
   const top3   = players.slice(0, 3);
@@ -648,9 +713,9 @@ function renderLeaderboard(players) {
     : 0;
   const topPct = players.length ? players[0].pct : 0;
 
-  document.getElementById('stat-players').textContent = players.length;
-  document.getElementById('stat-top').textContent     = topPct + '%';
-  document.getElementById('stat-avg').textContent     = avgPct + '%';
+  animateStat(document.getElementById('stat-players'), String(players.length));
+  animateStat(document.getElementById('stat-top'),     topPct + '%');
+  animateStat(document.getElementById('stat-avg'),     avgPct + '%');
 
   // Ticker
   const achLeader    = [...players].sort((a,b) =>
